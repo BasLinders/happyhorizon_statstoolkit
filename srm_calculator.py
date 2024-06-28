@@ -33,11 +33,11 @@ if st.button("Check for Sample Ratio Mismatch"):
         # Define SRM result based on p-value threshold
         if p_value < 0.01:
             srm_result = (
-                f"Possible sample ratio mismatch! The distribution of data between your variants significantly deviates from the "
+                f"possible sample ratio mismatch! The distribution of data between your variants significantly deviates from the "
                 f"expected proportions of {expected_distribution}. Check the distribution"
             )
         else:
-            srm_result = "Valid distribution. The amount of visitors per variant does not significantly deviate from the expected split"
+            srm_result = "valid distribution. The amount of visitors per variant does not significantly deviate from the expected split"
 
         # Display results
         st.write(f"p-value: {p_value:.4f}. This suggests a {srm_result}.")
