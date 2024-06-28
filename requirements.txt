@@ -1,17 +1,9 @@
 altair
 streamlit
-<<<<<<< HEAD
 scikit-learn
-numpy
 seaborn
-pingouin
-matplotlib
 scipy
-=======
 pandas
-numpy>=1.22  # Ensure compatibility with Python 3.12
+numpy
 matplotlib
-seaborn
 pingouin
-scipy  # Correct package name
->>>>>>> 255f2c7b1e34a7b8b7bbf4574933a07c98b0c48c
