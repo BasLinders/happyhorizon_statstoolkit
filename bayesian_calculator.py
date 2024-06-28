@@ -66,6 +66,7 @@ else:
 
     st.write(f"Business risk alpha prior: {alpha_prior_business}")
     st.write(f"Business risk beta prior: {beta_prior_business}")
+    st.write("")
 
     def calculate_probability_b_better_and_samples(visitors_a, conversions_a, visitors_b, conversions_b, num_samples=10000):
         alpha_post_a = alpha_prior + conversions_a
