@@ -11,7 +11,7 @@ except ImportError as e:
     print(f"Failed to import libraries: {e}.")
 
 # Inputs
-baseline_visitors = st.number_inpt("Amount of visitors per week: ")
+baseline_visitors = st.number_input("Amount of visitors per week: ")
 baseline_conversions = st.number_input("Number of conversions per week: ")
 risk = st.number_input("In percentages, what is the risk you're willing to take (5, 10, 20, etc)? ")
 trust = st.number_input("In percentages, how sure do you want to be that the effect exists (80, 90, etc)? ")
