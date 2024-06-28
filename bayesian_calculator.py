@@ -17,8 +17,8 @@ conversions_b = st.number_input("How many conversions does variant B have?", min
 probability_winner = st.number_input("What is the minimum chance to win for a variant?", min_value=0.0, max_value=100.0, step=0.01)
 
 # Get average order values with validation
-aov_a = st.number_input("What is the average order value of A (use . with decimals)? ", min_value=0.0, step=0.01)
-aov_b = st.number_input("What is the average order value of B (use . with decimals)? ", min_value=0.0, step=0.01)
+aov_a = st.number_input("What is the average order value of A? ", min_value=0.0, step=0.01)
+aov_b = st.number_input("What is the average order value of B? ", min_value=0.0, step=0.01)
 
 # Get projection period with validation
 runtime_days = st.number_input("For how many days did your test run?", min_value=0, step=1)
