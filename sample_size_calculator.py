@@ -3,6 +3,8 @@ from scipy.stats import norm
 import pandas as pd
 import numpy as np
 
+st.title("Sample Size Calculator")
+
 # Inputs
 baseline_visitors = st.number_input("Amount of visitors per week:", min_value=0, step=1)
 baseline_conversions = st.number_input("Number of conversions per week:", min_value=0, step=1)
