@@ -34,10 +34,10 @@ if st.button("Check for Sample Ratio Mismatch"):
         if p_value < 0.01:
             srm_result = (
                 f"Possible sample ratio mismatch! The distribution of data significantly deviates from the "
-                f"expected proportions of {expected_distribution}. Check the distribution."
+                f"expected proportions of {expected_distribution}. Check the distribution"
             )
         else:
-            srm_result = "Valid distribution. The sample proportions do not significantly deviate from the expected split."
+            srm_result = "Valid distribution. The sample proportions do not significantly deviate from the expected split"
 
         # Display results
         st.write(f"p-value: {p_value:.4f}. This suggests a {srm_result}.")
