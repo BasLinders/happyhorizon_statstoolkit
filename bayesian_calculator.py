@@ -8,6 +8,15 @@ import pingouin as pg
 from scipy.stats import beta
 
 st.write("# Bayesian Calculator")
+"""
+This calculator outputs the probability of a variant to generate more conversions than the other. 
+Remember, you set the boundaries of success for the experiment; this calculator only helps you to translate it to numbers.
+
+It also shows the distribution of conversion rates by running a simulation and estimates the potential effect on revenue 
+over a chosen period after implementation with bayesian probability. Obviously, we make several statistical assumptions.
+
+Enter your experiment values below. Happy learning!
+"""
 
 # Get visitor and conversion inputs with validation
 visitors_a = st.number_input("How many visitors does variant A have?", min_value=0, step=1)
@@ -205,6 +214,7 @@ else:
     #st.write(f"Alpha prior for business risk: {alpha_prior_business}")
     #st.write(f"Beta prior for business risk: {beta_prior_business}")
 
-    st.write("## Results:")
+    st.write("## Results")
     st.write("Below is the summary of the outcomes including B's chance to win, potential uplift, risk, and total contribution over the specified projection period:")
+    st.write("Please note: This is a risk assessment that uses bayesian probability to assess the expected changes in monetary values.")
     st.dataframe(df)
