@@ -191,17 +191,17 @@ else:
         "Total Contribution (€)": [total_contribution]
     }).round(2)
 
-    st.write("## Expected Daily Conversions:")
-    st.write(f"Variant A: {expected_daily_conversions_a} conversions/day")
-    st.write(f"Variant B: {expected_daily_conversions_b} conversions/day")
+    #st.write("## Expected Daily Conversions:")
+    #st.write(f"Variant A: {expected_daily_conversions_a} conversions/day")
+    #st.write(f"Variant B: {expected_daily_conversions_b} conversions/day")
 
-    st.write("## Lower Bounds:")
-    st.write(f"Variant A: {lower_bound_a:.2f} conversions/day")
-    st.write(f"Variant B: {lower_bound_b:.2f} conversions/day")
+    #st.write("## Lower Bounds:")
+    #st.write(f"Variant A: {lower_bound_a:.2f} conversions/day")
+    #st.write(f"Variant B: {lower_bound_b:.2f} conversions/day")
 
-    st.write("## Priors:")
-    st.write(f"Alpha prior for business risk: {alpha_prior_business}")
-    st.write(f"Beta prior for business risk: {beta_prior_business}")
+    #st.write("## Priors:")
+    #st.write(f"Alpha prior for business risk: {alpha_prior_business}")
+    #st.write(f"Beta prior for business risk: {beta_prior_business}")
 
     st.write("## Results:")
     st.write("Below is the summary of the outcomes including B's chance to win, potential uplift, risk, and total contribution over the specified projection period:")
