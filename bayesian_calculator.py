@@ -7,14 +7,14 @@ import seaborn as sns
 import pingouin as pg
 from scipy.stats import beta
 
-st.write("# Bayesian Experiment Results Calculator")
+st.write("# Bayesian Experiment Calculator")
 
 # Get visitor and conversion inputs with validation
 visitors_a = st.number_input("How many visitors does variant A have?", min_value=0, step=1)
 conversions_a = st.number_input("How many conversions does variant A have?", min_value=0, step=1)
 visitors_b = st.number_input("How many visitors does variant B have?", min_value=0, step=1)
 conversions_b = st.number_input("How many conversions does variant B have?", min_value=0, step=1)
-probability_winner = st.number_input("What is the minimum chance to win for a variant?", min_value=0.0, max_value=100.0, step=0.01)
+probability_winner = st.number_input("What is your minimum probability for a winner?", min_value=0.0, max_value=100.0, step=0.01)
 
 # Get average order values with validation
 aov_a = st.number_input("What is the average order value of A? ", min_value=0.0, step=0.01)
