@@ -1,4 +1,5 @@
 try:
+    import streamlit as st
     from scipy.stats import binom, norm, beta
     from statsmodels.stats.proportion import proportions_ztest
     import pandas as pd
