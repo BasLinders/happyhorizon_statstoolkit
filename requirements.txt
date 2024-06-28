@@ -1,3 +1,9 @@
 altair
 pandas
 streamlit
+scikit-learn
+numpy
+seaborn
+pingouin
+matplotlib
+scipy
