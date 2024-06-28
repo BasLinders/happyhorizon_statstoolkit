@@ -66,7 +66,6 @@ else:
 
     st.write(f"Business risk alpha prior: {alpha_prior_business}")
     st.write(f"Business risk beta prior: {beta_prior_business}")
-    st.write("Data has been loaded.")
 
     def calculate_probability_b_better_and_samples(visitors_a, conversions_a, visitors_b, conversions_b, num_samples=10000):
         alpha_post_a = alpha_prior + conversions_a
@@ -83,11 +82,11 @@ else:
     probability_b_better, samples_a, samples_b = calculate_probability_b_better_and_samples(visitors_a, conversions_a, visitors_b, conversions_b)
 
     if probability_b_better >= probability_threshold:
-        st.write(f"Variant B has a higher chance of performing better than Variant A with a probability of {probability_b_better:.2%}.")
+        st.write(f"\nVariant B has a higher chance of performing better than Variant A with a probability of {probability_b_better:.2%}.")
     elif probability_b_better < (1 - probability_threshold):
-        st.write(f"Variant A has a higher chance of performing better than Variant B with a probability of {1 - probability_b_better:.2%}.")
+        st.write(f"\nVariant A has a higher chance of performing better than Variant B with a probability of {1 - probability_b_better:.2%}.")
     else:
-        st.write(f"Neither variant has a meaningful impact for more conversions with a probability of Variant B being better at {probability_b_better:.2%}.")
+        st.write(f"\nNeither variant has a meaningful impact for more conversions with a probability of Variant B being better at {probability_b_better:.2%}.")
 
     def simulate_differences(visitors_a, conversions_a, visitors_b, conversions_b, num_samples=10000):
         alpha_post_a = alpha_prior + conversions_a
