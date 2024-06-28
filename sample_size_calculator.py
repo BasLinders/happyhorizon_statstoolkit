@@ -14,7 +14,7 @@ except ImportError as e:
 baseline_visitors = st.number_inpt("Amount of visitors per week: ")
 baseline_conversions = st.number_input("Number of conversions per week: ")
 risk = st.number_input("In percentages, what is the risk you're willing to take (5, 10, 20, etc)? ")
-trust = st.number_input("In percentages, how sure do you want to be that the effect exists (80, 90, etc)? "))
+trust = st.number_input("In percentages, how sure do you want to be that the effect exists (80, 90, etc)? ")
 tails = st.number_input("Do you want to know if B is better than A, or also the other way around (enter '1-tailed' or '2-tailed')? ")
 alpha = risk / 100
 power = trust / 100
