@@ -40,4 +40,4 @@ if st.button("Check for Sample Ratio Mismatch"):
             srm_result = "valid distribution. The amount of visitors per variant does not significantly deviate from the expected split"
 
         # Display results
-        st.write(f"p-value: {p_value:.4f}. This suggests a {srm_result}.")
+        st.write(f"p-value: {p_value:.4f}. \nThis suggests a {srm_result}.")
