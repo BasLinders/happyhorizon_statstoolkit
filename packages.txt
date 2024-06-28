@@ -1,0 +1,4 @@
+libgfortran5
+libopenblas-dev
+build-essential
+python3-dev
