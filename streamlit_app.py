@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 
-st.write("# Bayesian experiment results calculator")
+st.write("# Bayesian calculator")
 
 # Get visitor and conversion inputs with validation
 visitors_a = st.number_input("How many visitors does variant A have?", min_value=0, step=1)
