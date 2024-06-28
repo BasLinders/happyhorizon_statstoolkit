@@ -184,10 +184,10 @@ else:
 
     df = pd.DataFrame({
         "B's chance to win (%)": [probability_b_better * 100],
-        "Uplift (€)": [optimistic_monetary_uplift:.2f],
-        "Risk (€)": [expected_monetary_risk:.2f],
-        "Total Contribution (€)": [total_contribution:.2f]
-    })
+        "Uplift (€)": [optimistic_monetary_uplift],
+        "Risk (€)": [expected_monetary_risk],
+        "Total Contribution (€)": [total_contribution]
+    }).round(2)
 
     st.write("## Expected Daily Conversions:")
     st.write(f"Variant A: {expected_daily_conversions_a} conversions/day")
