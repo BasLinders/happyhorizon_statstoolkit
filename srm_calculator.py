@@ -5,7 +5,7 @@ import string
 st.title("Sample Ratio Mismatch (SRM) Checker")
 
 # User input for number of variants
-num_variants = st.number_input("How many variants have been used?", min_value=2, max_value=26, step=1)
+num_variants = st.number_input("How many variants did your experiment have?", min_value=2, max_value=26, step=1)
 
 # Dynamically generate input fields for visitor counts and expected proportions
 visitor_counts = []
@@ -33,11 +33,11 @@ if st.button("Check for Sample Ratio Mismatch"):
         # Define SRM result based on p-value threshold
         if p_value < 0.01:
             srm_result = (
-                f"Possible sample ratio mismatch! The distribution of data significantly deviates from the "
+                f"Possible sample ratio mismatch! The distribution of data between your variants significantly deviates from the "
                 f"expected proportions of {expected_distribution}. Check the distribution"
             )
         else:
-            srm_result = "Valid distribution. The sample proportions do not significantly deviate from the expected split"
+            srm_result = "Valid distribution. The amount of visitors per variant does not significantly deviate from the expected split"
 
         # Display results
         st.write(f"p-value: {p_value:.4f}. This suggests a {srm_result}.")
