@@ -205,4 +205,4 @@ else:
 
     st.write("## Results:")
     st.write("Below is the summary of the outcomes including B's chance to win, potential uplift, risk, and total contribution over the specified projection period:")
-    st.dataframe(df.style.hide_index())
+    st.dataframe(df)
