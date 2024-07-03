@@ -36,6 +36,7 @@ st.write("")
 st.write("Please verify your input:")
 st.write(f"Variant A: {visitors_a} visitors, {conversions_a} conversions, AOV: {aov_a}")
 st.write(f"Variant B: {visitors_b} visitors, {conversions_b} conversions, AOV: {aov_b}")
+st.write(f"Measured change in conversion rate: {(conv_rate_b - conv_rate_a) / conv_rate_a * 100:.2f}%")
 st.write(f"Minimum chance to win: {probability_winner}%")
 st.write(f"Test runtime: {runtime_days} days, Projection period: {projection_period} days")
 
