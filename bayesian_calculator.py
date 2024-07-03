@@ -31,12 +31,15 @@ aov_b = st.number_input("What is the average order value of B? ", min_value=0.0,
 # Get projection period with validation
 runtime_days = st.number_input("For how many days did your test run?", min_value=0, step=1)
 projection_period = st.number_input("Over how many days should we project the contribution in revenue?", min_value=0, step=1)
+conv_rate_a = conversions_a / visitors_a if visitors_a != 0 else 0
+conv_rate_b = conversions_b / visitors_b if visitors_b != 0 else 0
+uplift = (conv_rate_b - conv_rate_a) / conv_rate_a if conv_rate_a != 0 else 0
 
 st.write("")
 st.write("Please verify your input:")
 st.write(f"Variant A: {visitors_a} visitors, {conversions_a} conversions, AOV: {aov_a}")
 st.write(f"Variant B: {visitors_b} visitors, {conversions_b} conversions, AOV: {aov_b}")
-st.write(f"Measured change in conversion rate: {(conv_rate_b - conv_rate_a) / conv_rate_a * 100:.2f}%")
+st.write(f"Measured change in conversion rate: {uplift * 100:.2f}%")
 st.write(f"Minimum chance to win: {probability_winner}%")
 st.write(f"Test runtime: {runtime_days} days, Projection period: {projection_period} days")
 
