@@ -3,7 +3,6 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
-import seaborn as sns
 import pingouin as pg
 from scipy.stats import beta
 
@@ -195,6 +194,7 @@ else:
     total_contribution = optimistic_monetary_uplift + expected_monetary_risk
 
     # Create DataFrame and round the values to 2 decimal places
+    
     df = pd.DataFrame({
         "B's chance to win (%)": [probability_b_better * 100],
         "Uplift (€)": [optimistic_monetary_uplift],
@@ -202,17 +202,9 @@ else:
         "Total Contribution (€)": [total_contribution]
     }).round(2)
 
-    #st.write("## Expected Daily Conversions:")
-    #st.write(f"Variant A: {expected_daily_conversions_a} conversions/day")
-    #st.write(f"Variant B: {expected_daily_conversions_b} conversions/day")
-
-    #st.write("## Lower Bounds:")
-    #st.write(f"Variant A: {lower_bound_a:.2f} conversions/day")
-    #st.write(f"Variant B: {lower_bound_b:.2f} conversions/day")
-
-    #st.write("## Priors:")
-    #st.write(f"Alpha prior for business risk: {alpha_prior_business}")
-    #st.write(f"Beta prior for business risk: {beta_prior_business}")
+    # Adjust for negative risk cases
+    df["Risk (€)"] = df.apply(lambda row: -abs(row["Risk (€)"]) if optimistic_monetary_uplift == 0 and probability_a_better > 0 else row["Risk (€)"], axis=1)
+    df["Total Contribution (€)"] = df.apply(lambda row: -abs(row["Total Contribution (€)"]) if optimistic_monetary_uplift == 0 and probability_a_better > 0 else row["Total Contribution (€)"], axis=1)
 
     st.write("## Results")
     st.write("Below is the summary of the outcomes including B's chance to win, potential uplift, risk, and total contribution over the specified projection period:")
