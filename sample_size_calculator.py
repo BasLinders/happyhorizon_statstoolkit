@@ -47,10 +47,10 @@ else:
         mde_relative = (mde_absolute / variant_cr) * 100
         
         # Append results for this week to the list
-        results.append([week, visitors_per_variant, mde_absolute, mde_relative])
+        results.append([week, visitors_per_variant, mde_relative])
 
     # Convert the list of results into a DataFrame
-    df = pd.DataFrame(results, columns=['Week', 'Visitors / Variant', 'Absolute MDE', 'Relative MDE'])
+    df = pd.DataFrame(results, columns=['Week', 'Visitors / Variant', 'Relative MDE'])
 
     # Adjust formatting for better readability
     #df['Absolute MDE'] = df['Absolute MDE'].map(lambda x: f"{x:.2%}")
