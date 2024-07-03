@@ -62,4 +62,4 @@ else:
         for the amount of weeks that your test has run. A relative MDE of < 5% is generally testworthy, 5-10% is debatable. For everything 
         above that, you should consider if the experiment will be able to achieve this effect and evaluate testworthiness.
     """)
-    st.write(df)
+    st.write(df.style.hide(axis="index"))
