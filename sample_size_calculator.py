@@ -53,13 +53,13 @@ else:
     df = pd.DataFrame(results, columns=['Week', 'Visitors / Variant', 'Absolute MDE', 'Relative MDE'])
 
     # Adjust formatting for better readability
-    df['Absolute MDE'] = df['Absolute MDE'].map(lambda x: f"{x:.2%}")
+    #df['Absolute MDE'] = df['Absolute MDE'].map(lambda x: f"{x:.2%}")
     df['Relative MDE'] = df['Relative MDE'].map(lambda x: f"{x:.2f}%")
 
     # Print the DataFrame
     st.write("""
         This table tells you what the minimum effect is that you need to see in order to reach statistical significance 
-        for the amount of weeks that your test has run. A MDE of < 5% is considered good, 5-10% is average. For everything 
-        above that, you should consider if the test will be able to achieve this effect and evaluate testworthiness.
+        for the amount of weeks that your test has run. A relative MDE of < 5% is generally testworthy, 5-10% is debatable. For everything 
+        above that, you should consider if the experiment will be able to achieve this effect and evaluate testworthiness.
     """)
     st.write(df)
