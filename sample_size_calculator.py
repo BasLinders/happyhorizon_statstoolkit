@@ -57,4 +57,9 @@ else:
     df['Relative MDE'] = df['Relative MDE'].map(lambda x: f"{x:.2f}%")
 
     # Print the DataFrame
+    st.write("")
+    st.write("This table tells you what the minimum effect is that you need to see in order to reach statistical significance " + 
+             "for the amount of weeks that your test has ran. A MDE of < 5% is considered good, 5-10% is average. For everything " +
+             "above that, you should consider if the test will be able to achieve this effect and evaluate testworthiness.")
+    st.write("")
     st.write(df)
