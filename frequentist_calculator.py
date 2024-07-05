@@ -14,7 +14,7 @@ risk = st.number_input("How much risk do you want to take in % (enter 5, 10, etc
 tail = st.selectbox("Do you only want to know if B is better than A, or also if A is better than B?", options=['greater', 'two-sided'])
 
 # Ensure inputs are valid before performing calculations
-if visitors_a > 0 and visitors_b > 0 and conversions_a >= 0 and conversions_b >= 0 and conversions_a <= visitors_a and conversions_b <= visitors_b:
+if visitors_a > 0 and visitors_b > 0 and conversions_a > 0 and conversions_b > 0 and conversions_a <= visitors_a and conversions_b <= visitors_b:
     alpha = risk / 100
     uplift = (conversions_b - conversions_a) / conversions_a if conversions_a != 0 else 0
 
@@ -25,6 +25,7 @@ if visitors_a > 0 and visitors_b > 0 and conversions_a >= 0 and conversions_b >=
     st.write(f"Variant A: {visitors_a} visitors, {conversions_a} conversions")
     st.write(f"Variant B: {visitors_b} visitors, {conversions_b} conversions")
     st.write(f"Measured change in conversion rate: {uplift * 100:.2f}%")
+    st.write("")
 
     def validate_inputs(visitors, conversions):
         if visitors == 0:
@@ -55,7 +56,7 @@ if visitors_a > 0 and visitors_b > 0 and conversions_a >= 0 and conversions_b >=
 
     # Perform the chi-squared test
     chi2, srm_p_value, dof, ex = stats.chi2_contingency([observed, expected])
-    st.write(f"SRM p-value: {srm_p_value:.4f}")
+    #st.write(f"SRM p-value: {srm_p_value:.4f}")
 
     # Calculate sample proportions
     p_A = conversions_a / visitors_a
@@ -81,13 +82,14 @@ if visitors_a > 0 and visitors_b > 0 and conversions_a >= 0 and conversions_b >=
         p_value /= 2
         p_value = 1 - p_value if z_stat > 0 else p_value
 
+    st.write("Test statistics:")
     st.write(f"Z-statistic: {z_stat:.4f}")
     st.write(f"P-value: {p_value:.4f}")
 
     # Standard Errors
     SE_A = np.sqrt(CR_A * (1 - CR_A) / visitors_a)
     SE_B = np.sqrt(CR_B * (1 - CR_B) / visitors_b)
-    st.write(f"SE_A: {SE_A:.6f}, SE_B: {SE_B:.6f}")
+    st.write(f"Standard error of A: {SE_A:.6f}, Standard error of B: {SE_B:.6f}")
 
     # Confidence intervals for conversion rates
     CI_A_lower = CR_A - 1.96 * SE_A
@@ -152,9 +154,9 @@ if visitors_a > 0 and visitors_b > 0 and conversions_a >= 0 and conversions_b >=
         data_b = np.concatenate([np.ones(conversions_b), np.zeros(visitors_b - conversions_b)])
         observed_power = bootstrap_power(data_a, data_b, alpha, tail, n_bootstraps=n_bootstraps)
 
-    st.write(f"Power test type: {tail}")
+    #st.write(f"Power test type: {tail}")
     st.write(f"Observed power: {observed_power * 100:.2f}%")
-    st.write(f"Alpha: {alpha}")
+    st.write(f"Chosen risk level: {risk}%")
     st.write(f"P-value: {p_value:.4f}")
 
     # Non-inferiority test
@@ -168,33 +170,6 @@ if visitors_a > 0 and visitors_b > 0 and conversions_a >= 0 and conversions_b >=
     # Confidence Interval
     confidence_interval = stats.norm.interval(1 - alpha_noninf, loc=(CR_B - CR_A), scale=SE_diff)
     st.write(f"Confidence interval for difference in conversion rates: {confidence_interval}")
-
-    # Output and conclusions
-    # Overall decision statistics
-    if srm_p_value > 0.01:
-        st.write("This test is valid. The distribution is as expected.")
-    else:
-        st.write("This test is invalid: The distribution of traffic shows a statistically significant deviation "
-                 "from the expected values. Interpret the results with caution.")
-    st.write(f"Observed power of this test: {observed_power * 100:.2f}%")
-    st.write(f"P-value (z-test): {p_value:.4f}\n")
-
-    if p_value <= alpha:
-        st.write(f"Confidence interval: {confidence_interval}")
-        st.write(f"P-value: {p_value:.4f} (statistically significant)")
-        st.write(f"Conversion rate change: {relative_change * 100:.2f}%")
-    elif p_value > alpha and p_value_noninf <= alpha_noninf:
-        st.write(f"Conversion rate of A: {CR_A * 100:.3f}%")
-        st.write(f"Conversion rate of B: {CR_B * 100:.3f}%")
-        st.write(f"P-value (non-inferiority test): {p_value_noninf:.4f}")
-        st.write("The test result is not statistically significant, but variant B generates at least "
-                 "the same number of conversions as variant A.")
-    else:
-        st.write(f"Conversion rate of A: {CR_A * 100:.3f}%")
-        st.write(f"Conversion rate of B: {CR_B * 100:.3f}%")
-        st.write(f"P-value (non-inferiority test): {p_value_noninf:.4f}")
-        st.write("The test result is not statistically significant and variant B possibly "
-                 "will not generate at least the same number of conversions as variant A.")
 
     # Probability density graph
 
@@ -241,5 +216,37 @@ if visitors_a > 0 and visitors_b > 0 and conversions_a >= 0 and conversions_b >=
     plt.legend()
     st.pyplot(plt)
     plt.clf()
+
+    # Output and conclusions
+    # Overall decision statistics
+    if srm_p_value > 0.01:
+        st.write("")
+        st.write("This test is valid. The distribution is as expected.")
+    else:
+        st.write("")
+        st.write("This test is invalid: The distribution of traffic shows a statistically significant deviation "
+                 "from the expected values. Interpret the results with caution.")
+    st.write(f"Observed power of this test: {observed_power * 100:.2f}%")
+    st.write(f"P-value (z-test): {p_value:.4f}\n")
+    st.write("")
+
+    if p_value <= alpha:
+        st.write(f"Confidence interval: {confidence_interval}")
+        st.write(f"P-value: {p_value:.4f} (statistically significant)")
+        st.write(f"Conversion rate change: {relative_change * 100:.2f}%")
+    elif p_value > alpha and p_value_noninf <= alpha_noninf:
+        st.write(f"Conversion rate of A: {CR_A * 100:.3f}%")
+        st.write(f"Conversion rate of B: {CR_B * 100:.3f}%")
+        st.write(f"P-value (non-inferiority test): {p_value_noninf:.4f}")
+        st.write("The test result is not statistically significant, but variant B generates at least "
+                 "the same number of conversions as variant A.")
+    else:
+        st.write(f"Conversion rate of A: {CR_A * 100:.3f}%")
+        st.write(f"Conversion rate of B: {CR_B * 100:.3f}%")
+        st.write(f"P-value (non-inferiority test): {p_value_noninf:.4f}")
+        st.write("The test result is not statistically significant and variant B possibly "
+                 "will not generate at least the same number of conversions as variant A.")
+
 else:
+    st.write("")
     st.write("Please enter valid inputs for all fields.")
