@@ -123,8 +123,10 @@ if visitors_a > 0 and visitors_b > 0 and conversions_a > 0 and conversions_b > 0
     # Power calculations
     if visitors_a > 1000 or visitors_b > 1000:
         observed_power = analytical_power(CR_A, CR_B, visitors_a, visitors_b, alpha, tail)
+        st.write("")
         st.write("\nUsing analytical approach to calculate observed power...\n")
     else:
+        st.write("")
         st.write("\nUsing bootstrapping to calculate power for more accuracy. Just a moment (running simulations)...\n")
         n_bootstraps = 10000
 
@@ -222,14 +224,15 @@ if visitors_a > 0 and visitors_b > 0 and conversions_a > 0 and conversions_b > 0
     # Overall decision statistics
     if srm_p_value > 0.01:
         st.write("")
+        st.write("Test results:")
         st.write("This test is valid. The distribution is as expected.")
     else:
         st.write("")
+        st.write("Test results:")
         st.write("This test is invalid: The distribution of traffic shows a statistically significant deviation "
                  "from the expected values. Interpret the results with caution.")
     st.write(f"Observed power of this test: {observed_power * 100:.2f}%")
-    st.write(f"P-value (z-test): {p_value:.4f}\n")
-    st.write("")
+    #st.write(f"P-value (z-test): {p_value:.4f}\n")
 
     if p_value <= alpha:
         print(f"Confidence interval for difference in conversion rates: ({lower_bound:.4f}, {upper_bound:.4f})")
