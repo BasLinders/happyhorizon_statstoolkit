@@ -167,7 +167,8 @@ p_value_noninf = stats.norm.cdf(z_stat_noninf)
 
 # Confidence Interval
 confidence_interval = stats.norm.interval(1 - alpha_noninf, loc=(CR_B - CR_A), scale=SE_diff)
-st.write(f"Confidence interval for difference in conversion rates: {confidence_interval}")
+lower_bound, upper_bound = confidence_interval
+st.write(f"Confidence interval for difference in conversion rates: ({lower_bound:.4f}, {upper_bound:.4f})")
 
 # Output and conclusions in print statements
 # Overall decision statistics
@@ -180,7 +181,7 @@ st.write(f"Observed power of this test: {observed_power * 100:.2f}%")
 st.write(f"P-value (z-test): {p_value:.4f}\n")
 
 if p_value <= alpha:
-    st.write(f"Confidence interval: {confidence_interval}")
+    st.write(f"Confidence interval for difference in conversion rates: ({lower_bound:.4f}, {upper_bound:.4f})")
     st.write(f"P-value: {p_value:.4f} (statistically significant)")
     st.write(f"Conversion rate change: {relative_change * 100:.2f}%")
 elif p_value > alpha and p_value_noninf <= alpha_noninf:
