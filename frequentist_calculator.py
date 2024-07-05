@@ -27,14 +27,12 @@ if visitors_a > 0 and visitors_b > 0 and conversions_a >= 0 and conversions_b >=
     st.write(f"Measured change in conversion rate: {uplift * 100:.2f}%")
 
     def validate_inputs(visitors, conversions):
-        if visitors is None or conversions is None:
-            raise ValueError("Visitors and conversions cannot be zero")
-        if not isinstance(visitors, int) or not isinstance(conversions, int):
-            raise ValueError("Visitors and conversions must be whole numbers")
-        if visitors < 0 or conversions < 0:
-            raise ValueError("Visitors and conversions cannot be negative")
+        if visitors == 0:
+            raise ValueError("Visitors cannot be zero")
         if conversions > visitors:
             raise ValueError("Conversions cannot exceed the number of visitors")
+        if conversions < 0 or visitors < 0:
+            raise ValueError("Visitors and conversions cannot be negative")
 
     try:
         validate_inputs(visitors_a, conversions_a)
