@@ -169,7 +169,8 @@ if visitors_a > 0 and visitors_b > 0 and conversions_a > 0 and conversions_b > 0
 
     # Confidence Interval
     confidence_interval = stats.norm.interval(1 - alpha_noninf, loc=(CR_B - CR_A), scale=SE_diff)
-    st.write(f"Confidence interval for difference in conversion rates: {confidence_interval}")
+    lower_bound, upper_bound = confidence_interval
+    print(f"Confidence interval for difference in conversion rates: ({lower_bound:.4f}, {upper_bound:.4f})")
 
     # Probability density graph
 
@@ -231,7 +232,7 @@ if visitors_a > 0 and visitors_b > 0 and conversions_a > 0 and conversions_b > 0
     st.write("")
 
     if p_value <= alpha:
-        st.write(f"Confidence interval: {confidence_interval}")
+        print(f"Confidence interval for difference in conversion rates: ({lower_bound:.4f}, {upper_bound:.4f})")
         st.write(f"P-value: {p_value:.4f} (statistically significant)")
         st.write(f"Conversion rate change: {relative_change * 100:.2f}%")
     elif p_value > alpha and p_value_noninf <= alpha_noninf:
