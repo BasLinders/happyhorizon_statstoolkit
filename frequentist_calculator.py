@@ -25,7 +25,6 @@ if visitors_a > 0 and visitors_b > 0 and conversions_a > 0 and conversions_b > 0
     st.write(f"Variant A: {visitors_a} visitors, {conversions_a} conversions")
     st.write(f"Variant B: {visitors_b} visitors, {conversions_b} conversions")
     st.write(f"Measured change in conversion rate: {uplift * 100:.2f}%")
-    st.write("")
 
     def validate_inputs(visitors, conversions):
         if visitors == 0:
@@ -47,8 +46,8 @@ if visitors_a > 0 and visitors_b > 0 and conversions_a > 0 and conversions_b > 0
     CR_A = conversions_a / visitors_a
     CR_B = conversions_b / visitors_b
     relative_change = (CR_B - CR_A) / CR_A
-    st.write(f"CR_A: {CR_A:.4f}, CR_B: {CR_B:.4f}")
-    st.write(f"Relative change: {relative_change:.4f}")
+    st.write(f"CR_A: {CR_A * 100:.2f}%, CR_B: {CR_B * 100:.2f}%")
+    st.write(f"Relative change: {relative_change * 100:.2f}%")
 
     # SRM check
     observed = [visitors_b, visitors_a]
@@ -81,10 +80,11 @@ if visitors_a > 0 and visitors_b > 0 and conversions_a > 0 and conversions_b > 0
     elif tail == 'less':
         p_value /= 2
         p_value = 1 - p_value if z_stat > 0 else p_value
-
+    
+    st.write("")
     st.write("Test statistics:")
     st.write(f"Z-statistic: {z_stat:.4f}")
-    st.write(f"P-value: {p_value:.4f}")
+    #st.write(f"P-value: {p_value:.4f}")
 
     # Standard Errors
     SE_A = np.sqrt(CR_A * (1 - CR_A) / visitors_a)
@@ -159,7 +159,7 @@ if visitors_a > 0 and visitors_b > 0 and conversions_a > 0 and conversions_b > 0
     #st.write(f"Power test type: {tail}")
     st.write(f"Observed power: {observed_power * 100:.2f}%")
     st.write(f"Chosen risk level: {risk}%")
-    st.write(f"P-value: {p_value:.4f}")
+    #st.write(f"P-value: {p_value:.4f}")
 
     # Non-inferiority test
     alpha_noninf = 0.05  # minimize the chance of disqualifying B to 5%
