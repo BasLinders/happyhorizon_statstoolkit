@@ -266,6 +266,7 @@ else:
     })
 
     # Display results in Streamlit
+    '''
     st.write("## Results")
     st.write("### Expected Daily Conversions")
     st.write(f"A: {expected_daily_conversions_a}")
@@ -281,6 +282,7 @@ else:
     st.write(f"Probability A better: {probability_a_better:.2%}")
     st.write(f"Probability B better: {probability_b_better:.2%}")
     st.write(f"Optimistic uplift: €{optimistic_monetary_uplift:.2f}")
+    '''
 
     st.write("### Results Summary")
     st.write("")
