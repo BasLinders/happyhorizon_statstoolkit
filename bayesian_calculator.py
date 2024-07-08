@@ -287,10 +287,10 @@ else:
 
     st.write("### Results Summary")
     st.dataframe(df)
-
+    df.rename(columns={"B's chance to win": "B_chance_to_win"}, inplace=True)
     st.write("\nResults:")
     for index, row in df.iterrows():
-        sst.write(f"B's chance to win: {row['B''s chance to win']:.2f}%")
+        st.write(f"B's chance to win: {row['B_chance_to_win']:.2f}%")
         st.write(f"Potential Uplift (180 days): €{row['Uplift']:.2f}")
         
         # Display risk as a negative value
