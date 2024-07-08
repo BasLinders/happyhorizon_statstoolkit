@@ -3,7 +3,6 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
-import pingouin as pg
 from scipy.stats import beta
 
 st.write("# Bayesian Calculator")
@@ -103,19 +102,19 @@ else:
     else:
         st.write(f"\nNeither variant has a meaningful impact for more conversions with a probability of Variant B being better at {probability_b_better:.2%}.")
 
-def simulate_differences(visitors_a, conversions_a, visitors_b, conversions_b, num_samples=10000):
-    alpha_prior = 1
-    beta_prior = 1
-    
-    alpha_post_a = alpha_prior + conversions_a
-    beta_post_a = beta_prior + (visitors_a - conversions_a)
-    alpha_post_b = alpha_prior + conversions_b
-    beta_post_b = beta_prior + (visitors_b - conversions_b)
-    
-    samples_a = beta.rvs(alpha_post_a, beta_post_a, size=num_samples)
-    samples_b = beta.rvs(alpha_post_b, beta_post_b, size=num_samples)
-    
-    return (samples_b - samples_a) / samples_a
+    def simulate_differences(visitors_a, conversions_a, visitors_b, conversions_b, num_samples=10000):
+        alpha_prior = 1
+        beta_prior = 1
+        
+        alpha_post_a = alpha_prior + conversions_a
+        beta_post_a = beta_prior + (visitors_a - conversions_a)
+        alpha_post_b = alpha_prior + conversions_b
+        beta_post_b = beta_prior + (visitors_b - conversions_b)
+        
+        samples_a = beta.rvs(alpha_post_a, beta_post_a, size=num_samples)
+        samples_b = beta.rvs(alpha_post_b, beta_post_b, size=num_samples)
+        
+        return (samples_b - samples_a) / samples_a
 
     # Simulating the differences as percentage uplift
     diffs_percentage = simulate_differences(visitors_a, conversions_a, visitors_b, conversions_b) * 100
@@ -152,10 +151,10 @@ def simulate_differences(visitors_a, conversions_a, visitors_b, conversions_b, n
     # Vertical line to visually provide uplift of variant
     if observed_uplift > 0:
         line_observed_uplift = plt.axvline(x=observed_uplift, color='red', linestyle='--', 
-                    linewidth=2, label=f'Observed Uplift B to A: {observed_uplift:.2f}%')
+                                           linewidth=2, label=f'Observed Uplift B to A: {observed_uplift:.2f}%')
     else:
         line_observed_uplift = plt.axvline(x=observed_uplift, color='red', linestyle='--', 
-                    linewidth=2, label=f'Observed Drop B to A: {observed_uplift:.2f}%')
+                                           linewidth=2, label=f'Observed Drop B to A: {observed_uplift:.2f}%')
 
     # Creating dummy patches for the legend
     patch_a = mpatches.Patch(color='lightcoral', label='Most Frequent Conversion Rates in A')
@@ -224,7 +223,6 @@ def simulate_differences(visitors_a, conversions_a, visitors_b, conversions_b, n
     total_contribution = optimistic_monetary_uplift + expected_monetary_risk
 
     # Create DataFrame and round the values to 2 decimal places
-    
     df = pd.DataFrame({
         "B's chance to win (%)": [probability_b_better * 100],
         "Uplift (€)": [optimistic_monetary_uplift],
