@@ -102,6 +102,7 @@ else:
     else:
         st.write(f"\nNeither variant has a meaningful impact for more conversions with a probability of Variant B being better at {probability_b_better:.2%}.")
 
+    # Function to simulate differences
     def simulate_differences(visitors_a, conversions_a, visitors_b, conversions_b, num_samples=10000):
         alpha_prior = 1
         beta_prior = 1
@@ -116,45 +117,60 @@ else:
         
         return (samples_b - samples_a) / samples_a
 
+    # Example data
+    visitors_a = 1000
+    conversions_a = 100
+    visitors_b = 1000
+    conversions_b = 80
+
     # Simulating the differences as percentage uplift
     diffs_percentage = simulate_differences(visitors_a, conversions_a, visitors_b, conversions_b) * 100
     conv_rate_a = conversions_a / visitors_a
     conv_rate_b = conversions_b / visitors_b
     observed_uplift = ((conv_rate_b - conv_rate_a) / conv_rate_a) * 100
 
+    # Define a tighter range for the histogram
+    mean_diff = np.mean(diffs_percentage)
+    std_diff = np.std(diffs_percentage)
+    range_min = mean_diff - 3 * std_diff
+    range_max = mean_diff + 3 * std_diff
+
     # Plotting
     plt.figure(figsize=(14, 7))
 
-    # Defining bins with a width of 2% for the histogram, making sure to cover the full range of observed differences
+    # Defining bins with a width of 2% for the histogram within the tighter range
     bin_width = 2  # 2% increments
-    min_diff = np.amin(diffs_percentage)
-    max_diff = np.amax(diffs_percentage)
-    bins = np.arange(min_diff - bin_width, max_diff + bin_width, bin_width)
+    bins = np.arange(range_min, range_max, bin_width)
 
     # Plotting the histogram
     n, bins, patches = plt.hist(diffs_percentage, bins=bins, edgecolor='black', alpha=0.6)
 
-    # Calculate the proportion of each bin
-    total_samples = len(diffs_percentage)
+    # Calculate the cumulative sum of the histogram frequencies
+    cumsum = np.cumsum(n)
+    total_samples = cumsum[-1]
+
+    # Determine the number of samples favoring Variant A and Variant B
+    num_a = np.sum(diffs_percentage < 0)
+    num_b = total_samples - num_a
+
+    # Determine the proportion of each bin to color
     for i in range(len(patches)):
-        if bins[i] < observed_uplift:
-            # Color for uplift related to Variant A
-            patches[i].set_facecolor('lightcoral')
+        if cumsum[i] < num_a:
+            patches[i].set_facecolor('lightcoral')  # Color for uplift related to Variant A
         else:
-            # Color for uplift related to Variant B
-            patches[i].set_facecolor('lightgreen')
+            patches[i].set_facecolor('lightgreen')  # Color for uplift related to Variant B
 
     # Setting dynamic x-ticks based on the bin range
-    xticks = np.arange(min_diff - bin_width, max_diff + bin_width, bin_width)
+    xticks = np.arange(range_min, range_max, bin_width)
     plt.xticks(xticks, [f'{tick:.0f}%' for tick in xticks], rotation=30)
 
     # Vertical line to visually provide uplift of variant
     if observed_uplift > 0:
         line_observed_uplift = plt.axvline(x=observed_uplift, color='red', linestyle='--', 
-                                           linewidth=2, label=f'Observed Uplift B to A: {observed_uplift:.2f}%')
+                    linewidth=2, label=f'Observed Uplift B to A: {observed_uplift:.2f}%')
     else:
         line_observed_uplift = plt.axvline(x=observed_uplift, color='red', linestyle='--', 
-                                           linewidth=2, label=f'Observed Drop B to A: {observed_uplift:.2f}%')
+                    linewidth=2, label=f'Observed Drop B to A: {observed_uplift:.2f}%')
 
     # Creating dummy patches for the legend
     patch_a = mpatches.Patch(color='lightcoral', label='Most Frequent Conversion Rates in A')
@@ -169,7 +185,7 @@ else:
 
     plt.legend(handles=[line_observed_uplift, patch_a, patch_b])
 
-    st.pyplot(plt)  # Use st.pyplot to display the plot in Streamlit
+    st.pyplot(plt)
     plt.clf()
 
     probability_a_better = 1 - probability_b_better
