@@ -260,9 +260,9 @@ else:
     # Construct dataframe with insights
     df = pd.DataFrame({
         "B's chance to win": [probability_b_better * 100],
-        "Uplift": [optimistic_monetary_uplift],
-        "Risk": [-abs(expected_monetary_risk)],  # Risk should be represented as a negative value
-        "Total Contribution": [total_contribution]
+        "Expected Monetary Uplift": [optimistic_monetary_uplift],
+        "Expected Monetary Risk": [-abs(expected_monetary_risk)],  # Risk should be represented as a negative value
+        "Expected Monetary Contribution": [total_contribution]
     })
 
     # Display results in Streamlit
@@ -284,16 +284,3 @@ else:
 
     st.write("### Results Summary")
     st.dataframe(df)
-    '''
-    df.rename(columns={"B's chance to win": "B_chance_to_win"}, inplace=True)
-    st.write("\nResults:")
-    for index, row in df.iterrows():
-        st.write(f"B's chance to win: {row['B_chance_to_win']:.2f}%")
-        st.write(f"Potential Uplift (180 days): €{row['Uplift']:.2f}")
-        
-        # Display risk as a negative value
-        st.write(f"Potential Risk (180 days): €{row['Risk']:.2f}")
-        
-        # Display total contribution considering negative risk
-        st.write(f"Potential contribution over 6 months (with statistical assumptions): €{row['Total Contribution']:.2f}")
-    '''
