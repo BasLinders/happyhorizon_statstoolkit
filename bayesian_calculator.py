@@ -283,4 +283,7 @@ else:
     st.write(f"Optimistic uplift: €{optimistic_monetary_uplift:.2f}")
 
     st.write("### Results Summary")
+    st.write("")
+    st.write("The table below shows the contribution to the revenue over the projection period, with the AOVs as constants. This is purely a measurement for potential impact - no guarantee!")
+    st.write("")
     st.dataframe(df)
