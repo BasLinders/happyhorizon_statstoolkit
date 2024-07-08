@@ -244,7 +244,7 @@ else:
 
     # Adjust expected monetary risk to account for the probability of A being better
     if probability_a_better > 0:
-        expected_monetary_risk = (lower_bound_a - lower_bound_b) * aov_a * projection_period * probability_a_better
+        expected_monetary_risk = round((lower_bound_a - lower_bound_b) * aov_a * projection_period * probability_a_better, 2)
     else:
         expected_monetary_risk = 0
 
@@ -255,10 +255,10 @@ else:
     optimistic_daily_diff = daily_uplift * (1 + improvement_factor)
 
     # Optimistic monetary uplift
-    optimistic_monetary_uplift = max(0, optimistic_daily_diff * aov_b * projection_period)
+    optimistic_monetary_uplift = round(max(0, optimistic_daily_diff * aov_b * projection_period),2)
 
     # Total contribution assuming this optimistic scenario
-    total_contribution = optimistic_monetary_uplift + (-abs(expected_monetary_risk))
+    total_contribution = round(optimistic_monetary_uplift + (-abs(expected_monetary_risk)),2)
 
     # Construct dataframe with insights
     df = pd.DataFrame({
@@ -283,10 +283,11 @@ else:
     st.write(f"Beta Prior: {beta_prior_business}")
     st.write(f"Probability A better: {probability_a_better:.2%}")
     st.write(f"Probability B better: {probability_b_better:.2%}")
-    st.write(f"Optimistic uplift: {optimistic_monetary_uplift:.2f} €")
+    st.write(f"Optimistic uplift: €{optimistic_monetary_uplift:.2f}")
 
     st.write("### Results Summary")
     st.dataframe(df)
+    '''
     df.rename(columns={"B's chance to win": "B_chance_to_win"}, inplace=True)
     st.write("\nResults:")
     for index, row in df.iterrows():
@@ -298,3 +299,4 @@ else:
         
         # Display total contribution considering negative risk
         st.write(f"Potential contribution over 6 months (with statistical assumptions): €{row['Total Contribution']:.2f}")
+    '''
