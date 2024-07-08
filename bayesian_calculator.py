@@ -252,5 +252,5 @@ else:
 
     st.write("## Results")
     st.write("Below is the summary of the outcomes including B's chance to win, potential uplift, risk, and total contribution over the specified projection period:")
-    st.write("Please note: This is a risk assessment that uses bayesian probability to assess the expected changes in monetary values.")
+    st.write("Please note: This assessment is designed to take the potential of both A and B into account.")
     st.dataframe(df)
