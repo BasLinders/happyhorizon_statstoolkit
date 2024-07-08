@@ -71,11 +71,11 @@ except ValueError as e:
 else:
     alpha_prior, beta_prior = 1, 1
 
-    alpha_prior_business = conversions_a / visitors_a if visitors_a != 0 else 0
-    beta_prior_business = (
+    alpha_prior_business = round(conversions_a / visitors_a if visitors_a != 0 else 0, 6)
+    beta_prior_business = round((
         alpha_prior_business * ((conv_rate_b - conv_rate_a) / conv_rate_a) * (1 / alpha_prior_business)
         if alpha_prior_business != 0 and conv_rate_a != 0 else 0
-    ) + alpha_prior_business
+    ) + alpha_prior_business, 6)
 
     st.write("")
 
