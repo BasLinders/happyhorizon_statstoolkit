@@ -103,48 +103,74 @@ else:
     else:
         st.write(f"\nNeither variant has a meaningful impact for more conversions with a probability of Variant B being better at {probability_b_better:.2%}.")
 
-    def simulate_differences(visitors_a, conversions_a, visitors_b, conversions_b, num_samples=10000):
-        alpha_post_a = alpha_prior + conversions_a
-        beta_post_a = beta_prior + (visitors_a - conversions_a)
-        alpha_post_b = alpha_prior + conversions_b
-        beta_post_b = beta_prior + (visitors_b - conversions_b)
+def simulate_differences(visitors_a, conversions_a, visitors_b, conversions_b, num_samples=10000):
+    alpha_prior = 1
+    beta_prior = 1
+    
+    alpha_post_a = alpha_prior + conversions_a
+    beta_post_a = beta_prior + (visitors_a - conversions_a)
+    alpha_post_b = alpha_prior + conversions_b
+    beta_post_b = beta_prior + (visitors_b - conversions_b)
+    
+    samples_a = beta.rvs(alpha_post_a, beta_post_a, size=num_samples)
+    samples_b = beta.rvs(alpha_post_b, beta_post_b, size=num_samples)
+    
+    return (samples_b - samples_a) / samples_a
 
-        samples_a = beta.rvs(alpha_post_a, beta_post_a, size=num_samples)
-        samples_b = beta.rvs(alpha_post_b, beta_post_b, size=num_samples)
-        return (samples_b - samples_a) / samples_a
-
+    # Simulating the differences as percentage uplift
     diffs_percentage = simulate_differences(visitors_a, conversions_a, visitors_b, conversions_b) * 100
+    conv_rate_a = conversions_a / visitors_a
+    conv_rate_b = conversions_b / visitors_b
     observed_uplift = ((conv_rate_b - conv_rate_a) / conv_rate_a) * 100
 
+    # Plotting
     plt.figure(figsize=(14, 7))
-    bin_width = 2
+
+    # Defining bins with a width of 2% for the histogram, making sure to cover the full range of observed differences
+    bin_width = 2  # 2% increments
     min_diff = np.amin(diffs_percentage)
     max_diff = np.amax(diffs_percentage)
     bins = np.arange(min_diff - bin_width, max_diff + bin_width, bin_width)
+
+    # Plotting the histogram
     n, bins, patches = plt.hist(diffs_percentage, bins=bins, edgecolor='black', alpha=0.6)
 
+    # Calculate the proportion of each bin
+    total_samples = len(diffs_percentage)
     for i in range(len(patches)):
         if bins[i] < observed_uplift:
+            # Color for uplift related to Variant A
             patches[i].set_facecolor('lightcoral')
         else:
+            # Color for uplift related to Variant B
             patches[i].set_facecolor('lightgreen')
 
+    # Setting dynamic x-ticks based on the bin range
     xticks = np.arange(min_diff - bin_width, max_diff + bin_width, bin_width)
     plt.xticks(xticks, [f'{tick:.0f}%' for tick in xticks], rotation=30)
 
+    # Vertical line to visually provide uplift of variant
     if observed_uplift > 0:
-        line_observed_uplift = plt.axvline(x=observed_uplift, color='red', linestyle='--', linewidth=2, label=f'Observed Uplift B to A: {observed_uplift:.2f}%')
+        line_observed_uplift = plt.axvline(x=observed_uplift, color='red', linestyle='--', 
+                    linewidth=2, label=f'Observed Uplift B to A: {observed_uplift:.2f}%')
     else:
-        line_observed_uplift = plt.axvline(x=observed_uplift, color='red', linestyle='--', linewidth=2, label=f'Observed Drop B to A: {observed_uplift:.2f}%')
+        line_observed_uplift = plt.axvline(x=observed_uplift, color='red', linestyle='--', 
+                    linewidth=2, label=f'Observed Drop B to A: {observed_uplift:.2f}%')
 
+    # Creating dummy patches for the legend
     patch_a = mpatches.Patch(color='lightcoral', label='Most Frequent Conversion Rates in A')
     patch_b = mpatches.Patch(color='lightgreen', label='Most Frequent Conversion Rates in B')
 
-    plt.title('Distribution of Simulated Conversion Rate Differences with Observed Uplift' if observed_uplift > 0 else 'Distribution of Simulated Conversion Rate Differences with Observed Drop')
+    if observed_uplift > 0:
+        plt.title('Distribution of Simulated Conversion Rate Differences with Observed Uplift')
+    else:
+        plt.title('Distribution of Simulated Conversion Rate Differences with Observed Drop')
     plt.xlabel('Conversion rate (%)')
     plt.ylabel('Frequency')
+
     plt.legend(handles=[line_observed_uplift, patch_a, patch_b])
-    st.pyplot(plt)
+
+    plt.show()
     plt.clf()
 
     probability_a_better = 1 - probability_b_better
