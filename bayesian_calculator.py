@@ -169,7 +169,7 @@ else:
 
     plt.legend(handles=[line_observed_uplift, patch_a, patch_b])
 
-    plt.show()
+    st.pyplot(plt)  # Use st.pyplot to display the plot in Streamlit
     plt.clf()
 
     probability_a_better = 1 - probability_b_better
