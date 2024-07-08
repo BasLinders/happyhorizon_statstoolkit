@@ -21,7 +21,7 @@ if visitors_a > 0 and visitors_b > 0 and conversions_a > 0 and conversions_b > 0
     # Verify the data
     st.write("### Please verify your input:")
     st.write(f"Chosen threshold for significance: {round((1 - alpha) * 100)}%")
-    st.write(f"Chosen test type: {'B is better than A' if tail == 'greater' else 'Two-sided test'}.")
+    st.write(f"Chosen test type: {'B is better than A' if tail == 'greater' else 'B is worse than A'}.")
     st.write(f"Variant A: {visitors_a} visitors, {conversions_a} conversions")
     st.write(f"Variant B: {visitors_b} visitors, {conversions_b} conversions")
     st.write(f"Measured change in conversion rate: {uplift * 100:.2f}%")
