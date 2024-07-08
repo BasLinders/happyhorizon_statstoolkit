@@ -5,6 +5,20 @@ from scipy import stats
 from scipy.stats import norm
 import matplotlib.pyplot as plt
 
+st.write("# Frequentist Calculator")
+"""
+This calculator tests your data against the null-hypothesis (= there's no difference between 'A' and 'B'). If your results deviate significantly from the null-
+hypothesis, that means that the change you tested did indeed shift user behavior for your chosen metric. 
+
+If you enter less than 1000 users, power calculations (= trustworthiness of the measured effect) are done with a bootstrapping method, 
+meaning your PC will run 10,000 simulations to find the precise power for your test data. 
+If you enter over 1000 users per variant, the calculator will use an analytical approach to get an estimate.
+
+The calculator will output the results at the very bottom, but will also display relevant statistics for your data.
+
+Enter your experiment values below. Happy learning!
+"""
+
 # Experiment inputs
 visitors_a = st.number_input("How many visitors does 'A' have?", min_value=0, step=1)
 visitors_b = st.number_input("How many visitors does 'B' have?", min_value=0, step=1)
