@@ -173,8 +173,8 @@ else:
                     linewidth=2, label=f'Observed Drop B to A: {observed_uplift:.2f}%')
 
     # Creating dummy patches for the legend
-    patch_a = mpatches.Patch(color='lightcoral', label='Conversions in Variant A')
-    patch_b = mpatches.Patch(color='lightgreen', label='Conversions in Variant B')
+    patch_a = mpatches.Patch(color='lightcoral', label='Variant A')
+    patch_b = mpatches.Patch(color='lightgreen', label='Variant B')
 
     if observed_uplift > 0:
         plt.title('Distribution of Simulated Conversion Rate Differences with Observed Uplift')
