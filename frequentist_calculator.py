@@ -20,7 +20,7 @@ if visitors_a > 0 and visitors_b > 0 and conversions_a > 0 and conversions_b > 0
 
     # Verify the data
     st.write("### Please verify your input:")
-    st.write(f"Chosen threshold for significance: {1 - alpha:.2f}%")
+    st.write(f"Chosen threshold for significance: {1 - alpha * 100}%")
     st.write(f"Chosen test type: {'B is better than A' if tail == 'greater' else 'Two-sided test'}.")
     st.write(f"Variant A: {visitors_a} visitors, {conversions_a} conversions")
     st.write(f"Variant B: {visitors_b} visitors, {conversions_b} conversions")
@@ -46,7 +46,7 @@ if visitors_a > 0 and visitors_b > 0 and conversions_a > 0 and conversions_b > 0
     CR_A = conversions_a / visitors_a
     CR_B = conversions_b / visitors_b
     relative_change = (CR_B - CR_A) / CR_A
-    st.write(f"CR_A: {CR_A * 100:.2f}%, CR_B: {CR_B * 100:.2f}%")
+    st.write(f"Conversion Rate A: {CR_A * 100:.2f}%, Conversion Rate B: {CR_B * 100:.2f}%")
     st.write(f"Relative change: {relative_change * 100:.2f}%")
 
     # SRM check
@@ -83,7 +83,7 @@ if visitors_a > 0 and visitors_b > 0 and conversions_a > 0 and conversions_b > 0
     
     st.write("")
     st.write("### Test statistics:")
-    st.write(f"Z-statistic: {z_stat:.4f}")
+    #st.write(f"Z-statistic: {z_stat:.4f}")
     #st.write(f"P-value: {p_value:.4f}")
 
     # Standard Errors
@@ -230,13 +230,13 @@ if visitors_a > 0 and visitors_b > 0 and conversions_a > 0 and conversions_b > 0
         st.write("")
         st.write("Test results:")
         st.write("This test is invalid: The distribution of traffic shows a statistically significant deviation "
-                 "from the expected values. Interpret the results with caution.")
+                 "from the expected values. Interpret the results with caution and check the distribution.")
     st.write(f"Observed power of this test: {observed_power * 100:.2f}%")
     #st.write(f"P-value (z-test): {p_value:.4f}\n")
 
     if p_value <= alpha:
         print(f"Confidence interval for difference in conversion rates: ({lower_bound:.4f}, {upper_bound:.4f})")
-        st.write(f"P-value: {p_value:.4f} (statistically significant)")
+        st.write(f"Statistically significant test result with p-value: {p_value:.4f}!")
         st.write(f"Conversion rate change: {relative_change * 100:.2f}%")
     elif p_value > alpha and p_value_noninf <= alpha_noninf:
         st.write(f"Conversion rate of A: {CR_A * 100:.3f}%")
