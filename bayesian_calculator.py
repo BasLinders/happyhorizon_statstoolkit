@@ -77,8 +77,6 @@ else:
         if alpha_prior_business != 0 and conv_rate_a != 0 else 0
     ) + alpha_prior_business
 
-    # st.write(f"Business risk alpha prior: {alpha_prior_business}")
-    # st.write(f"Business risk beta prior: {beta_prior_business}")
     st.write("")
 
     def calculate_probability_b_better_and_samples(visitors_a, conversions_a, visitors_b, conversions_b, num_samples=10000):
@@ -207,10 +205,20 @@ else:
     st.pyplot(plt)
     plt.clf()
 
+    # risk assessment
+    probability_a_better = 1 - probability_b_better
+
+    # Ensure runtime_days and projection_period are positive
     if runtime_days <= 0:
-        raise ValueError("Runtime days must be a positive integer")
+        st.error("Runtime days must be a positive integer")
+        st.stop()
     if projection_period <= 0:
-        raise ValueError("Projection period must be a positive value")
+        st.error("Projection period must be a positive value")
+        st.stop()
+
+    # Calculate expected conversion rates for A and B
+    alpha_prior_business = 1  # Assuming prior alpha for beta distribution
+    beta_prior_business = 1   # Assuming prior beta for beta distribution
 
     alpha_post_a = alpha_prior_business + conversions_a
     beta_post_a = beta_prior_business + (visitors_a - conversions_a)
@@ -220,37 +228,73 @@ else:
     beta_post_b = beta_prior_business + (visitors_b - conversions_b)
     expected_conv_rate_b = alpha_post_b / (alpha_post_b + beta_post_b)
 
+    # Calculate expected daily conversions over runtime
     expected_daily_conversions_a = round((expected_conv_rate_a * visitors_a) / runtime_days)
     expected_daily_conversions_b = round((expected_conv_rate_b * visitors_b) / runtime_days)
-    daily_uplift = expected_daily_conversions_b - expected_daily_conversions_a
-    expected_monetary_uplift = daily_uplift * aov_b * projection_period
 
+    # Calculate expected daily uplift, using mean conversion rates
+    daily_uplift = expected_daily_conversions_b - expected_daily_conversions_a
+
+    # Calculate expected monetary uplift using mean values
+    expected_monetary_uplift = max(0, daily_uplift * aov_b * projection_period)
+
+    # Risk calculation
     lower_bound_a = beta.ppf(.01, alpha_post_a, beta_post_a) * visitors_a / runtime_days
     lower_bound_b = beta.ppf(.01, alpha_post_b, beta_post_b) * visitors_b / runtime_days
 
+    # Adjust expected monetary risk to account for the probability of A being better
     if probability_a_better > 0:
         expected_monetary_risk = (lower_bound_a - lower_bound_b) * aov_a * projection_period * probability_a_better
     else:
         expected_monetary_risk = 0
 
+    # Calculate improvement factor based on uplift in conversion rates
     improvement_factor = (expected_conv_rate_b - expected_conv_rate_a) / expected_conv_rate_a
+
+    # Calculate optimistic daily difference over 180 days
     optimistic_daily_diff = daily_uplift * (1 + improvement_factor)
-    optimistic_monetary_uplift = optimistic_daily_diff * aov_b * projection_period
-    total_contribution = optimistic_monetary_uplift + expected_monetary_risk
 
-    # Create DataFrame and round the values to 2 decimal places
+    # Optimistic monetary uplift
+    optimistic_monetary_uplift = max(0, optimistic_daily_diff * aov_b * projection_period)
+
+    # Total contribution assuming this optimistic scenario
+    total_contribution = optimistic_monetary_uplift + (-abs(expected_monetary_risk))
+
+    # Construct dataframe with insights
     df = pd.DataFrame({
-        "B's chance to win (%)": [probability_b_better * 100],
-        "Uplift (€)": [optimistic_monetary_uplift],
-        "Risk (€)": [expected_monetary_risk],
-        "Total Contribution (€)": [total_contribution]
-    }).round(2)
+        "B's chance to win": [probability_b_better * 100],
+        "Uplift": [optimistic_monetary_uplift],
+        "Risk": [-abs(expected_monetary_risk)],  # Risk should be represented as a negative value
+        "Total Contribution": [total_contribution]
+    })
 
-    # Adjust for negative risk cases
-    df["Risk (€)"] = df.apply(lambda row: -abs(row["Risk (€)"]) if optimistic_monetary_uplift == 0 and probability_a_better > 0 else row["Risk (€)"], axis=1)
-    df["Total Contribution (€)"] = df.apply(lambda row: -abs(row["Total Contribution (€)"]) if optimistic_monetary_uplift == 0 and probability_a_better > 0 else row["Total Contribution (€)"], axis=1)
-
+    # Display results in Streamlit
     st.write("## Results")
-    st.write("Below is the summary of the outcomes including B's chance to win, potential uplift, risk, and total contribution over the specified projection period:")
-    st.write("Please note: This assessment is designed to take the potential of both A and B into account.")
+    st.write("### Expected Daily Conversions")
+    st.write(f"A: {expected_daily_conversions_a}")
+    st.write(f"B: {expected_daily_conversions_b}")
+
+    st.write("### Lower Bounds")
+    st.write(f"A: {lower_bound_a}")
+    st.write(f"B: {lower_bound_b}")
+
+    st.write("### Priors")
+    st.write(f"Alpha Prior: {alpha_prior_business}")
+    st.write(f"Beta Prior: {beta_prior_business}")
+    st.write(f"Probability A better: {probability_a_better:.2%}")
+    st.write(f"Probability B better: {probability_b_better:.2%}")
+    st.write(f"Optimistic uplift: {optimistic_monetary_uplift:.2f} €")
+
+    st.write("### Results Summary")
     st.dataframe(df)
+
+    st.write("\nResults:")
+    for index, row in df.iterrows():
+        st.write(f"B's chance to win: {row['B's chance to win']:.2f}%")
+        st.write(f"Potential Uplift (180 days): €{row['Uplift']:.2f}")
+        
+        # Display risk as a negative value
+        st.write(f"Potential Risk (180 days): €{row['Risk']:.2f}")
+        
+        # Display total contribution considering negative risk
+        st.write(f"Potential contribution over 6 months (with statistical assumptions): €{row['Total Contribution']:.2f}")
