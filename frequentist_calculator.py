@@ -238,6 +238,10 @@ if visitors_a > 0 and visitors_b > 0 and conversions_a > 0 and conversions_b > 0
         print(f"Confidence interval for difference in conversion rates: ({lower_bound:.4f}, {upper_bound:.4f})")
         st.write(f"Statistically significant test result with p-value: {p_value:.4f}!")
         st.write(f"Conversion rate change: {relative_change * 100:.2f}%")
+        if relative_change > 0:
+            st.write("Your variant is a winner, congratulations!")
+        else:
+            st.write("Loss prevented! Congratulations with this valuable insight.")
     elif p_value > alpha and p_value_noninf <= alpha_noninf:
         st.write(f"Conversion rate of A: {CR_A * 100:.3f}%")
         st.write(f"Conversion rate of B: {CR_B * 100:.3f}%")
