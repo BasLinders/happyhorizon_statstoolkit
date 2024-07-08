@@ -11,7 +11,7 @@ visitors_b = st.number_input("How many visitors does 'B' have?", min_value=0, st
 conversions_a = st.number_input("How many conversions does 'A' have?", min_value=0, step=1)
 conversions_b = st.number_input("How many conversions does 'B' have?", min_value=0, step=1)
 risk = st.number_input("How much risk do you want to take in % (enter 5, 10, etc)?", min_value=1, step=1)
-tail = st.selectbox("Do you only want to know if B is better than A, or also if A is better than B?", options=['greater', 'two-sided'])
+tail = st.selectbox("Do you only want to know if B is better than A ('greater'), or if B is worse than A ('two-sided')?", options=['greater', 'two-sided'])
 
 # Ensure inputs are valid before performing calculations
 if visitors_a > 0 and visitors_b > 0 and conversions_a > 0 and conversions_b > 0 and conversions_a <= visitors_a and conversions_b <= visitors_b:
