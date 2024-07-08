@@ -217,9 +217,6 @@ else:
         st.stop()
 
     # Calculate expected conversion rates for A and B
-    alpha_prior_business = 1  # Assuming prior alpha for beta distribution
-    beta_prior_business = 1   # Assuming prior beta for beta distribution
-
     alpha_post_a = alpha_prior_business + conversions_a
     beta_post_a = beta_prior_business + (visitors_a - conversions_a)
     expected_conv_rate_a = alpha_post_a / (alpha_post_a + beta_post_a)
