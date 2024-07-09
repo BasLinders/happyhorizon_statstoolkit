@@ -77,7 +77,8 @@ if AA_u > 0 and AB_u > 0 and BA_u > 0 and BB_u > 0 and AA_c > 0 and AB_c > 0 and
         st.write(f"Log-Likelihood (Null Model): {model.llnull}")
 
         # Analyzing the interaction effect
-        st.write("\nInsights from the logistic regression model:")
+        st.write("")
+        st.write("\n# Insights from the logistic regression model:")
         st.write("The coefficients of the model suggest these influences of the combinations on conversion rates:")
         for combination in ['Combination_AB', 'Combination_BA', 'Combination_BB']:
             coef = coefficients_table.loc[combination, 'Coef.']
@@ -95,15 +96,18 @@ if AA_u > 0 and AB_u > 0 and BA_u > 0 and BB_u > 0 and AA_c > 0 and AB_c > 0 and
         worst_combination = p_values.idxmax()
         worst_p_value = p_values.max()
 
+        st.write("")
         st.write(f"\nThe best performing combination based on p-value is {best_combination} (P-value = {best_p_value:.2e}).")
         st.write(f"The worst performing combination based on p-value is {worst_combination} (P-value = {worst_p_value:.2e}).")
 
         # Extract scalar value for the p-value of Combination_BB
         bb_p_value = coefficients_table.loc['Combination_BB', 'P>|z|'] 
         if bb_p_value < .05:
+            st.write("")
             st.write(f"\nVisitors that saw both your test variants converted significantly worse at p-value {bb_p_value:.2e}. " \
                     f"Interpret your experiment results with care.")
         else:
+            st.write("")
             st.write("\nVisitors who interacted with your test variants didn't react significantly more negatively than other visitors." \
                     " You can interpret your experiments as you would normally.")
 
