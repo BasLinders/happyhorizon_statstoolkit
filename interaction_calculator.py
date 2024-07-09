@@ -71,10 +71,10 @@ if AA_u > 0 and AB_u > 0 and BA_u > 0 and BB_u > 0 and AA_c > 0 and AB_c > 0 and
             return 1 - model.llf / model.llnull
 
         mc_fadden_r2 = mc_fadden_pseudo_r2(model)
-        st.write("")
-        st.write(f"Pseudo R-squared: {mc_fadden_r2}")
-        st.write(f"Log-Likelihood: {model.llf}")
-        st.write(f"Log-Likelihood (Null Model): {model.llnull}")
+        #st.write("")
+        #st.write(f"Pseudo R-squared: {mc_fadden_r2}")
+        #st.write(f"Log-Likelihood: {model.llf}")
+        #st.write(f"Log-Likelihood (Null Model): {model.llnull}")
 
         # Analyzing the interaction effect
         st.write("")
