@@ -7,14 +7,14 @@ import streamlit as st
 
 # Streamlit app
 st.title("Interaction Effect Calculator")
-""""
+"""
 This calculator lets you see if your variants from two experiments that ran concurrently influenced eachother on the KPI that
 you're measuring. The most important thing is that you fetch data that is accumulated in the combinations AA, AB, BA, BB correctly.
 
 Enter that data in the calculator below, and the algorithm will determine whether or not to interpret the experiments with caution.
 
 Happy learning!
-""""
+"""
 
 # Define the data input fields
 st.header("Input Data")
