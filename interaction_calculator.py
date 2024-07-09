@@ -6,7 +6,15 @@ from matplotlib.ticker import FuncFormatter
 import streamlit as st
 
 # Streamlit app
-st.title("Logistic Regression Analysis")
+st.title("Interaction Effect Calculator")
+""""
+This calculator lets you see if your variants from two experiments that ran concurrently influenced eachother on the KPI that
+you're measuring. The most important thing is that you fetch data that is accumulated in the combinations AA, AB, BA, BB correctly.
+
+Enter that data in the calculator below, and the algorithm will determine whether or not to interpret the experiments with caution.
+
+Happy learning!
+""""
 
 # Define the data input fields
 st.header("Input Data")
@@ -55,7 +63,7 @@ try:
 
     # Extracting coefficients, standard errors, z-scores, p-values, and confidence intervals
     coefficients_table = model.summary2().tables[1]
-    st.write("\nCoefficients:\n", coefficients_table)
+    #st.write("\nCoefficients:\n", coefficients_table)
 
     # Calculate and print additional values
     def mc_fadden_pseudo_r2(model):
