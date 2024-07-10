@@ -242,6 +242,6 @@ else:
 
 name = "Bas Linders"
 linkedin_url = "https://www.linkedin.com/in/blinders/"
-footnote_text = f"""Designed and developed by {name} (<a href="{linkedin_url}" target="_blank">LinkedIn</a>)."""
+footnote_text = f"""Designed and developed by {name} (<a href="{linkedin_url}" target="_blank">LinkedIn</a>) @Happy Horizon."""
 st.write("")
 st.markdown(footnote_text, unsafe_allow_html=True)
