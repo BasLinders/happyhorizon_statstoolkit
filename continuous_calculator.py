@@ -4,7 +4,6 @@ import statsmodels.api as sm
 from statsmodels.formula.api import ols
 import statsmodels.formula.api as smf
 from statsmodels.stats.multicomp import pairwise_tukeyhsd
-from statsmodels.stats.outliers_influence import OLSInfluence as sm_outliers
 from statsmodels.stats.anova import anova_lm
 from scipy.stats import shapiro, levene, kruskal, mannwhitneyu
 import seaborn as sns
@@ -13,8 +12,16 @@ from pingouin import welch_anova, qqplot
 import streamlit as st
 
 # Title and Introduction
-st.title("Continuous Data Analysis Tool")
-st.write("Upload your CSV file and select the KPI to analyze. The app will identify outliers, fit models, and perform statistical tests.")
+st.title("Continuous Data Calculator")
+"""
+This calculator lets you analyze revenue data or the amount of items of ecommerce transactions (or leads). See the example CSV file for what you need to upload. You're
+not limited to just A and B, but can add more labels when applicable (C, D, etc.). Upload your CSV file and select the KPI to analyze. 
+
+The app will identify outliers, fit models, and perform statistical tests.
+Based on the test results and the output of the highest average and higest standard deviation, you can determine which variant won.
+
+Happy learning!
+"""
 
 # Template CSV download
 def get_csv_template():
@@ -69,7 +76,8 @@ if uploaded_file is not None:
         valid_data = False
 
     if valid_data:
-        df['experience_variant_label'] = pd.Categorical(df['experience_variant_label'], categories=["A", "B"], ordered=True)
+        unique_labels = df['experience_variant_label'].unique()
+        df['experience_variant_label'] = pd.Categorical(df['experience_variant_label'], categories=unique_labels, ordered=True)
         df['total_item_quantity'] = pd.to_numeric(df['total_item_quantity'], errors='coerce')
         df['purchase_revenue'] = pd.to_numeric(df['purchase_revenue'], errors='coerce')
 
