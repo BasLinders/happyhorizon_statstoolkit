@@ -48,7 +48,14 @@ uploaded_file = st.file_uploader("Choose a CSV file", type="csv", help="Upload y
 if uploaded_file is not None:
     df = pd.read_csv(uploaded_file)
 
-    df.columns = [re.sub(r'[^a-zA-Z0-9]+', '_', col) for col in df.columns]
+    # Rename columns based on keywords
+    for col in df.columns:
+        if 'purchase' in col:
+            df.rename(columns={col: 'purchase_revenue'}, inplace=True)
+        elif 'total' in col:
+            df.rename(columns={col: 'total_item_quantity'}, inplace=True)
+        elif 'experience' in col:
+            df.rename(columns={col: 'experience_variant_label'}, inplace=True)
 
     st.write("### A random sample of your data:")
     st.write(df.sample(10))
