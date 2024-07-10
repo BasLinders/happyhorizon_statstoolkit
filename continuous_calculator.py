@@ -159,7 +159,7 @@ if uploaded_file is not None:
             # Summary statistics
             summary_stats = df_filtered.groupby('experience_variant_label', observed=True)[kpi].agg(['mean', 'std'])
             st.write("Summary Statistics and box plot:")
-            st.write(summary_stats)
+            st.dataframe(summary_stats)
 
             highest_mean_variant = summary_stats['mean'].idxmax()
             highest_mean = summary_stats.loc[highest_mean_variant, 'mean']
