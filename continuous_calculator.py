@@ -136,7 +136,7 @@ if uploaded_file is not None:
 
         # Fit the model without outliers
         model_no_outliers = smf.ols(f'{kpi} ~ C(experience_variant_label)', data=df_filtered).fit()
-        st.write("The model has been fitted after outliers have been removed (2 standard deviations).")
+        st.write("The model has been fitted after outliers have been removed (> 2 standard deviations).")
 
         st.write("### QQ Plot of residuals")
         qqplot(model_no_outliers.resid, marker='o')
