@@ -15,7 +15,6 @@ over a chosen period after implementation with bayesian probability. Obviously, 
 
 Enter your experiment values below. Happy learning!
 """
-name = "Bas Linders"
 linkedin_url = "https://www.linkedin.com/in/blinders/"
 happyhorizon_url = "https://happyhorizon.com/"
 footnote_text = f"""Designed and developed by <a href="{linkedin_url}" target="_blank">Bas Linders</a> @<a href="{happyhorizon_url}" target="_blank">Happy Horizon.</a>"""

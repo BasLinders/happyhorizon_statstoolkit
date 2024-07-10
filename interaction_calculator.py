@@ -15,9 +15,9 @@ Enter that data in the calculator below, and the algorithm will determine whethe
 
 Happy learning!
 """
-name = "Bas Linders"
 linkedin_url = "https://www.linkedin.com/in/blinders/"
-footnote_text = f"""Designed and developed by {name} (<a href="{linkedin_url}" target="_blank">LinkedIn</a>) @Happy Horizon."""
+happyhorizon_url = "https://happyhorizon.com/"
+footnote_text = f"""Designed and developed by <a href="{linkedin_url}" target="_blank">Bas Linders</a> @<a href="{happyhorizon_url}" target="_blank">Happy Horizon.</a>"""
 st.write("")
 st.markdown(footnote_text, unsafe_allow_html=True)
 st.write("")
