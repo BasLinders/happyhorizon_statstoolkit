@@ -167,13 +167,12 @@ if uploaded_file is not None:
             highest_std_variant = summary_stats['std'].idxmax()
             highest_std = summary_stats.loc[highest_std_variant, 'std']
         st.write("### Box plot")
-        sns.boxplot(x='experience_variant_label', y=kpi, data=df_filtered)
+        sns.boxplot(x='experience_variant_label', y=kpi, data=df_filtered, palette={'A': 'blue', 'B': 'orange'})
         st.pyplot(plt)
         plt.clf()
 
         st.write("### Test results")
         st.write("Significance threshold = 95%")
-        
 
         if shapiro_p_val < 0.05 or levene_p_val < 0.05:
             if levene_p_val < 0.05:
