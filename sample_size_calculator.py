@@ -70,3 +70,9 @@ else:
 
     # Display the HTML table
     st.write(html_table, unsafe_allow_html=True)
+
+name = "Bas Linders"
+linkedin_url = "https://www.linkedin.com/in/blinders/"
+footnote_text = f"""Designed and developed by {name} (<a href="{linkedin_url}" target="_blank">LinkedIn</a>)."""
+st.write("")
+st.markdown(footnote_text, unsafe_allow_html=True)

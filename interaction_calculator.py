@@ -155,3 +155,9 @@ if AA_u > 0 and AB_u > 0 and BA_u > 0 and BB_u > 0 and AA_c > 0 and AB_c > 0 and
 else:
     st.write("")
     st.write("Please enter valid inputs for all fields.")
+
+name = "Bas Linders"
+linkedin_url = "https://www.linkedin.com/in/blinders/"
+footnote_text = f"""Designed and developed by {name} (<a href="{linkedin_url}" target="_blank">LinkedIn</a>)."""
+st.write("")
+st.markdown(footnote_text, unsafe_allow_html=True)
