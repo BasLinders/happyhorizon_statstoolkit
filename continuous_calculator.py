@@ -92,14 +92,14 @@ if uploaded_file is not None:
         df['total_item_quantity'] = pd.to_numeric(df['total_item_quantity'], errors='coerce')
         df['purchase_revenue'] = pd.to_numeric(df['purchase_revenue'], errors='coerce')
 
-        st.write("Amount of rows: ", len(df))
+        st.write("Amount of observations: ", len(df))
         st.write("The data types of your cells are:")
         st.write(df.dtypes)
 
         # Dropdown for KPI selection
         kpi = st.selectbox('Select the KPI to analyze:', ('purchase_revenue', 'total_item_quantity'), help="Select the metric for analysis.")
 
-        st.write(f"### Analyzing {kpi}")
+        st.write(f"### Analysis for {kpi}")
 
         # Identify outliers
         model = smf.ols(f'{kpi} ~ C(experience_variant_label)', data=df).fit()
@@ -148,14 +148,24 @@ if uploaded_file is not None:
         groups = [group[kpi].dropna() for _, group in df_filtered.groupby('experience_variant_label', observed=True)]
         levene_stat, levene_p_val = levene(*groups)
 
-        summary_stats = df_filtered.groupby('experience_variant_label', observed=True)[kpi].agg(['mean', 'std'])
-        highest_mean_variant = summary_stats['mean'].idxmax()
-        highest_mean = summary_stats.loc[highest_mean_variant, 'mean']
-        highest_std_variant = summary_stats['std'].idxmax()
-        highest_std = summary_stats.loc[highest_std_variant, 'std']
+        if 'experience_variant_label' not in df.columns:
+            st.error("Error: 'experience_variant_label' column not found after renaming.")
+        else:
+            # Data preparation and analysis
+            experiment_labels = df['experience_variant_label']
+            total_items = df['total_item_quantity']
+            purchase_revenue = df['purchase_revenue']
 
-        st.write("### Box plot")
-        st.write(summary_stats)
+            # Summary statistics
+            summary_stats = df_filtered.groupby('experience_variant_label', observed=True)[kpi].agg(['mean', 'std'])
+            st.write("Summary Statistics and box plot:")
+            st.write(summary_stats)
+
+            highest_mean_variant = summary_stats['mean'].idxmax()
+            highest_mean = summary_stats.loc[highest_mean_variant, 'mean']
+            highest_std_variant = summary_stats['std'].idxmax()
+            highest_std = summary_stats.loc[highest_std_variant, 'std']
+
         sns.boxplot(x='experience_variant_label', y=kpi, data=df_filtered)
         st.pyplot(plt)
         plt.clf()
