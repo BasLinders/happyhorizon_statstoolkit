@@ -14,6 +14,12 @@ import streamlit as st
 
 # Title and Introduction
 st.title("Continuous Data Calculator")
+linkedin_url = "https://www.linkedin.com/in/blinders/"
+happyhorizon_url = "https://happyhorizon.com/"
+footnote_text = f"""Designed and developed by <a href="{linkedin_url}" target="_blank">Bas Linders</a> @<a href="{happyhorizon_url}" target="_blank">Happy Horizon.</a>"""
+st.write("")
+st.markdown(footnote_text, unsafe_allow_html=True)
+st.write("")
 """
 This calculator lets you analyze revenue data or the amount of items of ecommerce transactions (or leads). See the example CSV file for what you need to upload. You're
 not limited to just A and B, but can add more labels when applicable (C, D, etc.). Upload your CSV file and select the KPI to analyze. 
@@ -23,12 +29,6 @@ Based on the test results and the output of the highest average and higest stand
 
 Happy learning!
 """
-linkedin_url = "https://www.linkedin.com/in/blinders/"
-happyhorizon_url = "https://happyhorizon.com/"
-footnote_text = f"""Designed and developed by <a href="{linkedin_url}" target="_blank">Bas Linders</a> @<a href="{happyhorizon_url}" target="_blank">Happy Horizon.</a>"""
-st.write("")
-st.markdown(footnote_text, unsafe_allow_html=True)
-st.write("")
 
 # Template CSV download
 def get_csv_template():

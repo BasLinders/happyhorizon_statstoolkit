@@ -7,6 +7,12 @@ import matplotlib.pyplot as plt
 import concurrent.futures
 
 st.write("# Frequentist Calculator")
+linkedin_url = "https://www.linkedin.com/in/blinders/"
+happyhorizon_url = "https://happyhorizon.com/"
+footnote_text = f"""Designed and developed by <a href="{linkedin_url}" target="_blank">Bas Linders</a> @<a href="{happyhorizon_url}" target="_blank">Happy Horizon.</a>"""
+st.write("")
+st.markdown(footnote_text, unsafe_allow_html=True)
+st.write("")
 """
 This calculator tests your data against the null-hypothesis (= there's no difference between 'A' and 'B'). If your results deviate significantly from the null-
 hypothesis, that means that the change you tested did indeed shift user behavior for your chosen metric. 
@@ -19,12 +25,6 @@ The calculator will output the results at the very bottom, but will also display
 
 Enter your experiment values below. Happy learning!
 """
-linkedin_url = "https://www.linkedin.com/in/blinders/"
-happyhorizon_url = "https://happyhorizon.com/"
-footnote_text = f"""Designed and developed by <a href="{linkedin_url}" target="_blank">Bas Linders</a> @<a href="{happyhorizon_url}" target="_blank">Happy Horizon.</a>"""
-st.write("")
-st.markdown(footnote_text, unsafe_allow_html=True)
-st.write("")
 
 # Experiment inputs
 visitors_a = st.number_input("How many visitors does 'A' have?", min_value=0, step=1)

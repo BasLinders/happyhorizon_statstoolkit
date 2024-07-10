@@ -3,18 +3,18 @@ import scipy.stats as stats
 import string
 
 st.title("Sample Ratio Mismatch (SRM) Checker")
-"""
-This calculator lets you see if your online experiment correctly divided visitors among the variants, or if something went wrong and there was a mismatch with 
-the expected amount of visitors per variant. Enter the values below to get started. 
-
-Happy Learning!
-"""
 linkedin_url = "https://www.linkedin.com/in/blinders/"
 happyhorizon_url = "https://happyhorizon.com/"
 footnote_text = f"""Designed and developed by <a href="{linkedin_url}" target="_blank">Bas Linders</a> @<a href="{happyhorizon_url}" target="_blank">Happy Horizon.</a>"""
 st.write("")
 st.markdown(footnote_text, unsafe_allow_html=True)
 st.write("")
+"""
+This calculator lets you see if your online experiment correctly divided visitors among the variants, or if something went wrong and there was a mismatch with 
+the expected amount of visitors per variant. Enter the values below to get started. 
+
+Happy Learning!
+"""
 
 # User input for number of variants
 num_variants = st.number_input("How many variants did your experiment have?", min_value=2, max_value=26, step=1)

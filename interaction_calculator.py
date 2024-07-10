@@ -7,6 +7,12 @@ import streamlit as st
 
 # Streamlit app
 st.title("Interaction Effect Calculator")
+linkedin_url = "https://www.linkedin.com/in/blinders/"
+happyhorizon_url = "https://happyhorizon.com/"
+footnote_text = f"""Designed and developed by <a href="{linkedin_url}" target="_blank">Bas Linders</a> @<a href="{happyhorizon_url}" target="_blank">Happy Horizon.</a>"""
+st.write("")
+st.markdown(footnote_text, unsafe_allow_html=True)
+st.write("")
 """
 This calculator lets you see if your variants from two experiments that ran concurrently influenced eachother on the KPI that
 you're measuring. The most important thing is that you fetch data that is accumulated in the combinations AA, AB, BA, BB correctly.
@@ -15,12 +21,6 @@ Enter that data in the calculator below, and the algorithm will determine whethe
 
 Happy learning!
 """
-linkedin_url = "https://www.linkedin.com/in/blinders/"
-happyhorizon_url = "https://happyhorizon.com/"
-footnote_text = f"""Designed and developed by <a href="{linkedin_url}" target="_blank">Bas Linders</a> @<a href="{happyhorizon_url}" target="_blank">Happy Horizon.</a>"""
-st.write("")
-st.markdown(footnote_text, unsafe_allow_html=True)
-st.write("")
 
 # Define the data input fields
 st.header("Input Data")
