@@ -167,7 +167,7 @@ if uploaded_file is not None:
             highest_std_variant = summary_stats['std'].idxmax()
             highest_std = summary_stats.loc[highest_std_variant, 'std']
         st.write("### Box plot")
-        sns.boxplot(x='experience_variant_label', y=kpi, data=df_filtered, palette={'A': 'blue', 'B': 'orange'})
+        sns.boxplot(x='experience_variant_label', y=kpi, data=df_filtered, palette={'A': 'lightblue', 'B': 'orange'})
         st.pyplot(plt)
         plt.clf()
 
