@@ -9,6 +9,7 @@ from scipy.stats import shapiro, levene, kruskal, mannwhitneyu
 import seaborn as sns
 import matplotlib.pyplot as plt
 from pingouin import welch_anova, qqplot
+import re
 import streamlit as st
 
 # Title and Introduction
@@ -46,8 +47,11 @@ uploaded_file = st.file_uploader("Choose a CSV file", type="csv", help="Upload y
 
 if uploaded_file is not None:
     df = pd.read_csv(uploaded_file)
-    st.write("### A sample of your data:")
-    st.write(df.head())
+
+    df.columns = [re.sub(r'[^\w]+', '_', col) for col in df.columns]
+
+    st.write("### A random sample of your data:")
+    st.write(df.sample(10))
 
     # Data preparation
     experiment_labels = df['experience_variant_label']
