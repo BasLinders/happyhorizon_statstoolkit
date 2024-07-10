@@ -171,7 +171,9 @@ if uploaded_file is not None:
         st.pyplot(plt)
         plt.clf()
 
+        st.write("### Test results")
         st.write("Significance threshold = 95%")
+        
 
         if shapiro_p_val < 0.05 or levene_p_val < 0.05:
             if levene_p_val < 0.05:
