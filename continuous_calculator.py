@@ -158,7 +158,7 @@ if uploaded_file is not None:
 
             # Summary statistics
             summary_stats = df_filtered.groupby('experience_variant_label', observed=True)[kpi].agg(['mean', 'std'])
-            st.write("Summary Statistics and box plot:")
+            st.write("### Summary Statistics")
             st.write("(Double-click variant cells to see the value)")
             st.dataframe(summary_stats)
 
@@ -166,7 +166,7 @@ if uploaded_file is not None:
             highest_mean = summary_stats.loc[highest_mean_variant, 'mean']
             highest_std_variant = summary_stats['std'].idxmax()
             highest_std = summary_stats.loc[highest_std_variant, 'std']
-
+        st.write("### Box plot")
         sns.boxplot(x='experience_variant_label', y=kpi, data=df_filtered)
         st.pyplot(plt)
         plt.clf()
@@ -180,7 +180,7 @@ if uploaded_file is not None:
                 welch_results = welch_anova(dv=kpi, between='experience_variant_label', data=df_filtered)
                 st.write(welch_results)
                 
-                significant = 'significant' if welch_results['p-unc'].iloc[0] < 0.05 else 'not significant'
+                significant = 'significant' if welch_results['p-unc'].iloc[0] < 0.05 else 'no significant'
                 st.write(f"\nConclusion: Welch's ANOVA was performed due to non-homogeneous variance, " +
                       f"with results suggesting {significant} differences between the groups with a " + 
                       f"p-value of {welch_results['p-unc'].iloc[0]:.4f}.")
@@ -195,7 +195,7 @@ if uploaded_file is not None:
                     statistic, p_value = kruskal(*groups)
                     st.write(f"Kruskal-Wallis H-test statistic: {statistic:.4f}, P-value: {p_value:.4g}")
                     
-                    significant = 'significant' if p_value < 0.05 else 'not significant'
+                    significant = 'significant' if p_value < 0.05 else 'no significant'
                     st.write(f"\nConclusion: The Kruskal-Wallis test results " +
                           f"suggest {significant} differences between the groups.")
                 elif unique_variants == 2:
@@ -207,7 +207,7 @@ if uploaded_file is not None:
                     
                     st.write(f"Mann-Whitney U test statistic: {statistic:.4f}, P-value: {p_value:.4g}")
                     
-                    significant = 'significant' if p_value < 0.05 else 'not significant'
+                    significant = 'significant' if p_value < 0.05 else 'no significant'
                     st.write(f"\nConclusion: The Mann-Whitney U test results " +
                           f"suggest {significant} differences between the two groups.")
 
