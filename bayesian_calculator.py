@@ -15,6 +15,12 @@ over a chosen period after implementation with bayesian probability. Obviously, 
 
 Enter your experiment values below. Happy learning!
 """
+name = "Bas Linders"
+linkedin_url = "https://www.linkedin.com/in/blinders/"
+footnote_text = f"""Designed and developed by {name} (<a href="{linkedin_url}" target="_blank">LinkedIn</a>) @Happy Horizon."""
+st.write("")
+st.markdown(footnote_text, unsafe_allow_html=True)
+st.write("")
 
 # Get visitor and conversion inputs with validation
 visitors_a = st.number_input("How many visitors does variant A have?", min_value=0, step=1)
@@ -289,9 +295,3 @@ else:
     st.write("The table below shows the contribution to the revenue over the projection period, with the AOVs as constants. This is purely a measurement for potential impact - no guarantee!")
     st.write("")
     st.dataframe(df)
-
-name = "Bas Linders"
-linkedin_url = "https://www.linkedin.com/in/blinders/"
-footnote_text = f"""Designed and developed by {name} (<a href="{linkedin_url}" target="_blank">LinkedIn</a>) @Happy Horizon."""
-st.write("")
-st.markdown(footnote_text, unsafe_allow_html=True)

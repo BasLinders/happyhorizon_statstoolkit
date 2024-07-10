@@ -4,6 +4,17 @@ import pandas as pd
 import numpy as np
 
 st.title("Sample Size Calculator")
+"""
+This calculator provides you with an adequate sample size and Minimum Detectable Effect for your online experiment. Enter the values below to start.
+
+Happy learning!
+"""
+name = "Bas Linders"
+linkedin_url = "https://www.linkedin.com/in/blinders/"
+footnote_text = f"""Designed and developed by {name} (<a href="{linkedin_url}" target="_blank">LinkedIn</a>) @Happy Horizon."""
+st.write("")
+st.markdown(footnote_text, unsafe_allow_html=True)
+st.write("")
 
 # Inputs
 baseline_visitors = st.number_input("Amount of visitors per week:", min_value=0, step=1)
@@ -70,9 +81,3 @@ else:
 
     # Display the HTML table
     st.write(html_table, unsafe_allow_html=True)
-
-name = "Bas Linders"
-linkedin_url = "https://www.linkedin.com/in/blinders/"
-footnote_text = f"""Designed and developed by {name} (<a href="{linkedin_url}" target="_blank">LinkedIn</a>) @Happy Horizon."""
-st.write("")
-st.markdown(footnote_text, unsafe_allow_html=True)

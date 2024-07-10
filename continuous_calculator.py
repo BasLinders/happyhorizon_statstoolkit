@@ -23,6 +23,12 @@ Based on the test results and the output of the highest average and higest stand
 
 Happy learning!
 """
+name = "Bas Linders"
+linkedin_url = "https://www.linkedin.com/in/blinders/"
+footnote_text = f"""Designed and developed by {name} (<a href="{linkedin_url}" target="_blank">LinkedIn</a>) @Happy Horizon."""
+st.write("")
+st.markdown(footnote_text, unsafe_allow_html=True)
+st.write("")
 
 # Template CSV download
 def get_csv_template():
@@ -239,9 +245,3 @@ if uploaded_file is not None:
               f"is the {highest_std_variant} group with a standard deviation of {highest_std:.2f}.")
 else:
     st.info("Please upload a CSV file to proceed.")
-
-name = "Bas Linders"
-linkedin_url = "https://www.linkedin.com/in/blinders/"
-footnote_text = f"""Designed and developed by {name} (<a href="{linkedin_url}" target="_blank">LinkedIn</a>) @Happy Horizon."""
-st.write("")
-st.markdown(footnote_text, unsafe_allow_html=True)
