@@ -4,6 +4,7 @@ import statsmodels.api as sm
 from scipy import stats
 from scipy.stats import norm
 import matplotlib.pyplot as plt
+import concurrent.futures
 
 st.write("# Frequentist Calculator")
 """
