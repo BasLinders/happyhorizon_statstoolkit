@@ -5,10 +5,11 @@ st.set_page_config(
     page_icon="📈",
 )
 
-st.title("Happy Horizon Experimentation Toolkit")
+logo_url = "https://cdn.homerun.co/49305/hh-woordmerk-rgb-blue-met-discriptor1666785216logo.png"
+st.image(logo_url, width=200) # alternative: use_column_width=True
 
+st.title("Happy Horizon Experimentation Toolkit")
 st.write("""
-## Experimentation Toolkit
 This is the main page for the Happy Horizon Experimentation Toolkit. You can navigate to individual apps using the sidebar.
 
 ### Features
