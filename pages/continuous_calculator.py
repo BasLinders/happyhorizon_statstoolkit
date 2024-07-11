@@ -186,6 +186,7 @@ def run():
             st.write("Significance threshold = 95%")
 
             if shapiro_p_val < 0.05 or levene_p_val < 0.05:
+                # Check for homogeneity of variance
                 if levene_p_val < 0.05:
                     st.write("\nSince the variance is not homogeneous, Welch's ANOVA was performed.")
                     
@@ -194,22 +195,21 @@ def run():
                     
                     significant = 'significant' if welch_results['p-unc'].iloc[0] < 0.05 else 'no significant'
                     st.write(f"\nConclusion: Welch's ANOVA was performed due to non-homogeneous variance, " +
-                        f"with results suggesting {significant} differences between the groups with a " + 
-                        f"p-value of {welch_results['p-unc'].iloc[0]:.4f}.")
-                
+                            f"with results suggesting {significant} differences between the groups with a " + 
+                            f"p-value of {welch_results['p-unc'].iloc[0]:.4f}.")
                 else:
                     unique_variants = df_filtered['experience_variant_label'].nunique()
 
                     if unique_variants > 2:
                         st.write("\nWe used the non-parametric Kruskal-Wallis test due to non-normal distribution " +
-                            f"between more than 2 groups.")
-                        
+                                f"between more than 2 groups.")
+                        groups = [df_filtered[df_filtered['experience_variant_label'] == variant][kpi] 
+                                for variant in df_filtered['experience_variant_label'].unique()]
                         statistic, p_value = kruskal(*groups)
                         st.write(f"Kruskal-Wallis H-test statistic: {statistic:.4f}, P-value: {p_value:.4g}")
                         
                         significant = 'significant' if p_value < 0.05 else 'no significant'
-                        st.write(f"\nConclusion: The Kruskal-Wallis test results " +
-                            f"suggest {significant} differences between the groups.")
+                        st.write(f"\nConclusion: The Kruskal-Wallis test results suggest {significant} differences between the groups.")
                     elif unique_variants == 2:
                         st.write("\nWe used the non-parametric Mann-Whitney U test for two groups.")
                         
@@ -220,34 +220,40 @@ def run():
                         st.write(f"Mann-Whitney U test statistic: {statistic:.4f}, P-value: {p_value:.4g}")
                         
                         significant = 'significant' if p_value < 0.05 else 'no significant'
-                        st.write(f"\nConclusion: The Mann-Whitney U test results " +
-                            f"suggest {significant} differences between the two groups.")
-
+                        st.write(f"\nConclusion: The Mann-Whitney U test results suggest {significant} differences between the two groups.")
             else:
                 st.write("\nThe data shows a normal distribution with homogeneous variance, so a standard ANOVA was performed.")
                 anova_results = sm.stats.anova_lm(model_no_outliers, typ=2)
-                
                 st.write(anova_results)
-                significant = 'significant' if anova_results['PR(>F)'].iloc[0] < 0.05 else 'not significant'
                 
+                significant = 'significant' if anova_results['PR(>F)'].iloc[0] < 0.05 else 'no significant'
                 st.write(f"\nConclusion: ANOVA was performed because the data shows a normal distribution with homogeneous variance, " +
-                    f"with results suggesting {significant} differences between the groups.")
-
+                        f"with results suggesting {significant} differences between the groups.")
+                
                 if anova_results['PR(>F)'][0] < 0.05:
-                    tukey_results = pairwise_tukeyhsd(endog=df_filtered[kpi], groups=df_filtered['experience_variant_label'], 
-                                                    alpha=0.05)
+                    tukey_results = pairwise_tukeyhsd(endog=df_filtered[kpi], groups=df_filtered['experience_variant_label'], alpha=0.05)
                     
                     st.write("\nTukey's HSD test results for multiple comparisons:")
                     st.write(tukey_results)
                     
                     tukey_results.plot_simultaneous()
-                    plt.show()
+                    st.pyplot(plt)
                     plt.clf()
 
+            # Summarize final results
             st.write(f"\nThe variant with the highest mean in '{kpi}' is the {highest_mean_variant} group " +
-                f"with an average of {highest_mean:.2f}.")
+                    f"with an average of {highest_mean:.2f}.")
             st.write(f"The variant with the highest spread of values in '{kpi}' " +
-                f"is the {highest_std_variant} group with a standard deviation of {highest_std:.2f}.")
+                    f"is the {highest_std_variant} group with a standard deviation of {highest_std:.2f}.")
+
+            # Final conclusions based on significant results and descriptive statistics
+            if significant == 'significant' and highest_mean_variant == 'B' and highest_std_variant == 'B':
+                st.write(f"Congratulations, variant B is a winner for {kpi}!")
+            elif significant == 'significant' and highest_mean_variant == 'A' and highest_std_variant == 'A':
+                st.write(f"Loss prevented! Variant A performed significantly worse for {kpi}.")
+            elif significant == 'no significant':
+                st.write("No significant differences detected. There may not be a real effect here or you need to collect more data.")
+
     else:
         st.info("Please upload a CSV file to proceed.")
 
