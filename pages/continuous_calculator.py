@@ -12,11 +12,17 @@ from pingouin import welch_anova, qqplot
 import re
 import streamlit as st
 
+def run():
+    st.set_page_config(
+        page_title="Continuous data calculator",
+        page_icon="🔢",
+    )
+
 # Title and Introduction
 st.title("Continuous Data Calculator")
 linkedin_url = "https://www.linkedin.com/in/blinders/"
 happyhorizon_url = "https://happyhorizon.com/"
-footnote_text = f"""Designed and developed by <a href="{linkedin_url}" target="_blank">Bas Linders</a> @<a href="{happyhorizon_url}" target="_blank">Happy Horizon.</a>"""
+footnote_text = f"""Engineered and developed by <a href="{linkedin_url}" target="_blank">Bas Linders</a> @<a href="{happyhorizon_url}" target="_blank">Happy Horizon.</a>"""
 st.markdown(footnote_text, unsafe_allow_html=True)
 st.write("")
 """

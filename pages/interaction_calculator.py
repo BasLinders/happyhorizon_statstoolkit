@@ -5,11 +5,17 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter
 import streamlit as st
 
+def run():
+    st.set_page_config(
+        page_title="Interaction Effect calculator",
+        page_icon="🔢",
+    )
+
 # Streamlit app
 st.title("Interaction Effect Calculator")
 linkedin_url = "https://www.linkedin.com/in/blinders/"
 happyhorizon_url = "https://happyhorizon.com/"
-footnote_text = f"""Designed and developed by <a href="{linkedin_url}" target="_blank">Bas Linders</a> @<a href="{happyhorizon_url}" target="_blank">Happy Horizon.</a>"""
+footnote_text = f"""Engineered and developed by <a href="{linkedin_url}" target="_blank">Bas Linders</a> @<a href="{happyhorizon_url}" target="_blank">Happy Horizon.</a>"""
 st.markdown(footnote_text, unsafe_allow_html=True)
 st.write("")
 """
