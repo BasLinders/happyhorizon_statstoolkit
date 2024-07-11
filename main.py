@@ -26,9 +26,6 @@ This is the main page for the Happy Horizon Experimentation Toolkit. You can nav
 
 ### About
 This toolkit has been created for the purposes of analyzing data from online controlled experiments ('A/B tests').
-
-### Contact
-For more information, visit [HappyHorizon.com](https://happyhorizon.com).
 """)
 
 linkedin_url = "https://www.linkedin.com/in/blinders/"
