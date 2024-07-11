@@ -18,7 +18,6 @@ def run():
         page_icon="🔢",
     )
 
-    # Title and Introduction
     st.title("Continuous Data Calculator")
     linkedin_url = "https://www.linkedin.com/in/blinders/"
     happyhorizon_url = "https://happyhorizon.com/"

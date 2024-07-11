@@ -11,7 +11,6 @@ def run():
         page_icon="🔢",
     )
 
-    # Streamlit app
     st.title("Interaction Effect Calculator")
     linkedin_url = "https://www.linkedin.com/in/blinders/"
     happyhorizon_url = "https://happyhorizon.com/"
