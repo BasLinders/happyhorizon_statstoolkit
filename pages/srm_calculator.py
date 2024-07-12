@@ -15,7 +15,7 @@ def run():
 
     Happy Learning!
     """
-
+    col1, col2 = st.columns(2)
     # User input for number of variants
     num_variants = st.number_input("How many variants did your experiment have?", min_value=2, max_value=26, step=1)
 
@@ -25,8 +25,10 @@ def run():
     alphabet = string.ascii_uppercase
 
     for i in range(num_variants):
-        visitor_counts.append(st.number_input(f"How many visitors did variant {alphabet[i]} have?", min_value=0, step=1))
-        expected_proportions.append(st.number_input(f"What percentage of users should be in variant {alphabet[i]}?", min_value=0.0, max_value=100.0, step=0.01))
+        with col1:
+            visitor_counts.append(st.number_input(f"How many visitors did variant {alphabet[i]} have?", min_value=0, step=1))
+        with col2:
+            expected_proportions.append(st.number_input(f"What percentage of users should be in variant {alphabet[i]}?", min_value=0.0, max_value=100.0, step=0.01))
 
     if st.button("Check for Sample Ratio Mismatch"):
         if sum(expected_proportions) != 100:
