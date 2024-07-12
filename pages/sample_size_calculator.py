@@ -19,10 +19,10 @@ def run():
     # Inputs
     with col1:
         baseline_visitors = st.number_input("Amount of visitors per week:", min_value=0, step=1)
-        risk = st.number_input("In percentages, what is the risk you're willing to take (5, 10, 20, etc)?", min_value=0.0, max_value=100.0, step=0.1)
+        risk = st.number_input("In %, enter the risk you're willing to take (5, 10, 20, etc)", min_value=0.0, max_value=100.0, step=0.1)
     with col2:
         baseline_conversions = st.number_input("Number of conversions per week:", min_value=0, step=1)
-        trust = st.number_input("In percentages, how sure do you want to be that the effect exists (80, 90, etc)?", min_value=0.0, max_value=100.0, step=0.1)
+        trust = st.number_input("In %, enter the minimum trustworthiness (e.g. 80)", min_value=0.0, max_value=100.0, step=0.1)
 
     tails = st.selectbox("Do you want to know if B is better than A, or also the other way around?", ('1-tailed', '2-tailed'))
 
