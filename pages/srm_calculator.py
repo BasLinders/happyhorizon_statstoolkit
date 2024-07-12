@@ -23,12 +23,16 @@ def run():
     expected_proportions = []
     alphabet = string.ascii_uppercase
 
+    # Display headers only once
+    with col1:
+        st.write("### Visitors")
+    with col2:
+        st.write("### Portions")
+
     for i in range(num_variants):
         with col1:
-            st.write("### Visitors")
             visitor_counts.append(st.number_input(f"How many visitors did variant {alphabet[i]} have?", min_value=0, step=1))
         with col2:
-            st.write("### Portions")
             expected_proportions.append(st.number_input(f"What percentage of users should be in variant {alphabet[i]}?", min_value=0.0, max_value=100.0, step=0.01))
 
     if st.button("Check for Sample Ratio Mismatch"):
