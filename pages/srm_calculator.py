@@ -9,11 +9,6 @@ def run():
     )
 
     st.title("Sample Ratio Mismatch (SRM) Checker")
-    linkedin_url = "https://www.linkedin.com/in/blinders/"
-    happyhorizon_url = "https://happyhorizon.com/"
-    footnote_text = f"""Engineered and developed by <a href="{linkedin_url}" target="_blank">Bas Linders</a> @<a href="{happyhorizon_url}" target="_blank">Happy Horizon.</a>"""
-    st.markdown(footnote_text, unsafe_allow_html=True)
-    st.write("")
     """
     This calculator lets you see if your online experiment correctly divided visitors among the variants, or if something went wrong and there was a mismatch with 
     the expected amount of visitors per variant. Enter the values below to get started. 

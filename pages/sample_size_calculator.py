@@ -10,11 +10,6 @@ def run():
     )
 
     st.title("Sample Size Calculator")
-    linkedin_url = "https://www.linkedin.com/in/blinders/"
-    happyhorizon_url = "https://happyhorizon.com/"
-    footnote_text = f"""Engineered and developed by <a href="{linkedin_url}" target="_blank">Bas Linders</a> @<a href="{happyhorizon_url}" target="_blank">Happy Horizon.</a>"""
-    st.markdown(footnote_text, unsafe_allow_html=True)
-    st.write("")
     """
     This calculator provides you with an adequate sample size and Minimum Detectable Effect for your online experiment. Enter the values below to start.
 

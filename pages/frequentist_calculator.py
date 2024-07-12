@@ -13,11 +13,6 @@ def run():
     )
 
     st.write("# Frequentist Calculator")
-    linkedin_url = "https://www.linkedin.com/in/blinders/"
-    happyhorizon_url = "https://happyhorizon.com/"
-    footnote_text = f"""Engineered and developed by <a href="{linkedin_url}" target="_blank">Bas Linders</a> @<a href="{happyhorizon_url}" target="_blank">Happy Horizon.</a>"""
-    st.markdown(footnote_text, unsafe_allow_html=True)
-    st.write("")
     """
     This calculator tests your data against the null-hypothesis (= there's no difference between 'A' and 'B'). If your results deviate significantly from the null-
     hypothesis, that means that the change you tested did indeed shift user behavior for your chosen metric. 
