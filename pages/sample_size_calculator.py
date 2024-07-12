@@ -24,7 +24,7 @@ def run():
         baseline_conversions = st.number_input("Number of conversions per week:", min_value=0, step=1)
         trust = st.number_input("In %, enter the minimum trustworthiness (e.g. 80)", min_value=0.0, max_value=100.0, step=0.1)
 
-    tails = st.selectbox("Do you want to know if B is better than A, or also the other way around?", ('B better than A', 'A better than B'))
+    tails = st.selectbox("Do you want to know if B is better than A, or also the other way around (i.e. verify a negative effect)?", ('B better than A', 'A better than B'))
 
     # Ensure all inputs are provided and valid
     if any([baseline_visitors <= 0, baseline_conversions <= 0, risk <= 0, trust <= 0, tails not in ['B better than A', 'A better than B']]):
