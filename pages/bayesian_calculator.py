@@ -123,12 +123,6 @@ def run():
             
             return (samples_b - samples_a) / samples_a
 
-        # Example data
-        visitors_a = 1000
-        conversions_a = 100
-        visitors_b = 1000
-        conversions_b = 80
-
         # Simulating the differences as percentage uplift
         diffs_percentage = simulate_differences(visitors_a, conversions_a, visitors_b, conversions_b) * 100
         conv_rate_a = conversions_a / visitors_a
