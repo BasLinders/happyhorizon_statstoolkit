@@ -27,7 +27,7 @@ def run():
     tails = st.selectbox("Do you want to know if B is better than A, or also the other way around?", ('1-tailed', '2-tailed'))
 
     # Ensure all inputs are provided and valid
-    if any([baseline_visitors <= 0, baseline_conversions <= 0, risk <= 0, trust <= 0, tails not in ['1-tailed', '2-tailed']]):
+    if any([baseline_visitors <= 0, baseline_conversions <= 0, risk <= 0, trust <= 0, tails not in ['B better than A', 'A better than B']]):
         st.write("Please enter all required inputs with valid values.")
     else:
         alpha = risk / 100
@@ -37,7 +37,7 @@ def run():
         baseline_rate = baseline_conversions / baseline_visitors
 
         # Z-scores for confidence and power
-        if tails == '2-tailed':
+        if tails == 'A better than B':
             z_alpha = norm.ppf(1 - alpha / 2)  # Two-tailed
         else:
             z_alpha = norm.ppf(1 - alpha)
