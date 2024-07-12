@@ -28,9 +28,11 @@ def run():
     col1, col2 = st.columns(2)
     # Experiment inputs
     with col1:
+        st.write("### Control")
         visitors_a = st.number_input("How many visitors does 'A' have?", min_value=0, step=1)
         conversions_a = st.number_input("How many conversions does 'A' have?", min_value=0, step=1)
     with col2:
+        st.write("### Treatment")
         visitors_b = st.number_input("How many visitors does 'B' have?", min_value=0, step=1)
         conversions_b = st.number_input("How many conversions does 'B' have?", min_value=0, step=1)
 
