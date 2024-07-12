@@ -158,7 +158,14 @@ def run():
 
         # Probability density graph
         plt.figure(figsize=(10, 6))
-        x_range = np.linspace(0, max(conversion_rates) + 0.1, 1000)
+
+        # Define x_range dynamically based on the conversion rates
+        min_conversion_rate = min(conversion_rates)
+        max_conversion_rate = max(conversion_rates)
+        x_min = min_conversion_rate - 0.01  # Extend the range slightly to the left
+        x_max = max_conversion_rate + 0.01  # Extend the range slightly to the right
+        x_range = np.linspace(x_min, x_max, 1000)
+
         colors = ['#FF5733', '#3498DB', '#9B59B6', '#E74C3C', '#1ABC9C', '#F39C12', '#2980B9', '#D35400', '#C0392B', '#7D3C98']
 
         for i in range(num_variants):
