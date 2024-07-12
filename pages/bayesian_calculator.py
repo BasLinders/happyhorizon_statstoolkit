@@ -24,10 +24,12 @@ def run():
     col1, col2 = st.columns(2)
     # Get visitor and conversion inputs with validation
     with col1:
+        st.write("### Control")
         visitors_a = st.number_input("How many visitors does variant A have?", min_value=0, step=1)
         conversions_a = st.number_input("How many conversions does variant A have?", min_value=0, step=1)
         aov_a = st.number_input("What is the average order value of A? ", min_value=0.0, step=0.01)
     with col2:
+        st.write("Treatment")
         visitors_b = st.number_input("How many visitors does variant B have?", min_value=0, step=1)
         conversions_b = st.number_input("How many conversions does variant B have?", min_value=0, step=1)
         aov_b = st.number_input("What is the average order value of B? ", min_value=0.0, step=0.01)
