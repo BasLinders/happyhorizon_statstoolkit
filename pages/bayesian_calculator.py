@@ -29,7 +29,7 @@ def run():
         conversions_a = st.number_input("How many conversions does variant A have?", min_value=0, step=1)
         aov_a = st.number_input("What is the average order value of A? ", min_value=0.0, step=0.01)
     with col2:
-        st.write("Treatment")
+        st.write("### Treatment")
         visitors_b = st.number_input("How many visitors does variant B have?", min_value=0, step=1)
         conversions_b = st.number_input("How many conversions does variant B have?", min_value=0, step=1)
         aov_b = st.number_input("What is the average order value of B? ", min_value=0.0, step=0.01)
