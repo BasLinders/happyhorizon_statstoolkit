@@ -21,19 +21,19 @@ def run():
 
     Enter your experiment values below. Happy learning!
     """
-
+    col1, col2 = st.columns(2)
     # Get visitor and conversion inputs with validation
-    visitors_a = st.number_input("How many visitors does variant A have?", min_value=0, step=1)
-    conversions_a = st.number_input("How many conversions does variant A have?", min_value=0, step=1)
-    visitors_b = st.number_input("How many visitors does variant B have?", min_value=0, step=1)
-    conversions_b = st.number_input("How many conversions does variant B have?", min_value=0, step=1)
-    probability_winner = st.number_input("What is your minimum probability for a winner?", min_value=0.0, max_value=100.0, step=0.01)
-
-    # Get average order values with validation
-    aov_a = st.number_input("What is the average order value of A? ", min_value=0.0, step=0.01)
-    aov_b = st.number_input("What is the average order value of B? ", min_value=0.0, step=0.01)
+    with col1:
+        visitors_a = st.number_input("How many visitors does variant A have?", min_value=0, step=1)
+        conversions_a = st.number_input("How many conversions does variant A have?", min_value=0, step=1)
+        aov_a = st.number_input("What is the average order value of A? ", min_value=0.0, step=0.01)
+    with col2:
+        visitors_b = st.number_input("How many visitors does variant B have?", min_value=0, step=1)
+        conversions_b = st.number_input("How many conversions does variant B have?", min_value=0, step=1)
+        aov_b = st.number_input("What is the average order value of B? ", min_value=0.0, step=0.01)
 
     # Get projection period with validation
+    probability_winner = st.number_input("What is your minimum probability for a winner?", min_value=0.0, max_value=100.0, step=0.01)
     runtime_days = st.number_input("For how many days did your test run?", min_value=0, step=1)
     projection_period = st.number_input("Over how many days should we project the contribution in revenue?", min_value=0, step=1)
     conv_rate_a = conversions_a / visitors_a if visitors_a != 0 else 0
