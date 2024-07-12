@@ -15,9 +15,8 @@ def run():
 
     Happy Learning!
     """
-    col1, col2 = st.columns(2)
-    # User input for number of variants
     num_variants = st.number_input("How many variants did your experiment have?", min_value=2, max_value=26, step=1)
+    col1, col2 = st.columns(2)
 
     # Dynamically generate input fields for visitor counts and expected proportions
     visitor_counts = []
