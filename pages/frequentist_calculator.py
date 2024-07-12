@@ -25,12 +25,15 @@ def run():
 
     Enter your experiment values below. Happy learning!
     """
-
+    col1, col2 = st.columns(2)
     # Experiment inputs
-    visitors_a = st.number_input("How many visitors does 'A' have?", min_value=0, step=1)
-    visitors_b = st.number_input("How many visitors does 'B' have?", min_value=0, step=1)
-    conversions_a = st.number_input("How many conversions does 'A' have?", min_value=0, step=1)
-    conversions_b = st.number_input("How many conversions does 'B' have?", min_value=0, step=1)
+    with col1:
+        visitors_a = st.number_input("How many visitors does 'A' have?", min_value=0, step=1)
+        conversions_a = st.number_input("How many conversions does 'A' have?", min_value=0, step=1)
+    with col2:
+        visitors_b = st.number_input("How many visitors does 'B' have?", min_value=0, step=1)
+        conversions_b = st.number_input("How many conversions does 'B' have?", min_value=0, step=1)
+
     risk = st.number_input("How much risk do you want to take in % (enter 5, 10, etc)?", min_value=1, step=1)
     tail = st.selectbox("Do you only want to know if B is better than A ('greater'), or if B is worse than A ('two-sided')?", options=['greater', 'two-sided'])
 
