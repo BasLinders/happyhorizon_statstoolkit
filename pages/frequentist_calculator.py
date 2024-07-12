@@ -73,8 +73,9 @@ def run():
         observed = visitor_counts
         expected = [sum(observed) / len(observed)] * len(observed)
 
-        # Perform the chi-squared test
-        chi2, srm_p_value, dof, ex = stats.chisquare(f_obs=observed, f_exp=expected)
+        # Perform the chi-squared test for independence
+        contingency_table = np.array([observed, expected])
+        chi2, srm_p_value, dof, expected_freq = stats.chi2_contingency(contingency_table)
         st.write(f"SRM p-value: {srm_p_value:.4f}")
 
         # Calculate pooled proportion and standard errors
