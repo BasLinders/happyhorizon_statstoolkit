@@ -170,11 +170,13 @@ def run():
             # Shading the regions for winners and losers
             if p_values[i-1] <= alpha:
                 if conversion_rates[i] > conversion_rates[0]:
-                    upper_critical_value = norm.ppf(1-alpha, conversion_rates[i], se_list[i])
-                    plt.fill_between(x_range * 100, pdf, where=(x_range * 100 >= upper_critical_value * 100), color='lightgreen', alpha=0.3)
-                else:
-                    lower_critical_value = norm.ppf(alpha, conversion_rates[i], se_list[i])
-                    plt.fill_between(x_range * 100, pdf, where=(x_range * 100 <= lower_critical_value * 100), color='lightcoral', alpha=0.3)
+                    # Shade only the upper tail in light green
+                    upper_critical_value = norm.ppf(1 - alpha, loc=conversion_rates[i], scale=se_list[i])
+                    plt.fill_between(x_range * 100, pdf, where=(x_range >= upper_critical_value), color='lightgreen', alpha=0.3)
+                elif conversion_rates[i] < conversion_rates[0]:
+                    # Shade only the lower tail in light red
+                    lower_critical_value = norm.ppf(alpha, loc=conversion_rates[i], scale=se_list[i])
+                    plt.fill_between(x_range * 100, pdf, where=(x_range <= lower_critical_value), color='lightcoral', alpha=0.3)
 
         # Adjust x-axis for percentages and add legend, titles, and labels
         plt.xlabel('Conversion rate (%)')
