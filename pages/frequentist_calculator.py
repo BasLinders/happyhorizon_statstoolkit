@@ -193,28 +193,6 @@ def run():
         st.pyplot(plt)
         plt.clf()
 
-        # Non-inferiority test
-        alpha_noninf = 0.05  # Minimize the chance of disqualifying B to 5%
-        non_inferiority_margin = 0.01  # Maximum acceptable difference in effect size for B to still be considered "non-inferior."
-
-        st.write("### Non-inferiority Test Results:")
-        for i in range(1, num_variants):
-            pooled_se = np.sqrt((conversion_rates[0] * (1 - conversion_rates[0]) / visitor_counts[0]) + 
-                                (conversion_rates[i] * (1 - conversion_rates[i]) / visitor_counts[i]))
-            z_stat_noninf = (conversion_rates[i] - conversion_rates[0] - non_inferiority_margin) / pooled_se
-            p_value_noninf = stats.norm.cdf(z_stat_noninf)
-            
-            confidence_interval = stats.norm.interval(1 - alpha_noninf, loc=(conversion_rates[i] - conversion_rates[0]), scale=pooled_se)
-            lower_bound, upper_bound = confidence_interval
-            st.write(f"Variant {alphabet[i]} vs {alphabet[0]}:")
-            st.write(f"Confidence interval for difference in conversion rates: ({lower_bound:.4f}, {upper_bound:.4f})")
-            st.write(f"P-value (non-inferiority test): {p_value_noninf:.4f}")
-
-            if p_value_noninf <= alpha_noninf:
-                st.write("The test result is not statistically significant, but variant B generates at least the same number of conversions as variant A.")
-            else:
-                st.write("The test result is not statistically significant and variant B possibly will not generate at least the same number of conversions as variant A.")
-
         # Output and conclusions
         st.write("")
         st.write("### Test results:")
@@ -232,7 +210,29 @@ def run():
                 else:
                     st.write(f"Loss prevented with variant {alphabet[i]}! Congratulations with this valuable insight.")
             else:
-                st.write(f"No significant result for {alphabet[i]} with p-value: {p_values[i-1]:.4f}.")
+                st.write(f"No significant result in the Z-test for {alphabet[i]} with p-value: {p_values[i-1]:.4f}.")
+                st.write("")
+                # Non-inferiority test
+                alpha_noninf = 0.05  # Minimize the chance of disqualifying B to 5%
+                non_inferiority_margin = 0.01  # Maximum acceptable difference in effect size for B to still be considered "non-inferior."
+
+                st.write("### Non-inferiority Test Results:")
+                for i in range(1, num_variants):
+                    pooled_se = np.sqrt((conversion_rates[0] * (1 - conversion_rates[0]) / visitor_counts[0]) + 
+                                        (conversion_rates[i] * (1 - conversion_rates[i]) / visitor_counts[i]))
+                    z_stat_noninf = (conversion_rates[i] - conversion_rates[0] - non_inferiority_margin) / pooled_se
+                    p_value_noninf = stats.norm.cdf(z_stat_noninf)
+                    
+                    confidence_interval = stats.norm.interval(1 - alpha_noninf, loc=(conversion_rates[i] - conversion_rates[0]), scale=pooled_se)
+                    lower_bound, upper_bound = confidence_interval
+                    st.write(f"Variant {alphabet[i]} vs {alphabet[0]}:")
+                    st.write(f"Confidence interval for difference in conversion rates: ({lower_bound:.4f}, {upper_bound:.4f})")
+                    st.write(f"P-value (non-inferiority test): {p_value_noninf:.4f}")
+
+                    if p_value_noninf <= alpha_noninf:
+                        st.write("The test result is not statistically significant, but variant B generates at least the same number of conversions as variant A.")
+                    else:
+                        st.write("The test result is not statistically significant and variant B possibly will not generate at least the same number of conversions as variant A.")
 
     else:
         st.write("")
