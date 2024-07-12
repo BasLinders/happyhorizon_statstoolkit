@@ -22,15 +22,16 @@ def run():
     """
 
     # Define the data input fields
-    st.header("Input Data")
 
     col1, col2 = st.columns(2)
     with col1:
+        st.write("### Visitors")
         AA_u = st.number_input("AA Visitors", value=0)
         AB_u = st.number_input("AB Visitors", value=0)
         BA_u = st.number_input("BA Visitors", value=0)
         BB_u = st.number_input("BB Visitors", value=0)
     with col2:
+        st.write("### Conversions")
         AA_c = st.number_input("AA Conversions", value=0)
         AB_c = st.number_input("AB Conversions", value=0)
         BA_c = st.number_input("BA Conversions", value=0)
