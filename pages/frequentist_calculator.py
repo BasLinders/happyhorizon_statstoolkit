@@ -202,7 +202,7 @@ def run():
 
         def perform_superiority_test(i, alphabet, p_values, conversion_rates):
             if p_values[i - 1] <= alpha:
-                st.write(f"### Test results for {alphabet[i]} vs {alphabet[0]}")
+                st.write(f"### Superiority test results for {alphabet[i]} vs {alphabet[0]}")
                 st.write(f"Statistically significant result for {alphabet[i]} with p-value: {p_values[i-1]:.4f}!")
                 st.write(f"Conversion rate change for {alphabet[i]}: {(conversion_rates[i] - conversion_rates[0]) * 100:.2f}%")
                 if conversion_rates[i] > conversion_rates[0]:
@@ -219,7 +219,7 @@ def run():
             lower_bound, upper_bound = confidence_interval
 
             if p_values[i - 1] > alpha:
-                st.write(f"Non-inferiority test for {alphabet[i]} vs {alphabet[0]}:")
+                st.write(f"### Non-inferiority test results for {alphabet[i]} vs {alphabet[0]}:")
                 st.write(f"Confidence interval for difference in conversion rates: ({lower_bound:.4f}, {upper_bound:.4f})")
                 st.write(f"P-value (non-inferiority test): {p_value_noninf:.4f}")
                 if p_value_noninf <= alpha_noninf:
