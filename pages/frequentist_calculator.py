@@ -221,7 +221,7 @@ def run():
             if p_values[i - 1] > alpha:
                 st.write(f"### Non-inferiority test results for {alphabet[i]} vs {alphabet[0]}:")
                 st.write(f"Confidence interval for difference in conversion rates: ({lower_bound:.4f}, {upper_bound:.4f})")
-                st.write(f"P-value (non-inferiority test): {p_value_noninf:.4f}")
+                st.write(f"P-value: {p_value_noninf:.4f}")
                 if p_value_noninf <= alpha_noninf:
                     st.write(f"The test result for {alphabet[i]} vs {alphabet[0]} is not statistically significant in the Z-test with p-value {p_values[i-1]:.4f}, but this variant generates at least the same number of conversions as the control variant.")
                 else:
