@@ -218,11 +218,11 @@ def run():
             confidence_interval = stats.norm.interval(1 - alpha_noninf, loc=(conversion_rates[i] - conversion_rates[0]), scale=pooled_se)
             lower_bound, upper_bound = confidence_interval
 
-            if p_value_noninf <= alpha_noninf:
-                st.write(f"Variant {alphabet[i]} vs {alphabet[0]}:")
+            if p_values[i - 1] > alpha:
+                st.write(f"Non-inferiority test for {alphabet[i]} vs {alphabet[0]}:")
                 st.write(f"Confidence interval for difference in conversion rates: ({lower_bound:.4f}, {upper_bound:.4f})")
                 st.write(f"P-value (non-inferiority test): {p_value_noninf:.4f}")
-                if p_values[i - 1] > alpha:
+                if p_value_noninf <= alpha_noninf:
                     st.write(f"The test result for {alphabet[i]} vs {alphabet[0]} is not statistically significant in the Z-test with p-value {p_values[i-1]:.4f}, but this variant generates at least the same number of conversions as the control variant.")
                 else:
                     st.write(f"The test result for {alphabet[i]} vs {alphabet[0]} is not statistically significant in the Z-test with p-value {p_values[i-1]:.4f}, and this variant possibly will not generate at least the same number of conversions as the control variant.")
