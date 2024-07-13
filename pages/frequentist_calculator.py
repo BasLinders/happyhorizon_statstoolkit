@@ -202,7 +202,7 @@ def run():
         def perform_superiority_test(i, alphabet, p_values, conversion_rates):
             if p_values[i - 1] <= alpha:
                 st.write(f"### Superiority test results for {alphabet[i]} vs {alphabet[0]}")
-                st.markdown(f" * Statistically significant result for {alphabet[i]} with p-value: {p_values[i-1]:.4f}!")
+                st.markdown(f" * Statistically significant result for {alphabet[i]} with p-value: {p_values[i-1]:.4f} and a power of {observed_powers[i-1] * 100:.2f}%!")
                 st.markdown(f" * Conversion rate change for {alphabet[i]}: {(conversion_rates[i] - conversion_rates[0]) * 100:.2f}%")
                 if conversion_rates[i] > conversion_rates[0]:
                     st.write(f"Variant {alphabet[i]} is a <span style='color: #009900; font-weight: 600;'>winner</span>, congratulations!", unsafe_allow_html=True)
