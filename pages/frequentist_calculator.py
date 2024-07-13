@@ -226,19 +226,17 @@ def run():
                     lower_bound, upper_bound = confidence_interval
 
                     if p_value_noninf <= alpha_noninf:
-                        for i in range(1, num_variants):
-                            if p_values[i-1] > alpha:
-                                st.write(f"Variant {alphabet[i]} vs {alphabet[0]}:")
-                                st.write(f"Confidence interval for difference in conversion rates: ({lower_bound:.4f}, {upper_bound:.4f})")
-                                st.write(f"P-value (non-inferiority test): {p_value_noninf:.4f}")
-                                st.write(f"The test result for {alphabet[i]} vs {alphabet[0]} is not statistically significant in the Z-test with p-value {p_values[i-1]:.4f}, but this variant generates at least the same number of conversions as the control variant.")
+                        if p_values[i-1] > alpha:
+                            st.write(f"Variant {alphabet[i]} vs {alphabet[0]}:")
+                            st.write(f"Confidence interval for difference in conversion rates: ({lower_bound:.4f}, {upper_bound:.4f})")
+                            st.write(f"P-value (non-inferiority test): {p_value_noninf:.4f}")
+                            st.write(f"The test result for {alphabet[i]} vs {alphabet[0]} is not statistically significant in the Z-test with p-value {p_values[i-1]:.4f}, but this variant generates at least the same number of conversions as the control variant.")
                     else:
-                        for i in range(1, num_variants):
-                            if p_values[i-1] > alpha:
-                                st.write(f"Variant {alphabet[i]} vs {alphabet[0]}:")
-                                st.write(f"Confidence interval for difference in conversion rates: ({lower_bound:.4f}, {upper_bound:.4f})")
-                                st.write(f"P-value (non-inferiority test): {p_value_noninf:.4f}")
-                                st.write(f"The test result for {alphabet[i]} vs {alphabet[0]} is not statistically significant in the Z-test with p-value {p_values[i-1]:.4f}, and this variant possibly will not generate at least the same number of conversions as the control variant.")
+                        if p_values[i-1] > alpha:
+                            st.write(f"Variant {alphabet[i]} vs {alphabet[0]}:")
+                            st.write(f"Confidence interval for difference in conversion rates: ({lower_bound:.4f}, {upper_bound:.4f})")
+                            st.write(f"P-value (non-inferiority test): {p_value_noninf:.4f}")
+                            st.write(f"The test result for {alphabet[i]} vs {alphabet[0]} is not statistically significant in the Z-test with p-value {p_values[i-1]:.4f}, and this variant possibly will not generate at least the same number of conversions as the control variant.")
     else:
         st.write("")
         st.write("Please enter valid inputs for all fields.")
