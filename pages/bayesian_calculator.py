@@ -21,7 +21,7 @@ def run():
 
     Enter your experiment values below. Happy learning!
     """
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2 = st.columns(2)
     # Get visitor and conversion inputs with validation
     with col1:
         st.write("### Visitors")
@@ -37,10 +37,8 @@ def run():
     # Get projection period with validation
     st.write("")
     st.write("### Business case data")
-    with col3:
-        aov_a = st.number_input("What is the average order value of A? ", min_value=0.0, step=0.01)
-    with col4:
-        aov_b = st.number_input("What is the average order value of B? ", min_value=0.0, step=0.01)
+    aov_a = st.number_input("What is the average order value of A? ", min_value=0.0, step=0.01)
+    aov_b = st.number_input("What is the average order value of B? ", min_value=0.0, step=0.01)
     runtime_days = st.number_input("For how many days did your test run?", min_value=0, step=1)
     projection_period = st.number_input("Over how many days should we project the contribution in revenue?", min_value=0, step=1)
     conv_rate_a = conversions_a / visitors_a if visitors_a != 0 else 0
