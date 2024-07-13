@@ -47,7 +47,7 @@ def run():
         with col2:
             variant_conversions.append(st.number_input(f"How many conversions did variant {alphabet[i]} have?", min_value=0, step=1))
 
-    risk = st.number_input("How confident do you want to be in the results % (enter 90, 95, etc)?", min_value=1, step=1)
+    risk = st.number_input("How confident do you want to be in the results % (enter 90, 95, etc)?", min_value=90, step=1)
     tail = st.selectbox("Do you only want to know if B is better than A ('greater'), or if B is worse than A ('two-sided')?", options=['greater', 'two-sided'])
 
     # Ensure inputs are valid before performing calculations
