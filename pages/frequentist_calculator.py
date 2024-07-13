@@ -194,6 +194,7 @@ def run():
         plt.clf()
 
         # Output and conclusions
+        st.write("### SRM Check")
         if srm_p_value > 0.01:
             st.write("This test is <span style='color: #009900; font-weight: 600;'>valid</span>. The distribution is as expected.", unsafe_allow_html=True)
         else:
