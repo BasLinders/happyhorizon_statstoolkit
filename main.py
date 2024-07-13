@@ -9,7 +9,7 @@ logo_url = "https://cdn.homerun.co/49305/hh-woordmerk-rgb-blue-met-discriptor166
 st.image(logo_url, width=200) # alternative: use_column_width=True
 
 st.title("Happy Horizon Experimentation Toolkit")
-st.write("### STAGE: <span style='color: orange;'Beta V1</span>", unsafe_allow_html=True)
+st.write("### STAGE: <span style='color: orange;'>Beta V1</span>", unsafe_allow_html=True)
 st.write("""
 This is the main page for the Happy Horizon Experimentation Toolkit. You can navigate to individual apps using the sidebar.
 
