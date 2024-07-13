@@ -206,7 +206,7 @@ def run():
                 st.write(f"Statistically significant result for {alphabet[i]} with p-value: {p_values[i-1]:.4f}!")
                 st.write(f"Conversion rate change for {alphabet[i]}: {(conversion_rates[i] - conversion_rates[0]) * 100:.2f}%")
                 if conversion_rates[i] > conversion_rates[0]:
-                    st.write(f"Variant {alphabet[i]} is a <span style='color: #009900; font-weight: 600;'>winner</span, congratulations!", unsafe_allow_html=True)
+                    st.write(f"Variant {alphabet[i]} is a <span style='color: #009900; font-weight: 600;'>winner</span>, congratulations!", unsafe_allow_html=True)
                 else:
                     st.write(f"<span style='color: #FF6600; font-weight: 600;'>Loss prevented</span> with variant {alphabet[i]}! Congratulations with this valuable insight.", unsafe_allow_html=True)
             else:
