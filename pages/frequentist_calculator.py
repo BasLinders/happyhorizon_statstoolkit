@@ -67,7 +67,7 @@ def run():
         # Conversion rates
         conversion_rates = [c / v for c, v in zip(variant_conversions, visitor_counts)]
         for i in range(num_variants):
-            st.markdown(f"  *Conversion Rate {alphabet[i]}: {conversion_rates[i] * 100:.2f}%")
+            st.markdown(f" * Conversion Rate {alphabet[i]}: {conversion_rates[i] * 100:.2f}%")
 
         # SRM check
         observed = visitor_counts
@@ -96,8 +96,8 @@ def run():
         st.write("")
         st.write("### Test statistics:")
         for i in range(1, num_variants):
-            st.markdown(f"  *Z-statistic for {alphabet[i]} vs {alphabet[0]}: {z_stats[i-1]:.4f}")
-            st.markdown(f"  *P-value for {alphabet[i]} vs {alphabet[0]}: {p_values[i-1]:.4f}")
+            st.markdown(f" * Z-statistic for {alphabet[i]} vs {alphabet[0]}: {z_stats[i-1]:.4f}")
+            st.markdown(f" * P-value for {alphabet[i]} vs {alphabet[0]}: {p_values[i-1]:.4f}")
 
         # Power calculations
         if all(v > 1000 for v in visitor_counts):
@@ -117,7 +117,7 @@ def run():
 
             observed_powers = [analytical_power(conversion_rates[0], conversion_rates[i], visitor_counts[0], visitor_counts[i], alpha, tail) for i in range(1, num_variants)]
             for i in range(1, num_variants):
-                st.markdown(f"  *Observed power for {alphabet[i]} vs {alphabet[0]}: {observed_powers[i-1] * 100:.2f}%")
+                st.markdown(f" * Observed power for {alphabet[i]} vs {alphabet[0]}: {observed_powers[i-1] * 100:.2f}%")
 
         else:
             st.write("")
@@ -202,8 +202,8 @@ def run():
         def perform_superiority_test(i, alphabet, p_values, conversion_rates):
             if p_values[i - 1] <= alpha:
                 st.write(f"### Superiority test results for {alphabet[i]} vs {alphabet[0]}")
-                st.markdown(f"  *Statistically significant result for {alphabet[i]} with p-value: {p_values[i-1]:.4f}!")
-                st.markdown(f"  *Conversion rate change for {alphabet[i]}: {(conversion_rates[i] - conversion_rates[0]) * 100:.2f}%")
+                st.markdown(f" * Statistically significant result for {alphabet[i]} with p-value: {p_values[i-1]:.4f}!")
+                st.markdown(f" * Conversion rate change for {alphabet[i]}: {(conversion_rates[i] - conversion_rates[0]) * 100:.2f}%")
                 if conversion_rates[i] > conversion_rates[0]:
                     st.write(f"Variant {alphabet[i]} is a <span style='color: #009900; font-weight: 600;'>winner</span>, congratulations!", unsafe_allow_html=True)
                 else:
@@ -219,8 +219,8 @@ def run():
 
             if p_values[i - 1] > alpha:
                 st.write(f"### Non-inferiority test results for {alphabet[i]} vs {alphabet[0]}:")
-                st.markdown(f"  *Confidence interval for difference in conversion rates: ({lower_bound:.4f}, {upper_bound:.4f})")
-                st.markdown(f"  *P-value: {p_value_noninf:.4f}")
+                st.markdown(f" * Confidence interval for difference in conversion rates: ({lower_bound:.4f}, {upper_bound:.4f})")
+                st.markdown(f" * P-value: {p_value_noninf:.4f}")
                 if p_value_noninf <= alpha_noninf:
                     st.write(f"The test result for {alphabet[i]} vs {alphabet[0]} is not statistically significant in the Z-test with p-value {p_values[i-1]:.4f}, but this variant generates at least the same number of conversions as the control variant.", unsafe_allow_html=True)
                 else:
