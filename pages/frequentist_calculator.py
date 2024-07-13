@@ -58,8 +58,8 @@ def run():
 
         # Verify the data
         st.write("### Please verify your input:")
-        st.write(f" **Chosen threshold for significance: {round((1 - alpha) * 100)}%")
-        st.write(f" **Chosen test type: {'B is better than A' if tail == 'greater' else 'B is worse than A'}.")
+        st.write(f" **Chosen threshold for significance: {round((1 - alpha) * 100)}%", unsafe_allow_html=True)
+        st.write(f" **Chosen test type: {'B is better than A' if tail == 'greater' else 'B is worse than A'}.", unsafe_allow_html=True)
 
         for i in range(num_variants):
             st.write(f" **Variant {alphabet[i]}: {visitor_counts[i]} visitors, {variant_conversions[i]} conversions")
@@ -67,7 +67,7 @@ def run():
         # Conversion rates
         conversion_rates = [c / v for c, v in zip(variant_conversions, visitor_counts)]
         for i in range(num_variants):
-            st.write(f" **Conversion Rate {alphabet[i]}: {conversion_rates[i] * 100:.2f}%")
+            st.write(f" **Conversion Rate {alphabet[i]}: {conversion_rates[i] * 100:.2f}%", unsafe_allow_html=True)
 
         # SRM check
         observed = visitor_counts
@@ -97,8 +97,8 @@ def run():
         st.write("")
         st.write("### Test statistics:")
         for i in range(1, num_variants):
-            st.write(f"Z-statistic for {alphabet[i]} vs {alphabet[0]}: {z_stats[i-1]:.4f}")
-            st.write(f"P-value for {alphabet[i]} vs {alphabet[0]}: {p_values[i-1]:.4f}")
+            st.write(f" **Z-statistic for {alphabet[i]} vs {alphabet[0]}: {z_stats[i-1]:.4f}", unsafe_allow_html=True)
+            st.write(f" **P-value for {alphabet[i]} vs {alphabet[0]}: {p_values[i-1]:.4f}", unsafe_allow_html=True)
 
         # Power calculations
         if all(v > 1000 for v in visitor_counts):
@@ -118,7 +118,7 @@ def run():
 
             observed_powers = [analytical_power(conversion_rates[0], conversion_rates[i], visitor_counts[0], visitor_counts[i], alpha, tail) for i in range(1, num_variants)]
             for i in range(1, num_variants):
-                st.write(f" **Observed power for {alphabet[i]} vs {alphabet[0]}: {observed_powers[i-1] * 100:.2f}%")
+                st.write(f" **Observed power for {alphabet[i]} vs {alphabet[0]}: {observed_powers[i-1] * 100:.2f}%", unsafe_allow_html=True)
 
         else:
             st.write("")
@@ -151,7 +151,7 @@ def run():
             data_controls = [np.concatenate([np.ones(c), np.zeros(v - c)]) for c, v in zip(variant_conversions, visitor_counts)]
             observed_powers = [bootstrap_power(data_controls[0], data_controls[i], alpha, tail, n_bootstraps=n_bootstraps) for i in range(1, num_variants)]
             for i in range(1, num_variants):
-                st.write(f" **Observed power for {alphabet[i]} vs {alphabet[0]}: {observed_powers[i-1] * 100:.2f}%")
+                st.write(f" **Observed power for {alphabet[i]} vs {alphabet[0]}: {observed_powers[i-1] * 100:.2f}%", unsafe_allow_html=True)
 
         st.write("")
         st.write("### Probability Density Graphs:")
@@ -203,8 +203,8 @@ def run():
         def perform_superiority_test(i, alphabet, p_values, conversion_rates):
             if p_values[i - 1] <= alpha:
                 st.write(f"### Superiority test results for {alphabet[i]} vs {alphabet[0]}")
-                st.write(f" **Statistically significant result for {alphabet[i]} with p-value: {p_values[i-1]:.4f}!")
-                st.write(f" **Conversion rate change for {alphabet[i]}: {(conversion_rates[i] - conversion_rates[0]) * 100:.2f}%")
+                st.write(f" **Statistically significant result for {alphabet[i]} with p-value: {p_values[i-1]:.4f}!", unsafe_allow_html=True)
+                st.write(f" **Conversion rate change for {alphabet[i]}: {(conversion_rates[i] - conversion_rates[0]) * 100:.2f}%", unsafe_allow_html=True)
                 if conversion_rates[i] > conversion_rates[0]:
                     st.write(f"Variant {alphabet[i]} is a <span style='color: #009900; font-weight: 600;'>winner</span>, congratulations!", unsafe_allow_html=True)
                 else:
@@ -220,12 +220,12 @@ def run():
 
             if p_values[i - 1] > alpha:
                 st.write(f"### Non-inferiority test results for {alphabet[i]} vs {alphabet[0]}:")
-                st.write(f" **Confidence interval for difference in conversion rates: ({lower_bound:.4f}, {upper_bound:.4f})")
-                st.write(f" **P-value: {p_value_noninf:.4f}")
+                st.write(f" **Confidence interval for difference in conversion rates: ({lower_bound:.4f}, {upper_bound:.4f})", unsafe_allow_html=True)
+                st.write(f" **P-value: {p_value_noninf:.4f}", unsafe_allow_html=True)
                 if p_value_noninf <= alpha_noninf:
-                    st.write(f"The test result for {alphabet[i]} vs {alphabet[0]} is not statistically significant in the Z-test with p-value {p_values[i-1]:.4f}, but this variant generates at least the same number of conversions as the control variant.")
+                    st.write(f"The test result for {alphabet[i]} vs {alphabet[0]} is not statistically significant in the Z-test with p-value {p_values[i-1]:.4f}, but this variant generates at least the same number of conversions as the control variant.", unsafe_allow_html=True)
                 else:
-                    st.write(f"The test result for {alphabet[i]} vs {alphabet[0]} is not statistically significant in the Z-test with p-value {p_values[i-1]:.4f}, and this variant possibly will not generate at least the same number of conversions as the control variant.")
+                    st.write(f"The test result for {alphabet[i]} vs {alphabet[0]} is not statistically significant in the Z-test with p-value {p_values[i-1]:.4f}, and this variant possibly will not generate at least the same number of conversions as the control variant.", unsafe_allow_html=True)
 
         # Main logic
         for i in range(1, num_variants):
