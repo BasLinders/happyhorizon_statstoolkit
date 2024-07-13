@@ -200,64 +200,41 @@ def run():
         else:
             st.write("This test is <span style='color: #FF6600; font-weight: 600;'>invalid</span>: The distribution of traffic shows a statistically significant deviation from the expected values. Interpret the results with caution and check the distribution.", unsafe_allow_html=True)
 
-for i in range(1, num_variants):
-    if p_values[i - 1] <= alpha:
-        st.write("")
-        st.write(f"### Test results for {alphabet[i]} vs {alphabet[0]}")
-        st.write(
-            f"Statistically significant result for {alphabet[i]} with p-value: {p_values[i-1]:.4f}!"
-        )
-        st.write(
-            f"Conversion rate change for {alphabet[i]}: {(conversion_rates[i] - conversion_rates[0]) * 100:.2f}%"
-        )
-        if conversion_rates[i] > conversion_rates[0]:
-            st.write(
-                f"Variant {alphabet[i]} is a <span style='color: #009900; font-weight: 600;'>winner</span>, congratulations!",
-                unsafe_allow_html=True,
-            )
-        else:
-            st.write(
-                f"<span style='color: #FF6600; font-weight: 600;'>Loss prevented</span> with variant {alphabet[i]}! Congratulations with this valuable insight.",
-                unsafe_allow_html=True,
-            )
+        def perform_superiority_test(i, alphabet, p_values, conversion_rates):
+            if p_values[i - 1] <= alpha:
+                st.write(f"### Test results for {alphabet[i]} vs {alphabet[0]}")
+                st.write(f"Statistically significant result for {alphabet[i]} with p-value: {p_values[i-1]:.4f}!")
+                st.write(f"Conversion rate change for {alphabet[i]}: {(conversion_rates[i] - conversion_rates[0]) * 100:.2f}%")
+                if conversion_rates[i] > conversion_rates[0]:
+                    st.write(f"Variant {alphabet[i]} is a <span style='color: #009900; font-weight: 600;'>winner</span>, congratulations!", unsafe_allow_html=True)
+                else:
+                    st.write(f"<span style='color: #FF6600; font-weight: 600;'>Loss prevented</span> with variant {alphabet[i]}! Congratulations with this valuable insight.", unsafe_allow_html=True)
 
-        # Non-inferiority tests
+        def perform_non_inferiority_test(i, alphabet, p_values, conversion_rates, visitor_counts, alpha_noninf, non_inferiority_margin):
+            pooled_se = np.sqrt((conversion_rates[0] * (1 - conversion_rates[0]) / visitor_counts[0]) + (conversion_rates[i] * (1 - conversion_rates[i]) / visitor_counts[i]))
+            z_stat_noninf = (conversion_rates[i] - conversion_rates[0] - non_inferiority_margin) / pooled_se
+            p_value_noninf = stats.norm.cdf(z_stat_noninf)
+
+            confidence_interval = stats.norm.interval(1 - alpha_noninf, loc=(conversion_rates[i] - conversion_rates[0]), scale=pooled_se)
+            lower_bound, upper_bound = confidence_interval
+
+            if p_value_noninf <= alpha_noninf:
+                st.write(f"Variant {alphabet[i]} vs {alphabet[0]}:")
+                st.write(f"Confidence interval for difference in conversion rates: ({lower_bound:.4f}, {upper_bound:.4f})")
+                st.write(f"P-value (non-inferiority test): {p_value_noninf:.4f}")
+                if p_values[i - 1] > alpha:
+                    st.write(f"The test result for {alphabet[i]} vs {alphabet[0]} is not statistically significant in the Z-test with p-value {p_values[i-1]:.4f}, but this variant generates at least the same number of conversions as the control variant.")
+                else:
+                    st.write(f"The test result for {alphabet[i]} vs {alphabet[0]} is not statistically significant in the Z-test with p-value {p_values[i-1]:.4f}, and this variant possibly will not generate at least the same number of conversions as the control variant.")
+
+        # Main logic
         for i in range(1, num_variants):
-            if p_values[i - 1] > alpha:
-                st.write("### Non-inferiority Test Results:")
-                alpha_noninf = 0.05  # Minimize the chance of disqualifying B to 5%
-                non_inferiority_margin = 0.01  # Maximum acceptable difference in effect size for B to still be considered "non-inferior."
-                
-                pooled_se = np.sqrt(
-                    (conversion_rates[0] * (1 - conversion_rates[0]) / visitor_counts[0])
-                    + (conversion_rates[i] * (1 - conversion_rates[i]) / visitor_counts[i])
-                )
-                z_stat_noninf = (
-                    conversion_rates[i] - conversion_rates[0] - non_inferiority_margin
-                ) / pooled_se
-                p_value_noninf = stats.norm.cdf(z_stat_noninf)
+            perform_superiority_test(i, alphabet, p_values, conversion_rates)
 
-                confidence_interval = stats.norm.interval(
-                    1 - alpha_noninf,
-                    loc=(conversion_rates[i] - conversion_rates[0]),
-                    scale=pooled_se,
-                )
-                lower_bound, upper_bound = confidence_interval
+            alpha_noninf = 0.05
+            non_inferiority_margin = 0.01
+            perform_non_inferiority_test(i, alphabet, p_values, conversion_rates, visitor_counts, alpha_noninf, non_inferiority_margin)
 
-                if p_value_noninf <= alpha_noninf:
-                    st.write(f"Variant {alphabet[i]} vs {alphabet[0]}:")
-                    st.write(
-                        f"Confidence interval for difference in conversion rates: ({lower_bound:.4f}, {upper_bound:.4f})"
-                    )
-                    st.write(f"P-value (non-inferiority test): {p_value_noninf:.4f}")
-                    if p_values[i - 1] > alpha:
-                        st.write(
-                            f"The test result for {alphabet[i]} vs {alphabet[0]} is not statistically significant in the Z-test with p-value {p_values[i-1]:.4f}, but this variant generates at least the same number of conversions as the control variant."
-                        )
-                    else:
-                        st.write(
-                            f"The test result for {alphabet[i]} vs {alphabet[0]} is not statistically significant in the Z-test with p-value {p_values[i-1]:.4f}, and this variant possibly will not generate at least the same number of conversions as the control variant."
-                        )
     else:
         st.write("")
         st.write("Please enter valid inputs for all fields.")
