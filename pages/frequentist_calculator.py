@@ -230,15 +230,13 @@ def run():
                     st.write(f"P-value (non-inferiority test): {p_value_noninf:.4f}")
 
                     if p_value_noninf <= alpha_noninf:
-                        st.write("The test result is not statistically significant, but this variant generates at least the same number of conversions as the control variant.")
                         for i in range(1, num_variants):
                             if p_values[i-1] > alpha:
-                                st.write(f"P-value for {alphabet[i]} vs {alphabet[0]}: {p_values[i-1]:.4f}")
+                                st.write("The test result for {alphabet[i]} vs {alphabet[0]} is not statistically significant with p-value {p_values[i-1]:.4f}, but this variant generates at least the same number of conversions as the control variant.")
                     else:
-                        st.write("The test result is not statistically significant, and this variant possibly will not generate at least the same number of conversions as the control variant.")
                         for i in range(1, num_variants):
                             if p_values[i-1] > alpha:
-                                st.write(f"P-value for {alphabet[i]} vs {alphabet[0]}: {p_values[i-1]:.4f}")
+                                st.write("The test result for {alphabet[i]} vs {alphabet[0]} is not statistically significant with p-value {p_values[i-1]:.4f}, and this variant possibly will not generate at least the same number of conversions as the control variant.")
     else:
         st.write("")
         st.write("Please enter valid inputs for all fields.")
