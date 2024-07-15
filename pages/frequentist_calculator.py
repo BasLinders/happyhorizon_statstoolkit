@@ -228,25 +228,15 @@ def run():
                 else:
                     st.write(f"The test result for {alphabet[i]} vs {alphabet[0]} is not statistically significant in the Z-test with p-value {p_values[i-1]:.4f}, and this variant possibly will not generate at least the same number of conversions as the control variant.", unsafe_allow_html=True)
 
-        # Main logic
-        for i in range(1, num_variants):
-            perform_superiority_test(i, alphabet, p_values, conversion_rates)
-
-            alpha_noninf = 0.05
-            non_inferiority_margin = 0.01
-            perform_non_inferiority_test(i, alphabet, p_values, conversion_rates, visitor_counts, alpha_noninf, non_inferiority_margin)
-
-        if num_variants >= 3 and any(p <= alpha for p in p_values):
+        def perform_dunnett_test(alpha, conversion_rates, visitor_counts, alphabet):
             # Prepare data for Dunnett's test using TukeyHSD as an approximation
             data = []
             groups = []
-            #for i, count in enumerate(visitor_counts):
             for i in range(num_variants):
                 data.extend([conversion_rates[i]] * visitor_counts[i])
                 groups.extend([alphabet[i]] * visitor_counts[i])
 
             mc = pairwise_tukeyhsd(data, groups, alpha=alpha)
-            #dunnett_summary = mc.summary()
             dunnett_results = mc._results_table.data[1:]
 
             # Convert results to DataFrame
@@ -264,14 +254,25 @@ def run():
 
                 def perform_dunnett_test_summary():
                     st.write("### Dunnett's Test Summary")
-                    for comp in dunnett_results:
-                        comparison, p_value = comp[0] + " vs " + comp[1], comp[4]
+                    for idx, row in dunnett_df.iterrows():
+                        comparison, p_value = f"{row['group1']} vs {row['group2']}", row['p-adj']
                         if p_value <= alpha:
                             st.markdown(f" * Statistically significant difference for {comparison} with p-value: {p_value:.4f}")
                         else:
                             st.markdown(f" * No significant difference for {comparison} with p-value: {p_value:.4f}")
 
                 perform_dunnett_test_summary()
+
+        # Main logic
+        for i in range(1, num_variants):
+            perform_superiority_test(i, alphabet, p_values, conversion_rates)
+
+            alpha_noninf = 0.05
+            non_inferiority_margin = 0.01
+            perform_non_inferiority_test(i, alphabet, p_values, conversion_rates, visitor_counts, alpha_noninf, non_inferiority_margin)
+
+        if num_variants >= 3 and any(p <= alpha for p in p_values):
+            perform_dunnett_test(alpha, conversion_rates, visitor_counts, alphabet)
 
     else:
         st.write("")
