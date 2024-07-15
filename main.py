@@ -9,16 +9,16 @@ logo_url = "https://cdn.homerun.co/49305/hh-woordmerk-rgb-blue-met-discriptor166
 st.image(logo_url, width=200) # alternative: use_column_width=True
 
 st.title("Happy Horizon Experimentation Toolkit")
-st.write("### STAGE: <span style='color: orange;'>Beta V1</span>", unsafe_allow_html=True)
+st.write("### STAGE: <span style='color: orange;'>Beta v1.1</span>", unsafe_allow_html=True)
 st.write("""
 This is the main page for the Happy Horizon Experimentation Toolkit. You can navigate to individual apps using the sidebar.
 
 ### Features
-<span style='color:#009900; font-weight: 600;'>&#10003;</span> **Bayesian calculator**: Calculate the probability of a winner and make a business case<br>
-<span style='color:#009900; font-weight: 600;'>&#10003;</span> **Frequentist calculator**: Calculate significance for your test variant as tangible proof for a winner<br>
-<span style='color:#009900; font-weight: 600;'>&#10003;</span> **Continuous data calculator**: Analyze metrics such as AOV, items per transaction for your experiment<br>
-<span style='color:#009900; font-weight: 600;'>&#10003;</span> **Interaction Effect calculator**: Verify if your experiments negatively impacted each other or not<br>
-<span style='color:#009900; font-weight: 600;'>&#10003;</span> **SRM calculator**: Identify if your visitors were distributed as expected in your experiment<br>
+<span style='color:#009900; font-weight: 600;'>&#10003;</span> **Bayesian calculator**: Calculate the probability of a winner and make a business case<br><br>
+<span style='color:#009900; font-weight: 600;'>&#10003;</span> **Frequentist calculator**: Calculate significance for your test variant as tangible proof for a winner<br><br>
+<span style='color:#009900; font-weight: 600;'>&#10003;</span> **Continuous data calculator**: Analyze metrics such as AOV, items per transaction for your experiment<br><br>
+<span style='color:#009900; font-weight: 600;'>&#10003;</span> **Interaction Effect calculator**: Verify if your experiments negatively impacted each other or not<br><br>
+<span style='color:#009900; font-weight: 600;'>&#10003;</span> **SRM calculator**: Identify if your visitors were distributed as expected in your experiment<br><br>
 <span style='color:#009900; font-weight: 600;'>&#10003;</span> **Sample Size / MDE calculator**: See how long your experiment has to run to reach an effect before you can draw conclusions
 
 ### How to Use
