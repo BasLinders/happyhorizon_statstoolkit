@@ -236,7 +236,7 @@ def run():
             non_inferiority_margin = 0.01
             perform_non_inferiority_test(i, alphabet, p_values, conversion_rates, visitor_counts, alpha_noninf, non_inferiority_margin)
 
-        if num_variants >= 3 and any(p_values[i - 1].astype(float) <= alpha):
+        if num_variants >= 3 and any(p <= alpha for p in p_values):
             # Prepare data for Dunnett's test using TukeyHSD as an approximation
             data = []
             groups = []
