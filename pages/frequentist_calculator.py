@@ -1,6 +1,7 @@
 import streamlit as st
 import numpy as np
 import statsmodels.api as sm
+from statsmodels.stats.multicomp import pairwise_tukeyhsd
 from scipy import stats
 from scipy.stats import norm
 import matplotlib.pyplot as plt
@@ -225,6 +226,38 @@ def run():
                     st.write(f"The test result for {alphabet[i]} vs {alphabet[0]} is not statistically significant in the Z-test with p-value {p_values[i-1]:.4f}, but this variant generates at least the same number of conversions as the control variant.", unsafe_allow_html=True)
                 else:
                     st.write(f"The test result for {alphabet[i]} vs {alphabet[0]} is not statistically significant in the Z-test with p-value {p_values[i-1]:.4f}, and this variant possibly will not generate at least the same number of conversions as the control variant.", unsafe_allow_html=True)
+
+        if num_variants >= 3:
+            # Prepare data for Dunnett's test using TukeyHSD as an approximation
+            data = []
+            groups = []
+            for i, count in enumerate(visitor_counts):
+                data.extend([conversion_rates[i]] * count)
+                groups.extend([alphabet[i]] * count)
+
+            mc = pairwise_tukeyhsd(data, groups, alpha=alpha)
+            dunnett_summary = mc.summary()
+            dunnett_results = mc._results_table.data[1:]
+
+            # Add a button to show Dunnett's test results
+            st.write("")
+            st.write("Because you ran more than 2 variants, do you want to use Dunnett's test to correct for the Multiple Comparison Problem?")
+            st.write("")
+            if st.button('Show Dunnett\'s Test Results'):
+                st.write("### Dunnett's Test Results")
+                st.write(dunnett_summary)
+                st.write("")
+
+                def perform_dunnett_test_summary():
+                    st.write("### Dunnett's Test Summary")
+                    for comp in dunnett_results:
+                        comparison, p_value = comp[0] + " vs " + comp[1], comp[4]
+                        if p_value <= alpha:
+                            st.markdown(f" * Statistically significant difference for {comparison} with p-value: {p_value:.4f}")
+                        else:
+                            st.markdown(f" * No significant difference for {comparison} with p-value: {p_value:.4f}")
+
+                perform_dunnett_test_summary()
 
         # Main logic
         for i in range(1, num_variants):
