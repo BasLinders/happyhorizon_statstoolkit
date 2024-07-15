@@ -236,7 +236,7 @@ def run():
             non_inferiority_margin = 0.01
             perform_non_inferiority_test(i, alphabet, p_values, conversion_rates, visitor_counts, alpha_noninf, non_inferiority_margin)
 
-        if num_variants >= 3:
+        if num_variants >= 3 and p_values[i - 1] <= alpha:
             # Prepare data for Dunnett's test using TukeyHSD as an approximation
             data = []
             groups = []
@@ -245,7 +245,7 @@ def run():
                 groups.extend([alphabet[i]] * count)
 
             mc = pairwise_tukeyhsd(data, groups, alpha=alpha)
-            dunnett_summary = mc.summary()
+            #dunnett_summary = mc.summary()
             dunnett_results = mc._results_table.data[1:]
 
             # Convert results to DataFrame
