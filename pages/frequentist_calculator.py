@@ -1,4 +1,5 @@
 import streamlit as st
+import pandas as pd
 import numpy as np
 import statsmodels.api as sm
 from statsmodels.stats.multicomp import pairwise_tukeyhsd
