@@ -227,6 +227,14 @@ def run():
                 else:
                     st.write(f"The test result for {alphabet[i]} vs {alphabet[0]} is not statistically significant in the Z-test with p-value {p_values[i-1]:.4f}, and this variant possibly will not generate at least the same number of conversions as the control variant.", unsafe_allow_html=True)
 
+        # Main logic
+        for i in range(1, num_variants):
+            perform_superiority_test(i, alphabet, p_values, conversion_rates)
+
+            alpha_noninf = 0.05
+            non_inferiority_margin = 0.01
+            perform_non_inferiority_test(i, alphabet, p_values, conversion_rates, visitor_counts, alpha_noninf, non_inferiority_margin)
+
         if num_variants >= 3:
             # Prepare data for Dunnett's test using TukeyHSD as an approximation
             data = []
@@ -239,13 +247,17 @@ def run():
             dunnett_summary = mc.summary()
             dunnett_results = mc._results_table.data[1:]
 
+            # Convert results to DataFrame
+            dunnett_df = pd.DataFrame(dunnett_results, columns=mc._results_table.data[0])
+            dunnett_df.columns = [str(col) for col in dunnett_df.columns]  # Ensure columns are strings
+
             # Add a button to show Dunnett's test results
             st.write("")
             st.write("Because you ran more than 2 variants, do you want to use Dunnett's test to correct for the Multiple Comparison Problem?")
             st.write("")
             if st.button('Show Dunnett\'s Test Results'):
                 st.write("### Dunnett's Test Results")
-                st.write(dunnett_summary)
+                st.table(dunnett_df)
                 st.write("")
 
                 def perform_dunnett_test_summary():
@@ -258,14 +270,6 @@ def run():
                             st.markdown(f" * No significant difference for {comparison} with p-value: {p_value:.4f}")
 
                 perform_dunnett_test_summary()
-
-        # Main logic
-        for i in range(1, num_variants):
-            perform_superiority_test(i, alphabet, p_values, conversion_rates)
-
-            alpha_noninf = 0.05
-            non_inferiority_margin = 0.01
-            perform_non_inferiority_test(i, alphabet, p_values, conversion_rates, visitor_counts, alpha_noninf, non_inferiority_margin)
 
     else:
         st.write("")
