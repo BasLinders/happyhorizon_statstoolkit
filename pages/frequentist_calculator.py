@@ -56,6 +56,13 @@ def run():
     if valid_inputs:
         alpha = 1 - (risk / 100)
 
+        # Apply Sidak's correction if there are 3 or more variants
+        if num_variants >= 3:
+            m = num_variants - 1  # Number of comparisons
+            sidak_alpha = 1 - (1 - alpha)**(1 / m)
+        else:
+            sidak_alpha = alpha  # No correction needed if less than 3 variants
+
         # Verify the data
         st.write("### Please verify your input:")
         st.markdown(f"Chosen threshold for significance: {risk}%")
@@ -97,6 +104,9 @@ def run():
         for i in range(1, num_variants):
             st.markdown(f" * Z-statistic for {alphabet[i]} vs {alphabet[0]}: {z_stats[i-1]:.4f}")
             st.markdown(f" * P-value for {alphabet[i]} vs {alphabet[0]}: {p_values[i-1]:.4f}")
+
+        # Apply Sidak's correction to the p-values
+        significant_results = [p <= sidak_alpha for p in p_values]
 
         # Power calculations
         if all(v > 1000 for v in visitor_counts):
@@ -173,14 +183,14 @@ def run():
             plt.text(conversion_rates[i] * 100, plt.ylim()[1] * 0.50, f'Mean {alphabet[i]}', color=colors[i], ha='right', rotation=90, va='bottom')
 
             # Shading the regions for winners and losers
-            if p_values[i-1] <= alpha:
+            if significant_results[i-1]:
                 if conversion_rates[i] > conversion_rates[0]:
                     # Shade only the upper tail in light green
-                    upper_critical_value = norm.ppf(1 - alpha, loc=conversion_rates[i], scale=se_list[i])
+                    upper_critical_value = norm.ppf(1 - sidak_alpha, loc=conversion_rates[i], scale=se_list[i])
                     plt.fill_between(x_range * 100, pdf, where=(x_range * 100 >= upper_critical_value * 100), color='lightgreen', alpha=0.3)
                 elif conversion_rates[i] < conversion_rates[0]:
                     # Shade only the lower tail in light red
-                    lower_critical_value = norm.ppf(alpha, loc=conversion_rates[i], scale=se_list[i])
+                    lower_critical_value = norm.ppf(sidak_alpha, loc=conversion_rates[i], scale=se_list[i])
                     plt.fill_between(x_range * 100, pdf, where=(x_range * 100 <= lower_critical_value * 100), color='lightcoral', alpha=0.3)
 
         # Adjust x-axis for percentages and add legend, titles, and labels
@@ -199,7 +209,7 @@ def run():
             st.write("This test is <span style='color: #FF6600; font-weight: 600;'>invalid</span>: The distribution of traffic shows a statistically significant deviation from the expected values. Interpret the results with caution and check the distribution.", unsafe_allow_html=True)
 
         def perform_superiority_test(i, alphabet, p_values, conversion_rates):
-            if p_values[i - 1] <= alpha:
+            if significant_results[i - 1]:
                 st.write(f"### Superiority test results for {alphabet[i]} vs {alphabet[0]}")
                 st.markdown(f" * Statistically significant result for {alphabet[i]} with p-value: {p_values[i-1]:.4f} and a power of {observed_powers[i-1] * 100:.2f}%!")
                 st.markdown(f" * Conversion rate change for {alphabet[i]}: {(conversion_rates[i] - conversion_rates[0]) * 100:.2f}%")
@@ -216,7 +226,7 @@ def run():
             confidence_interval = stats.norm.interval(1 - alpha_noninf, loc=(conversion_rates[i] - conversion_rates[0]), scale=pooled_se)
             lower_bound, upper_bound = confidence_interval
 
-            if p_values[i - 1] > alpha:
+            if p_values[i - 1] > sidak_alpha:
                 st.write(f"### Non-inferiority test results for {alphabet[i]} vs {alphabet[0]}:")
                 st.markdown(f" * Confidence interval for difference in conversion rates: ({lower_bound:.4f}, {upper_bound:.4f})")
                 st.markdown(f" * P-value (non-inferiority test): {p_value_noninf:.4f}")
