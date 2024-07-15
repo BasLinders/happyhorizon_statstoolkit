@@ -1,8 +1,6 @@
 import streamlit as st
-import pandas as pd
 import numpy as np
 import statsmodels.api as sm
-from statsmodels.stats.multicomp import pairwise_tukeyhsd
 from scipy import stats
 from scipy.stats import norm
 import matplotlib.pyplot as plt
@@ -72,12 +70,11 @@ def run():
             st.markdown(f" * Conversion Rate {alphabet[i]}: {conversion_rates[i] * 100:.2f}%")
 
         # SRM check
-        observed = visitor_counts
-        expected = [sum(observed) / len(observed)] * len(observed)
+        observed = np.array(visitor_counts)
+        expected = np.array([sum(observed) / len(observed)] * len(observed))
 
         # Perform the chi-squared test for independence
-        contingency_table = np.array([observed, expected])
-        chi2, srm_p_value, dof, expected_freq = stats.chi2_contingency(contingency_table)
+        chi2, srm_p_value = stats.chisquare(f_obs=observed, f_exp=expected)
 
         # Calculate pooled proportion and standard errors
         pooled_proportion = sum(variant_conversions) / sum(visitor_counts)
@@ -180,11 +177,11 @@ def run():
                 if conversion_rates[i] > conversion_rates[0]:
                     # Shade only the upper tail in light green
                     upper_critical_value = norm.ppf(1 - alpha, loc=conversion_rates[i], scale=se_list[i])
-                    plt.fill_between(x_range * 100, pdf, where=(x_range >= upper_critical_value), color='lightgreen', alpha=0.3)
+                    plt.fill_between(x_range * 100, pdf, where=(x_range * 100 >= upper_critical_value * 100), color='lightgreen', alpha=0.3)
                 elif conversion_rates[i] < conversion_rates[0]:
                     # Shade only the lower tail in light red
                     lower_critical_value = norm.ppf(alpha, loc=conversion_rates[i], scale=se_list[i])
-                    plt.fill_between(x_range * 100, pdf, where=(x_range <= lower_critical_value), color='lightcoral', alpha=0.3)
+                    plt.fill_between(x_range * 100, pdf, where=(x_range * 100 <= lower_critical_value * 100), color='lightcoral', alpha=0.3)
 
         # Adjust x-axis for percentages and add legend, titles, and labels
         plt.xlabel('Conversion rate (%)')
