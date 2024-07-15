@@ -240,9 +240,10 @@ def run():
             # Prepare data for Dunnett's test using TukeyHSD as an approximation
             data = []
             groups = []
-            for i, count in enumerate(visitor_counts):
-                data.extend([conversion_rates[i]] * count)
-                groups.extend([alphabet[i]] * count)
+            #for i, count in enumerate(visitor_counts):
+            for i in range(num_variants):
+                data.extend([conversion_rates[i]] * visitor_counts[i])
+                groups.extend([alphabet[i]] * visitor_counts[i])
 
             mc = pairwise_tukeyhsd(data, groups, alpha=alpha)
             #dunnett_summary = mc.summary()
@@ -250,7 +251,7 @@ def run():
 
             # Convert results to DataFrame
             dunnett_df = pd.DataFrame(dunnett_results, columns=mc._results_table.data[0])
-            dunnett_df.columns = [str(col) for col in dunnett_df.columns]  # Ensure columns are strings
+            dunnett_df.columns = [str(col) for col in dunnett_df.columns]
 
             # Add a button to show Dunnett's test results
             st.write("")
