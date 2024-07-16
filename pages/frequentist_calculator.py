@@ -250,9 +250,9 @@ def run():
                 non_inferiority_margin = 0.01
                 perform_non_inferiority_test(i, alphabet, p_values, conversion_rates, visitor_counts, alpha_noninf, non_inferiority_margin)
 
-    else:
-        st.write("")
-        st.write("<span style='color: #ff6600;'>*Please enter valid inputs for all fields</span>", unsafe_allow_html=True)
+        else:
+            st.write("")
+            st.write("<span style='color: #ff6600;'>*Please enter valid inputs for all fields</span>", unsafe_allow_html=True)
 
 if __name__ == "__main__":
     run()
