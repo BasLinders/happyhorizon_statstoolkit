@@ -303,7 +303,7 @@ def run():
                 st.dataframe(df)
         else:
             st.write("")
-            st.write("<span style='color: #ff6600;'>*Please enter valid inputs for all fields</span>", unsafe_allow_html=True)
+            st.write("<span style='color: #ff6600;'>*Please enter valid inputs for all fields (business case is optional)</span>", unsafe_allow_html=True)
 
 if __name__ == "__main__":
     run()
