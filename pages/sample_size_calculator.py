@@ -26,64 +26,65 @@ def run():
 
     tails = st.selectbox("Do you want to know if B is better than A, or also the other way around (i.e. verify a negative effect)?", ('B better than A', 'A better than B'))
 
-    # Ensure all inputs are provided and valid
-    if any([baseline_visitors <= 0, baseline_conversions <= 0, risk <= 0, trust <= 0, tails not in ['B better than A', 'A better than B']]):
-        st.write("Please enter all required inputs with valid values.")
-    else:
-        alpha = 1 - (risk / 100)
-        power = trust / 100
-
-        # Calculate baseline conversion rate
-        baseline_rate = baseline_conversions / baseline_visitors
-
-        # Z-scores for confidence and power
-        if tails == 'A better than B':
-            z_alpha = norm.ppf(1 - alpha / 2)  # Two-tailed
+    st.write("")
+    if st.button("Calculate Sample size and MDE"):
+        if any([baseline_visitors <= 0, baseline_conversions <= 0, risk <= 0, trust <= 0, tails not in ['B better than A', 'A better than B']]):
+            st.write("Please enter all required inputs with valid values.")
         else:
-            z_alpha = norm.ppf(1 - alpha)
-        z_power = norm.ppf(power)
+            alpha = 1 - (risk / 100)
+            power = trust / 100
 
-        # Weekly increments
-        weeks = range(1, 7)  # For 6 weeks
-        weekly_visitors_increase = np.ceil(baseline_visitors / 2)
+            # Calculate baseline conversion rate
+            baseline_rate = baseline_conversions / baseline_visitors
 
-        # Prepare a list to store the results for each week
-        results = []
-        for week in weeks:
-            visitors_per_variant = int(weekly_visitors_increase * week)
-            variant_cr = baseline_rate  # Assuming constant conversion rate over weeks for simplicity
-            
-            # Sample size calculation adapted for two-tailed test, solving for MDE
-            se = np.sqrt(2 * variant_cr * (1 - variant_cr) / visitors_per_variant)
-            mde_absolute = z_alpha * se + z_power * se
-            
-            # Calculate relative MDE based on the baseline conversion rate
-            mde_relative = (mde_absolute / variant_cr) * 100
-            
-            # Append results for this week to the list
-            results.append([week, visitors_per_variant, mde_relative])
+            # Z-scores for confidence and power
+            if tails == 'A better than B':
+                z_alpha = norm.ppf(1 - alpha / 2)  # Two-tailed
+            else:
+                z_alpha = norm.ppf(1 - alpha)
+            z_power = norm.ppf(power)
 
-        # Convert the list of results into a DataFrame
-        df = pd.DataFrame(results, columns=['Week', 'Visitors / Variant', 'Relative MDE'])
+            # Weekly increments
+            weeks = range(1, 7)  # For 6 weeks
+            weekly_visitors_increase = np.ceil(baseline_visitors / 2)
 
-        # Adjust formatting for better readability
-        #df['Absolute MDE'] = df['Absolute MDE'].map(lambda x: f"{x:.2%}")
-        df['Relative MDE'] = df['Relative MDE'].map(lambda x: f"{x:.2f}%")
+            # Prepare a list to store the results for each week
+            results = []
+            for week in weeks:
+                visitors_per_variant = int(weekly_visitors_increase * week)
+                variant_cr = baseline_rate  # Assuming constant conversion rate over weeks for simplicity
+                
+                # Solving for MDE
+                se = np.sqrt(2 * variant_cr * (1 - variant_cr) / visitors_per_variant)
+                mde_absolute = z_alpha * se + z_power * se
+                
+                # Calculate relative MDE based on the baseline conversion rate
+                mde_relative = (mde_absolute / variant_cr) * 100
+                
+                # Append results for this week to the list
+                results.append([week, visitors_per_variant, mde_relative])
 
-        df = df.reset_index(drop=True)
+            # Convert the list of results into a DataFrame
+            df = pd.DataFrame(results, columns=['Week', 'Visitors / Variant', 'Relative MDE'])
 
-        # Print the DataFrame
-        st.write("""
-            This table tells you what the minimum effect is that you need to see in order to reach statistical significance 
-            for the amount of weeks that your test has run. A relative MDE of < 5% is generally testworthy, 5-10% is debatable. For everything 
-            above that, you should consider if the experiment will be able to achieve this effect and evaluate testworthiness.
-        """)
-        #st.write(df)
-        # Convert DataFrame to HTML table without the index
-        html_table = df.to_html(index=False)
+            # Adjust formatting for better readability
+            #df['Absolute MDE'] = df['Absolute MDE'].map(lambda x: f"{x:.2%}")
+            df['Relative MDE'] = df['Relative MDE'].map(lambda x: f"{x:.2f}%")
 
-        # Display the HTML table
-        st.write(html_table, unsafe_allow_html=True)
+            df = df.reset_index(drop=True)
+
+            # Print the DataFrame
+            st.write("""
+                This table tells you what the minimum effect is that you need to see in order to reach statistical significance 
+                for the amount of weeks that your test has run. A relative MDE of < 5% is generally testworthy, 5-10% is debatable. For everything 
+                above that, you should consider if the experiment will be able to achieve this effect and evaluate testworthiness.
+            """)
+            #st.write(df)
+            # Convert DataFrame to HTML table without the index
+            html_table = df.to_html(index=False)
+
+            # Display the HTML table
+            st.write(html_table, unsafe_allow_html=True)
 
 if __name__ == "__main__":
     run()
