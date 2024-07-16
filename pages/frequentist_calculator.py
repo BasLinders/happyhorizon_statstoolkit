@@ -53,6 +53,7 @@ def run():
     # Ensure inputs are valid before performing calculations
     valid_inputs = all(v > 0 for v in visitor_counts) and all(0 <= c <= v for c, v in zip(variant_conversions, visitor_counts))
 
+    st.write("")
     if st.button("Calculate my test results"):
 
         if valid_inputs:
