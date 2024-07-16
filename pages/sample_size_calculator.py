@@ -74,6 +74,8 @@ def run():
             df = df.reset_index(drop=True)
 
             # Print the DataFrame
+            st.write("")
+            st.write("### MDE table")
             st.write("""
                 This table tells you what the minimum effect is that you need to see in order to reach statistical significance 
                 for the amount of weeks that your test has run. A relative MDE of < 5% is generally testworthy, 5-10% is debatable. For everything 
