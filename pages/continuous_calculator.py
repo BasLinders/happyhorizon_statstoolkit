@@ -21,8 +21,8 @@ def run():
     st.title("Continuous Data Calculator")
     """
     This calculator lets you analyze revenue data or the amount of items of ecommerce transactions (or leads) for your online experiments. 
-    See the example CSV file for what you need to upload. You're
-    not limited to just A and B, but can add more labels when applicable (C, D, etc.). Upload your CSV file and select the KPI to analyze. 
+    See the example CSV file for what you need to upload. You're not limited to just A and B, but can add more labels when applicable (C, D, etc.). 
+    Upload your CSV file and select the KPI to analyze. 
 
     The app will identify outliers, fit models, and perform statistical tests.
     Based on the test results and the output of the highest average and higest standard deviation, you can determine which variant won.
@@ -33,12 +33,12 @@ def run():
     # Template CSV download
     def get_csv_template():
         data = {
-            "experience_variant_label": ["A", "B"],
-            "total_item_quantity": [0, 0],
-            "purchase_revenue": [0.0, 0.0]
+            "experience_variant_label": ["A", "B", "B", "A"],
+            "total_item_quantity": [5, 2, 4, 1],
+            "purchase_revenue": [114.35, 45.74, 91.48, 22.87]
         }
         template_df = pd.DataFrame(data)
-        return template_df.to_csv(index=False)
+        return template_df.to_csv(index=False, sep=',')
 
     st.download_button(
         label="Download CSV Template",
