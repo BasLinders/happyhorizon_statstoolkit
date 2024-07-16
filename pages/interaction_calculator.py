@@ -37,6 +37,7 @@ def run():
         BA_c = st.number_input("BA Conversions", value=0)
         BB_c = st.number_input("BB Conversions", value=0)
 
+    st.write("")
     if st.button("Calculate interaction effect"):
         if AA_u > 0 and AB_u > 0 and BA_u > 0 and BB_u > 0 and AA_c > 0 and AB_c > 0 and BA_c > 0 and BB_c > 0:
             # Creating dataframes for each combination
