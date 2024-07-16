@@ -189,7 +189,8 @@ def run():
                     st.write(welch_results)
                     
                     significant = 'significant' if welch_results['p-unc'].iloc[0] < 0.05 else 'no significant'
-                    st.write(f"\nConclusion: Welch's ANOVA was performed due to non-homogeneous variance, " +
+                    st.write("### Conclusion")
+                    st.write(f"Welch's ANOVA was performed due to non-homogeneous variance, " +
                             f"with results suggesting {significant} differences between the groups with a " + 
                             f"p-value of {welch_results['p-unc'].iloc[0]:.4f}.")
                 else:
@@ -204,7 +205,8 @@ def run():
                         st.write(f"Kruskal-Wallis H-test statistic: {statistic:.4f}, P-value: {p_value:.4g}")
                         
                         significant = 'significant' if p_value < 0.05 else 'no significant'
-                        st.write(f"\nConclusion: The Kruskal-Wallis test results suggest {significant} differences between the groups.")
+                        st.write("### Conclusion")
+                        st.write(f"The Kruskal-Wallis test results suggest {significant} differences between the groups.")
                     elif unique_variants == 2:
                         st.write("\nWe used the non-parametric Mann-Whitney U test for two groups.")
                         
@@ -215,20 +217,22 @@ def run():
                         st.write(f"Mann-Whitney U test statistic: {statistic:.4f}, P-value: {p_value:.4g}")
                         
                         significant = 'significant' if p_value < 0.05 else 'no significant'
-                        st.write(f"\nConclusion: The Mann-Whitney U test results suggest {significant} differences between the two groups.")
+                        st.write("### Conclusion")
+                        st.write(f"The Mann-Whitney U test results suggest {significant} differences between the two groups.")
             else:
                 st.write("\nThe data shows a normal distribution with homogeneous variance, so a standard ANOVA was performed.")
                 anova_results = sm.stats.anova_lm(model_no_outliers, typ=2)
                 st.write(anova_results)
                 
                 significant = 'significant' if anova_results['PR(>F)'].iloc[0] < 0.05 else 'no significant'
-                st.write(f"\nConclusion: ANOVA was performed because the data shows a normal distribution with homogeneous variance, " +
+                st.write("### Conclusion")
+                st.write(f"ANOVA was performed because the data shows a normal distribution with homogeneous variance, " +
                         f"with results suggesting {significant} differences between the groups.")
                 
                 if anova_results['PR(>F)'][0] < 0.05:
                     tukey_results = pairwise_tukeyhsd(endog=df_filtered[kpi], groups=df_filtered['experience_variant_label'], alpha=0.05)
                     
-                    st.write("\nTukey's HSD test results for multiple comparisons:")
+                    st.write("\nTukey's Honestly Significant Difference test results for multiple comparisons:")
                     st.write(tukey_results)
                     
                     tukey_results.plot_simultaneous()
