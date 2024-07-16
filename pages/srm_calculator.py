@@ -1,5 +1,6 @@
 import streamlit as st
 import scipy.stats as stats
+import statistics
 import string
 
 def run():
@@ -62,7 +63,7 @@ def run():
             # Display results
             st.write("")
             st.write("### Conclusion")
-            st.write(f"P-value: {p_value:.4f}. The expected amount of visitors per variant is {visitor_counts / alphabet.nunique()}.") 
+            st.write(f"P-value: {p_value:.4f}. The expected amount of visitors per variant is {statistics.mean(expected)}.") 
             st.write(f"This suggests a {srm_result}.")
 
 if __name__ == "__main__":
