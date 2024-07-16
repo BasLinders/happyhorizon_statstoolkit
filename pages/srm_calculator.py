@@ -59,6 +59,7 @@ def run():
                 srm_result = "valid distribution. The amount of visitors per variant does not significantly deviate from the expected split"
 
             # Display results
+            st.write("### Conclusion")
             st.write(f"p-value: {p_value:.4f}.") 
             st.write("")
             st.write(f"This suggests a {srm_result}.")
