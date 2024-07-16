@@ -63,7 +63,7 @@ def run():
             # Display results
             st.write("")
             st.write("### Conclusion")
-            st.write(f"P-value: {p_value:.4f}. The expected amount of visitors per variant is {statistics.mean(expected)}.") 
+            st.write(f"P-value: {p_value:.4f}. The expected amount of visitors per variant is {round(statistics.mean(expected))}.") 
             st.write(f"This suggests a {srm_result}.")
 
 if __name__ == "__main__":
