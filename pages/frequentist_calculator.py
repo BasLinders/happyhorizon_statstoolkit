@@ -209,7 +209,7 @@ def run():
             st.write("This test is <span style='color: #FF6600; font-weight: 600;'>invalid</span>: The distribution of traffic shows a statistically significant deviation from the expected values. Interpret the results with caution and check the distribution.", unsafe_allow_html=True)
 
         if num_variants >= 3:
-            st.write("Šidák Correction applied")
+            st.write("### Šidák Correction applied")
             st.write("The Šidák correction to solve for the Multiple Comparison Problem was applied due to 3 or more variants in the test.")
 
         def perform_superiority_test(i, alphabet, p_values, conversion_rates):
