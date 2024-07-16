@@ -125,7 +125,7 @@ def run():
                         (np.abs(dffits) > dffits_threshold)]
 
             st.write("### Potential outliers identified:")
-            st.write(outliers.head(10))
+            st.write(outliers.sample(5))
             st.write("Amount of outliers: ", len(outliers))
 
             # Remove outliers and return filtered dataframe
@@ -138,7 +138,7 @@ def run():
 
             df_filtered = df[non_outliers_mask].copy()
             st.write("### Sample of filtered data (outliers removed):")
-            st.write(df_filtered.sample(10))
+            st.write(df_filtered.sample(5))
 
             # Fit the model without outliers
             model_no_outliers = smf.ols(f'{kpi} ~ C(experience_variant_label)', data=df_filtered).fit()
@@ -243,9 +243,9 @@ def run():
 
             # Final conclusions based on significant results and descriptive statistics
             if significant == 'significant' and highest_mean_variant == 'B' and highest_std_variant == 'B':
-                st.write(f"Congratulations, variant B is a winner for {kpi}!")
+                st.write(f"Congratulations, variant B is a <span style='color: #00b900;'>winner</span> for {kpi}!", unsafe_allow_html=True)
             elif significant == 'significant' and highest_mean_variant == 'A' and highest_std_variant == 'A':
-                st.write(f"Loss prevented! Variant A performed significantly worse for {kpi}.")
+                st.write(f"<span style='color: #ff6600;'>Loss prevented</span>! Variant A performed significantly worse for {kpi}.", unsafe_allow_html=True)
             elif significant == 'no significant':
                 st.write("No significant differences detected. There may not be a real effect here or you need to collect more data.")
 
