@@ -38,7 +38,7 @@ def run():
             "purchase_revenue": [114.35, 45.74, 91.48, 22.87]
         }
         template_df = pd.DataFrame(data)
-        return template_df.to_csv(index=False, sep=', ')
+        return template_df.to_csv(index=False, sep=',')
 
     st.download_button(
         label="Download CSV Template",
