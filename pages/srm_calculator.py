@@ -62,7 +62,7 @@ def run():
             # Display results
             st.write("")
             st.write("### Conclusion")
-            st.write(f"P-value: {p_value:.4f}. The expected amount of visitors per variant is {visitor_counts / len(alphabet.unique())}.") 
+            st.write(f"P-value: {p_value:.4f}. The expected amount of visitors per variant is {visitor_counts / alphabet.unique()}.") 
             st.write(f"This suggests a {srm_result}.")
 
 if __name__ == "__main__":
