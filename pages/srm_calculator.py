@@ -35,6 +35,7 @@ def run():
         with col2:
             expected_proportions.append(st.number_input(f"What percentage of users should be in variant {alphabet[i]}?", min_value=0.0, max_value=100.0, step=0.01))
 
+    st.write("")
     if st.button("Check for Sample Ratio Mismatch"):
         if sum(expected_proportions) != 100:
             st.error("The total sample proportion should be equal to 100.")
@@ -59,9 +60,9 @@ def run():
                 srm_result = "valid distribution. The amount of visitors per variant does not significantly deviate from the expected split"
 
             # Display results
+            st.write("")
             st.write("### Conclusion")
             st.write(f"p-value: {p_value:.4f}.") 
-            st.write("")
             st.write(f"This suggests a {srm_result}.")
 
 if __name__ == "__main__":
