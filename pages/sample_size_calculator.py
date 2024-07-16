@@ -29,7 +29,7 @@ def run():
     st.write("")
     if st.button("Calculate Sample size and MDE"):
         if any([baseline_visitors <= 0, baseline_conversions <= 0, risk <= 0, trust <= 0, tails not in ['B better than A', 'A better than B']]):
-            st.write("Please enter all required inputs with valid values.")
+            st.write("<span style='color: #ff6600;'>*Please enter valid inputs for all fields</span>", unsafe_allow_html=True)
         else:
             alpha = 1 - (risk / 100)
             power = trust / 100
