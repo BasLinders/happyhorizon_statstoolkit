@@ -13,6 +13,9 @@ st.write("### STAGE: <span style='color: orange;'>Beta v1.2</span>", unsafe_allo
 st.write("""
 This is the main page for the Happy Horizon Experimentation Toolkit. You can navigate to individual apps using the sidebar.
 
+### What you're looking at
+This toolkit has been created for the purposes of analyzing data from online controlled experiments ('A/B tests') to learn and better understand user behavior.  
+
 ### Features
 <span style='color:#009900; font-weight: 600; margin-right: 6px;'>&#10003;</span>**Bayesian calculator**: Calculate the probability of a winner and make a business case<br><br>
 <span style='color:#009900; font-weight: 600; margin-right: 6px;'>&#10003;</span>**Frequentist calculator**: Calculate significance for your test variant as tangible proof for a winner<br><br>
@@ -26,7 +29,7 @@ This is the main page for the Happy Horizon Experimentation Toolkit. You can nav
 - Each page contains a single tool for the purposes described above.
 
 ### About
-This toolkit has been created for the purposes of analyzing data from online controlled experiments ('A/B tests').
+Happy Horizon is a creative digital agency of experts in strategic thinking, analysis, creativity, digital services and technology.
 """, unsafe_allow_html=True)
 
 linkedin_url = "https://www.linkedin.com/in/blinders/"
