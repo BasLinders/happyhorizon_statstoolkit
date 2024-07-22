@@ -234,9 +234,10 @@ def run():
                     st.markdown(f" * Confidence interval for difference in conversion rates: ({lower_bound:.4f}, {upper_bound:.4f})")
                     st.markdown(f" * P-value (non-inferiority test): {p_value_noninf:.4f}")
                     if p_value_noninf <= alpha_noninf:
-                        st.write(f"The test result for {alphabet[i]} vs {alphabet[0]} is not statistically significant in the Z-test with p-value {p_values[i-1]:.4f}, but this variant generates at least the same number of conversions as the control variant.", unsafe_allow_html=True)
+                        st.write(f"The test result for {alphabet[i]} vs {alphabet[0]} is not statistically significant in the Z-test with p-value {p_values[i-1]:.4f}, but this variant likely generates at least the same number of conversions as the control variant. \
+                                 You may need to collect more data, or there is no real effect to be found.", unsafe_allow_html=True)
                     else:
-                        st.write(f"The test result for {alphabet[i]} vs {alphabet[0]} is not statistically significant in the Z-test with p-value {p_values[i-1]:.4f}, and this variant possibly will not generate at least the same number of conversions as the control variant.", unsafe_allow_html=True)
+                        st.write(f"The test result for {alphabet[i]} vs {alphabet[0]} is not statistically significant in the Z-test with p-value {p_values[i-1]:.4f}, and this variant likely won't generate at least the same number of conversions as the control variant.", unsafe_allow_html=True)
 
             # Main logic
             for i in range(1, num_variants):

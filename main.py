@@ -9,12 +9,12 @@ logo_url = "https://cdn.homerun.co/49305/hh-woordmerk-rgb-blue-met-discriptor166
 st.image(logo_url, width=200) # alternative: use_column_width=True
 
 st.title("Happy Horizon Experimentation Toolkit")
-st.write("### STAGE: <span style='color: orange;'>Beta v1.2</span>", unsafe_allow_html=True)
+st.write("### <span style='color: orange;'>v1.2.1 (beta)</span>", unsafe_allow_html=True)
 st.write("""
 This is the main page for the Happy Horizon Experimentation Toolkit. You can navigate to individual apps using the sidebar.
 
 ### What you're looking at
-This toolkit has been created for the purposes of analyzing data from online controlled experiments ('A/B tests') to learn and better understand user behavior.  
+This toolkit has been created for the purposes of analyzing data from online controlled experiments ('A/B tests') to learn from and better understand user behavior.  
 
 ### Features
 <span style='color:#009900; font-weight: 600; margin-right: 6px;'>&#10003;</span>**Bayesian calculator**: Calculate the probability of a winner and make a business case<br><br>
