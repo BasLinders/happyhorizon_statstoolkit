@@ -22,7 +22,7 @@ This toolkit has been created for the purposes of analyzing data from online con
 <span style='color:#009900; font-weight: 600; margin-right: 6px;'>&#10003;</span>**Continuous data calculator**: Analyze metrics such as revenue / items per transaction for your experiment<br><br>
 <span style='color:#009900; font-weight: 600; margin-right: 6px;'>&#10003;</span>**Interaction Effect calculator**: Verify if your experiments negatively impacted each other or not<br><br>
 <span style='color:#009900; font-weight: 600; margin-right: 6px;'>&#10003;</span>**SRM calculator**: Identify if your visitors were distributed as expected in your experiment<br><br>
-<span style='color:#009900; font-weight: 600; margin-right: 6px;'>&#10003;</span>**Sample Size / MDE calculator**: Calculate the runtime to reach an effect before you can draw conclusions
+<span style='color:#009900; font-weight: 600; margin-right: 6px;'>&#10003;</span>**Sample Size / MDE calculator**: Calculate the runtime to reach an effect
 
 ### How to Use
 - Select a page from the sidebar to view different tools.
