@@ -90,11 +90,11 @@ def run():
             else:
                 alpha_prior, beta_prior = 1, 1
 
-                alpha_prior_business = round(conversions_a / visitors_a if visitors_a != 0 else 0, 6)
-                beta_prior_business = round((
+                alpha_prior_business = conversions_a / visitors_a if visitors_a != 0 else 1
+                beta_prior_business = (
                     alpha_prior_business * ((conv_rate_b - conv_rate_a) / conv_rate_a) * (1 / alpha_prior_business)
-                    if alpha_prior_business != 0 and conv_rate_a != 0 else 0
-                ) + alpha_prior_business, 6)
+                    if alpha_prior_business != 0 and conv_rate_a != 0 else 1
+                ) + alpha_prior_business
 
                 st.write("")
 
@@ -221,14 +221,6 @@ def run():
                 # risk assessment
                 probability_a_better = 1 - probability_b_better
 
-                # Ensure runtime_days and projection_period are positive
-                if runtime_days <= 0:
-                    st.error("Runtime days must be a positive integer")
-                    st.stop()
-                if projection_period <= 0:
-                    st.error("Projection period must be a positive value")
-                    st.stop()
-
                 # Calculate expected conversion rates for A and B
                 alpha_post_a = alpha_prior_business + conversions_a
                 beta_post_a = beta_prior_business + (visitors_a - conversions_a)
@@ -238,23 +230,50 @@ def run():
                 beta_post_b = beta_prior_business + (visitors_b - conversions_b)
                 expected_conv_rate_b = alpha_post_b / (alpha_post_b + beta_post_b)
 
-                # Calculate expected daily conversions over runtime
-                expected_daily_conversions_a = round((expected_conv_rate_a * visitors_a) / runtime_days)
-                expected_daily_conversions_b = round((expected_conv_rate_b * visitors_b) / runtime_days)
+                # Simulate from posterior predictive distribution
+                n_simulations = 10000
+                samples_a = beta.rvs(alpha_post_a, beta_post_a, size=n_simulations)
+                samples_b = beta.rvs(alpha_post_b, beta_post_b, size=n_simulations)
 
-                # Calculate expected daily uplift, using mean conversion rates
-                daily_uplift = expected_daily_conversions_b - expected_daily_conversions_a
+                # Calculate daily conversions for each simulation
+                daily_conversions_a_samples = (samples_a * visitors_a) / runtime_days
+                daily_conversions_b_samples = (samples_b * visitors_b) / runtime_days
 
-                # Calculate expected monetary uplift using mean values
-                expected_monetary_uplift = max(0, daily_uplift * aov_b * projection_period)
+                # Calculate expected daily conversions
+                expected_daily_conversions_a = np.mean(daily_conversions_a_samples)
+                expected_daily_conversions_b = np.mean(daily_conversions_b_samples)
 
-                # Risk calculation
-                lower_bound_a = beta.ppf(.01, alpha_post_a, beta_post_a) * visitors_a / runtime_days
-                lower_bound_b = beta.ppf(.01, alpha_post_b, beta_post_b) * visitors_b / runtime_days
+                # Calculate credible intervals
+                credible_interval_a = np.percentile(daily_conversions_a_samples, [2.5, 97.5])
+                credible_interval_b = np.percentile(daily_conversions_b_samples, [2.5, 97.5])
+
+                # Use the lower bounds of the credible intervals for conservative scenario
+                lower_bound_a = credible_interval_a[0]
+                lower_bound_b = credible_interval_b[0]
+
+                # Conservative daily uplift
+                if lower_bound_b > lower_bound_a:
+                    conservative_daily_uplift = 0
+                else:
+                    conservative_daily_uplift = lower_bound_b - lower_bound_a
+
+                # Calculate expected monetary uplift using conservative daily uplift
+                expected_monetary_uplift_conservative = max(0, conservative_daily_uplift * aov_b * projection_period)
+
+                # Print expected daily conversions and conservative uplift
+                print(f"Expected daily conversions for A: {expected_daily_conversions_a:.2f}")
+                print(f"Expected daily conversions for B: {expected_daily_conversions_b:.2f}")
+                print(f"Conservative daily uplift: {conservative_daily_uplift:.2f}")
+                print(f"Expected monetary uplift (conservative): {expected_monetary_uplift_conservative:.2f}")
+
+                # Risk calculation using the original lower bound approach for comparison
+                lower_bound_a_beta = beta.ppf(.01, alpha_post_a, beta_post_a) * visitors_a / runtime_days
+                lower_bound_b_beta = beta.ppf(.01, alpha_post_b, beta_post_b) * visitors_b / runtime_days
 
                 # Adjust expected monetary risk to account for the probability of A being better
                 if probability_a_better > 0:
-                    expected_monetary_risk = round((lower_bound_a - lower_bound_b) * aov_a * projection_period * probability_a_better, 2)
+                    pessimistic_daily_diff = lower_bound_b_beta - lower_bound_a_beta
+                    expected_monetary_risk = round((lower_bound_a_beta - lower_bound_b_beta) * aov_a * projection_period * probability_a_better, 2)
                 else:
                     expected_monetary_risk = 0
 
@@ -262,19 +281,25 @@ def run():
                 improvement_factor = (expected_conv_rate_b - expected_conv_rate_a) / expected_conv_rate_a
 
                 # Calculate optimistic daily difference over 180 days
+                daily_uplift = expected_daily_conversions_b - expected_daily_conversions_a
                 optimistic_daily_diff = daily_uplift * (1 + improvement_factor)
 
                 # Optimistic monetary uplift
-                optimistic_monetary_uplift = round(max(0, optimistic_daily_diff * aov_b * projection_period),2)
+                optimistic_monetary_uplift = round(max(0, optimistic_daily_diff * aov_b * projection_period), 2)
 
                 # Total contribution assuming this optimistic scenario
-                total_contribution = round(optimistic_monetary_uplift + (-abs(expected_monetary_risk)),2)
+                total_contribution = round(optimistic_monetary_uplift + (-abs(expected_monetary_risk)), 2)
 
                 # Construct dataframe with insights
+                if probability_a_better > probability_b_better and lower_bound_b > lower_bound_a:
+                    total_contribution = -abs(expected_monetary_risk)
+                else:
+                    total_contribution = total_contribution
+
                 df = pd.DataFrame({
                     "B's chance to win": [probability_b_better * 100],
                     "Expected Monetary Uplift": [optimistic_monetary_uplift],
-                    "Expected Monetary Risk": [-abs(expected_monetary_risk)],  # Risk should be represented as a negative value
+                    "Expected Monetary Risk": [-abs(expected_monetary_risk)],
                     "Expected Monetary Contribution": [total_contribution]
                 })
 
