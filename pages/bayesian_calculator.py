@@ -293,6 +293,7 @@ def run():
                 # Construct dataframe with insights
                 if probability_a_better > probability_b_better and lower_bound_b > lower_bound_a:
                     total_contribution = -abs(expected_monetary_risk)
+                    optimistic_monetary_uplift = 0
                 else:
                     total_contribution = total_contribution
 
