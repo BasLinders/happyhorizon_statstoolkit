@@ -125,29 +125,36 @@ def run():
                         (np.abs(dffits) > dffits_threshold)]
 
             st.write("### Potential outliers identified:")
-            st.write(outliers.sample(5))
-            st.write("Amount of outliers: ", len(outliers))
+            if len(outliers) > 0:
+                sample_size = min(5, len(outliers))
+                st.write(outliers.sample(sample_size))
 
-            # Remove outliers and return filtered dataframe
-            residuals_outliers = np.abs(standardized_residuals) > residual_threshold
-            leverage_outliers = leverage > leverage_threshold
-            dffits_outliers = np.abs(dffits) > dffits_threshold
+                # Remove outliers and return filtered dataframe
+                residuals_outliers = np.abs(standardized_residuals) > residual_threshold
+                leverage_outliers = leverage > leverage_threshold
+                dffits_outliers = np.abs(dffits) > dffits_threshold
 
-            outliers_mask = residuals_outliers | leverage_outliers | dffits_outliers
-            non_outliers_mask = ~outliers_mask
+                outliers_mask = residuals_outliers | leverage_outliers | dffits_outliers
+                non_outliers_mask = ~outliers_mask
 
-            df_filtered = df[non_outliers_mask].copy()
-            st.write("### Sample of filtered data (outliers removed):")
-            st.write(df_filtered.sample(5))
+                df_filtered = df[non_outliers_mask].copy()
+                st.write("### Sample of filtered data (outliers removed):")
+                st.write(df_filtered.sample(5))
 
-            # Fit the model without outliers
-            model_no_outliers = smf.ols(f'{kpi} ~ C(experience_variant_label)', data=df_filtered).fit()
-            st.write("The model has been fitted after outliers have been removed (> 2 standard deviations).")
+                # Fit the model without outliers
+                model_no_outliers = smf.ols(f'{kpi} ~ C(experience_variant_label)', data=df_filtered).fit()
+                st.write("The model has been fitted after outliers have been removed (> 2 standard deviations).")
 
-            st.write("### QQ Plot of residuals")
-            qqplot(model_no_outliers.resid, marker='o')
-            st.pyplot(plt)
-            plt.clf()
+                st.write("### QQ Plot of residuals")
+                qqplot(model_no_outliers.resid, marker='o')
+                st.pyplot(plt)
+                plt.clf()
+            else:
+                st.write("No outliers identified.")
+                st.write("### QQ Plot of residuals")
+                qqplot(model.resid, marker='o')
+                st.pyplot(plt)
+                plt.clf()
 
             # Assumption tests
             shapiro_stat, shapiro_p_val = shapiro(model_no_outliers.resid)
