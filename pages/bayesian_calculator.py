@@ -197,7 +197,8 @@ def run():
             st.write("\nPlease verify your input:")
             for i in range(num_variants):
                 st.write(f"**Variant {alphabet[i]}**: {variant_visitors[i]} visitors, {variant_conversions[i]} conversions, AOV: {variant_aov[i]}")
-                st.write(f"Measured change in conversion rate for {alphabet[i]} vs {alphabet[0]}: {variant_uplift[i-1] * 100:.2f}%")
+                if i > 0:
+                    st.write(f"Measured change in conversion rate for {alphabet[i]} vs {alphabet[0]}: {variant_uplift[i-1] * 100:.2f}%")
             st.write(f"Minimum chance to win: {probability_winner}%") 
             st.write(f"Test runtime: {runtime_days} days, Projection period: {projection_period} days")
             probability_threshold = probability_winner / 100
