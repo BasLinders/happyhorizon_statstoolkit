@@ -6,10 +6,6 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import string
 
-st.set_page_config(
-    page_title="Bayesian calculator",
-    page_icon="🔢",
-)
 def validate_inputs(visitors, conversions):
     if visitors is None or conversions is None:
         raise ValueError("Visitors and conversions cannot be zero")
@@ -130,6 +126,10 @@ def calculate_business_risk(num_variants, variant_visitors, variant_conversions,
     return df
 
 def run():
+    st.set_page_config(
+        page_title="Bayesian calculator",
+        page_icon="🔢",
+    )
     st.title("Bayesian Calculator")
     st.markdown("""
     This calculator outputs the probability of a variant to generate more conversions than the other. 
