@@ -127,7 +127,7 @@ def calculate_business_risk(num_variants, variant_visitors, variant_conversions,
 
 def run():
     st.set_page_config(
-        page_title="Bayesian calculator",
+        page_title="Bayesian test",
         page_icon="🔢",
     )
     st.title("Bayesian Calculator")
