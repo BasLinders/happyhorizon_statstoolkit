@@ -97,67 +97,81 @@ def run():
     def calculate_business_risk(num_variants, variant_visitors, variant_conversions, variant_aov, 
                                 alpha_prior_business, beta_prior_business, probability_better_than_all, 
                                 runtime_days, projection_period):
-        expected_conv_rates, expected_daily_conversions, daily_uplifts, expected_monetary_uplifts = [], [], [], []
-        expected_monetary_risks, lower_bounds, improvement_factors, optimistic_daily_diffs, optimistic_monetary_uplifts, total_contributions = [], [], [], [], [], []
+        
+        # Initialize lists with default values
+        expected_conv_rates = [0] * num_variants
+        expected_daily_conversions = [0] * num_variants
+        daily_uplifts = [0] * num_variants
+        expected_monetary_uplifts = [0] * num_variants
+        expected_monetary_risks = [0] * num_variants
+        lower_bounds = [0] * num_variants
+        improvement_factors = [0] * num_variants
+        optimistic_daily_diffs = [0] * num_variants
+        optimistic_monetary_uplifts = [0] * num_variants
+        total_contributions = [0] * num_variants
+
+        lower_bound_a = 0  # Initialize the control variant's lower bound outside the loop
+
         for i in range(num_variants):
             alpha_post = alpha_prior_business[i] + variant_conversions[i]
             beta_post = beta_prior_business[i] + (variant_visitors[i] - variant_conversions[i])
+            
             expected_conv_rate = alpha_post / (alpha_post + beta_post)
-            expected_conv_rates.append(expected_conv_rate)
-            expected_daily_conversions_i = round((expected_conv_rate * variant_visitors[i]) / runtime_days)
-            expected_daily_conversions.append(expected_daily_conversions_i)
-            if i > 0:
-                daily_uplift = expected_daily_conversions_i - expected_daily_conversions[0]
-                daily_uplifts.append(daily_uplift)
+            expected_conv_rates[i] = expected_conv_rate
+            
+            expected_daily_conversions[i] = round((expected_conv_rate * variant_visitors[i]) / runtime_days)
+            
+            if i > 0:  # Skip the control variant in this block
+                daily_uplifts[i] = expected_daily_conversions[i] - expected_daily_conversions[0]
                 
-                expected_monetary_uplift = max(0, daily_uplift * variant_aov[i] * projection_period)
-                expected_monetary_uplifts.append(expected_monetary_uplift)
+                expected_monetary_uplifts[i] = max(0, daily_uplifts[i] * variant_aov[i] * projection_period)
                 
-                lower_bound = beta.ppf(.01, alpha_post, beta_post) * variant_visitors[i] / runtime_days
-                lower_bounds.append(lower_bound)
+                lower_bounds[i] = beta.ppf(.01, alpha_post, beta_post) * variant_visitors[i] / runtime_days
                 
                 if i == 1:
                     lower_bound_a = beta.ppf(.01, alpha_prior_business[0] + variant_conversions[0],
                                             beta_prior_business[0] + (variant_visitors[0] - variant_conversions[0])) * variant_visitors[0] / runtime_days
                 
-                if lower_bound_a > 0 and lower_bound < lower_bound_a:
-                    expected_monetary_risk = -round(abs((lower_bound_a - lower_bound) * variant_aov[0] * projection_period * probability_better_than_all[0]), 2)
+                if lower_bound_a > 0 and lower_bounds[i] < lower_bound_a:
+                    expected_monetary_risks[i] = -round(abs((lower_bound_a - lower_bounds[i]) * variant_aov[0] * projection_period * probability_better_than_all[0]), 2)
                 else:
                     # Adding a minimal risk if the lower bound is not lower
-                    expected_monetary_risk = round(lower_bound * variant_aov[i] * projection_period, 2)
-                expected_monetary_risks.append(expected_monetary_risk)
+                    expected_monetary_risks[i] = round(lower_bounds[i] * variant_aov[i] * projection_period, 2)
                 
-                improvement_factor = (expected_conv_rate - expected_conv_rates[0]) / expected_conv_rates[0]
-                improvement_factors.append(improvement_factor)
+                improvement_factors[i] = (expected_conv_rates[i] - expected_conv_rates[0]) / expected_conv_rates[0]
                 
-                optimistic_daily_diff = daily_uplift * (1 + improvement_factor)
-                optimistic_daily_diffs.append(optimistic_daily_diff)
+                optimistic_daily_diffs[i] = daily_uplifts[i] * (1 + improvement_factors[i])
                 
-                optimistic_monetary_uplift = round(max(0, optimistic_daily_diff * variant_aov[i] * projection_period), 2)
-                optimistic_monetary_uplifts.append(optimistic_monetary_uplift)
+                optimistic_monetary_uplifts[i] = round(max(0, optimistic_daily_diffs[i] * variant_aov[i] * projection_period), 2)
                 
-                total_contribution = round(optimistic_monetary_uplift + expected_monetary_risk, 2)
-                total_contributions.append(total_contribution)
+                total_contributions[i] = round(optimistic_monetary_uplifts[i] + expected_monetary_risks[i], 2)
             else:
-                # Append default values for control (i == 0)
-                daily_uplifts.append(0)
-                expected_monetary_uplifts.append(0)
-                lower_bounds.append(0)
-                expected_monetary_risks.append(0)
-                improvement_factors.append(0)
-                optimistic_daily_diffs.append(0)
-                optimistic_monetary_uplifts.append(0)
-                total_contributions.append(0)
+                # Set default values for control (i == 0)
+                daily_uplifts[i] = 0
+                expected_monetary_uplifts[i] = 0
+                lower_bounds[i] = 0
+                expected_monetary_risks[i] = 0
+                improvement_factors[i] = 0
+                optimistic_daily_diffs[i] = 0
+                optimistic_monetary_uplifts[i] = 0
+                total_contributions[i] = 0
 
-        # Verify lengths before creating the DataFrame
+        # Print lengths for debugging
+        print(f"Lengths: conv_rates={len(expected_conv_rates)}, daily_conversions={len(expected_daily_conversions)}, "
+            f"uplifts={len(daily_uplifts)}, monetary_uplifts={len(expected_monetary_uplifts)}, "
+            f"risks={len(expected_monetary_risks)}, contributions={len(total_contributions)}")
+
+        # Assert that all lists have the same length
         assert len(expected_conv_rates) == len(expected_monetary_risks) == len(total_contributions), "Inconsistent lengths detected."
+
         results = {
             "Variant": [f"Variant {chr(i + ord('A'))}" for i in range(1, num_variants)],
             "Chance to win (%)": [round(prob * 100, 2) for prob in probability_better_than_all[1:]],
-            "Expected Monetary Uplift (€)": optimistic_monetary_uplifts,
-            "Expected Monetary Risk (€)": expected_monetary_risks,
-            "Expected Monetary Contribution (€)": total_contributions
+            "Expected Monetary Uplift (€)": optimistic_monetary_uplifts[1:],  # Skip the control variant for output
+            "Expected Monetary Risk (€)": expected_monetary_risks[1:],        # Skip the control variant for output
+            "Expected Monetary Contribution (€)": total_contributions[1:]     # Skip the control variant for output
         }
+
         df = pd.DataFrame(results)
         return df
 
