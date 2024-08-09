@@ -144,7 +144,7 @@ def run():
                 
                 optimistic_monetary_uplifts[i] = round(max(0, optimistic_daily_diffs[i] * variant_aov[i] * projection_period), 2)
                 
-                total_contributions[i] = round(optimistic_monetary_uplifts[i] + expected_monetary_risks[i], 2)
+                total_contributions[i] = round(optimistic_monetary_uplifts[i] + (-abs(expected_monetary_risks[i])), 2)
             else:
                 # Set default values for control (i == 0)
                 daily_uplifts[i] = 0
@@ -157,9 +157,9 @@ def run():
                 total_contributions[i] = 0
 
         # Print lengths for debugging
-        st.write(f"Lengths: conv_rates={len(expected_conv_rates)}, daily_conversions={len(expected_daily_conversions)}, "
-            f"uplifts={len(daily_uplifts)}, monetary_uplifts={len(expected_monetary_uplifts)}, "
-            f"risks={len(expected_monetary_risks)}, contributions={len(total_contributions)}")
+        #st.write(f"Lengths: conv_rates={len(expected_conv_rates)}, daily_conversions={len(expected_daily_conversions)}, "
+        #    f"uplifts={len(daily_uplifts)}, monetary_uplifts={len(expected_monetary_uplifts)}, "
+        #    f"risks={len(expected_monetary_risks)}, contributions={len(total_contributions)}")
 
         # Assert that all lists have the same length
         assert len(expected_conv_rates) == len(expected_monetary_risks) == len(total_contributions), "Inconsistent lengths detected."
