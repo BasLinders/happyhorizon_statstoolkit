@@ -20,6 +20,7 @@ def run():
     variant_uplift = []
     alphabet = string.ascii_uppercase
 
+    # Validation of visitors and conversions
     def validate_inputs(visitors, conversions):
         if visitors is None or conversions is None:
             raise ValueError("Visitors and conversions cannot be zero")
@@ -30,6 +31,7 @@ def run():
         if conversions > visitors:
             raise ValueError("Conversions cannot exceed the number of visitors")
 
+    # Probability calculation
     def calculate_probabilities_better(visitors, conversions, alpha_prior, beta_prior, num_samples=10000):
         alpha_post = alpha_prior + np.array(conversions)
         beta_post = beta_prior + (np.array(visitors) - np.array(conversions))
@@ -42,6 +44,7 @@ def run():
         probabilities_better_than_all = probabilities_better.mean(axis=1)
         return probabilities_better_than_all, samples
 
+    # Simulating differences in conversion 
     def simulate_differences(visitors_a, conversions_a, visitors_b, conversions_b, num_samples=10000):
         alpha_prior = 1
         beta_prior = 1
@@ -53,6 +56,7 @@ def run():
         samples_b = beta.rvs(alpha_post_b, beta_post_b, size=num_samples)
         return (samples_b - samples_a) / samples_a
 
+    # Histogram when num_variants == 2
     def plot_histogram(diffs_percentage, observed_uplift):
         mean_diff = np.mean(diffs_percentage)
         std_diff = np.std(diffs_percentage)
@@ -79,6 +83,7 @@ def run():
         st.pyplot(plt)
         plt.clf()
 
+    # Bar chart for probability comparisons
     def plot_bar_chart(variants, probabilities):
         plt.figure(figsize=(14, 6))
         bars = plt.barh(variants, probabilities, color=plt.cm.tab10.colors[:len(variants)])
@@ -94,6 +99,7 @@ def run():
         st.pyplot(plt)
         plt.clf()
 
+    # Business risk calculation
     def calculate_business_risk(num_variants, variant_visitors, variant_conversions, variant_aov, 
                                 alpha_prior_business, beta_prior_business, probability_better_than_all, 
                                 runtime_days, projection_period):
@@ -102,15 +108,14 @@ def run():
         expected_conv_rates = [0] * num_variants
         expected_daily_conversions = [0] * num_variants
         daily_uplifts = [0] * num_variants
-        expected_monetary_uplifts = [0] * num_variants
+        conservative_monetary_uplifts = [0] * num_variants
         expected_monetary_risks = [0] * num_variants
         lower_bounds = [0] * num_variants
-        improvement_factors = [0] * num_variants
-        optimistic_daily_diffs = [0] * num_variants
-        optimistic_monetary_uplifts = [0] * num_variants
+        conservative_improvement_factors = [0] * num_variants
+        conservative_monetary_uplifts = [0] * num_variants
         total_contributions = [0] * num_variants
 
-        lower_bound_a = 0  # Initialize the control variant's lower bound outside the loop
+        lower_bound_a = 0  # Initializing the control variant's lower bound outside the loop
 
         for i in range(num_variants):
             alpha_post = alpha_prior_business[i] + variant_conversions[i]
@@ -121,10 +126,18 @@ def run():
             
             expected_daily_conversions[i] = round((expected_conv_rate * variant_visitors[i]) / runtime_days)
             
-            if i > 0:  # Skip the control variant in this block
+            if i > 0:  # Skip the control variant in this block (assess whether or not this is useful)
                 daily_uplifts[i] = expected_daily_conversions[i] - expected_daily_conversions[0]
                 
-                expected_monetary_uplifts[i] = max(0, daily_uplifts[i] * variant_aov[i] * projection_period)
+                # Used lower bound in the 25th percentile for a more conservative estimate
+                conservative_conv_rate = beta.ppf(0.25, alpha_post, beta_post)  # 25th percentile
+                conservative_daily_conversions = round((conservative_conv_rate * variant_visitors[i]) / runtime_days)
+                conservative_daily_uplift = conservative_daily_conversions - expected_daily_conversions[0]
+                
+                # Added a cap to the improvement factor to avoid overestimation
+                conservative_improvement_factors[i] = min((conservative_conv_rate - expected_conv_rates[0]) / expected_conv_rates[0], 0.2)  # cap at 20%
+                
+                conservative_monetary_uplifts[i] = round(max(0, conservative_daily_uplift * variant_aov[i] * projection_period * (1 + conservative_improvement_factors[i])), 2)
                 
                 lower_bounds[i] = beta.ppf(.01, alpha_post, beta_post) * variant_visitors[i] / runtime_days
                 
@@ -135,31 +148,18 @@ def run():
                 if lower_bound_a > 0 and lower_bounds[i] < lower_bound_a:
                     expected_monetary_risks[i] = -round(abs((lower_bound_a - lower_bounds[i]) * variant_aov[0] * projection_period * probability_better_than_all[0]), 2)
                 else:
-                    # Adding a minimal risk if the lower bound is not lower
+                    # Adding a minimal risk if the lower bound is not lower (assess this with more RL scenarios)
                     expected_monetary_risks[i] = round(lower_bounds[i] * variant_aov[i] * projection_period, 2)
                 
-                improvement_factors[i] = (expected_conv_rates[i] - expected_conv_rates[0]) / expected_conv_rates[0]
-                
-                optimistic_daily_diffs[i] = daily_uplifts[i] * (1 + improvement_factors[i])
-                
-                optimistic_monetary_uplifts[i] = round(max(0, optimistic_daily_diffs[i] * variant_aov[i] * projection_period), 2)
-                
-                total_contributions[i] = round(optimistic_monetary_uplifts[i] + (-abs(expected_monetary_risks[i])), 2)
+                total_contributions[i] = round(conservative_monetary_uplifts[i] + expected_monetary_risks[i], 2)
             else:
                 # Set default values for control (i == 0)
                 daily_uplifts[i] = 0
-                expected_monetary_uplifts[i] = 0
+                conservative_monetary_uplifts[i] = 0
                 lower_bounds[i] = 0
                 expected_monetary_risks[i] = 0
-                improvement_factors[i] = 0
-                optimistic_daily_diffs[i] = 0
-                optimistic_monetary_uplifts[i] = 0
+                conservative_improvement_factors[i] = 0
                 total_contributions[i] = 0
-
-        # Print lengths for debugging
-        #st.write(f"Lengths: conv_rates={len(expected_conv_rates)}, daily_conversions={len(expected_daily_conversions)}, "
-        #    f"uplifts={len(daily_uplifts)}, monetary_uplifts={len(expected_monetary_uplifts)}, "
-        #    f"risks={len(expected_monetary_risks)}, contributions={len(total_contributions)}")
 
         # Assert that all lists have the same length
         assert len(expected_conv_rates) == len(expected_monetary_risks) == len(total_contributions), "Inconsistent lengths detected."
@@ -167,9 +167,9 @@ def run():
         results = {
             "Variant": [f"Variant {chr(i + ord('A'))}" for i in range(1, num_variants)],
             "Chance to win (%)": [round(prob * 100, 2) for prob in probability_better_than_all[1:]],
-            "Expected Monetary Uplift (€)": optimistic_monetary_uplifts[1:],  # Skip the control variant for output
-            "Expected Monetary Risk (€)": expected_monetary_risks[1:],        # Skip the control variant for output
-            "Expected Monetary Contribution (€)": total_contributions[1:]     # Skip the control variant for output
+            "Conservative Monetary Uplift (€)": conservative_monetary_uplifts[1:],  # Skip the control variant for output
+            "Expected Monetary Risk (€)": expected_monetary_risks[1:],              # Skip the control variant for output
+            "Expected Monetary Contribution (€)": total_contributions[1:]           # Skip the control variant for output
         }
 
         df = pd.DataFrame(results)
