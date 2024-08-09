@@ -20,19 +20,6 @@ def run():
     variant_uplift = []
     alphabet = string.ascii_uppercase
 
-    # Lists for business risk assessment
-
-    #expected_conv_rates = []
-    #expected_daily_conversions = []
-    #daily_uplifts = []
-    #expected_monetary_uplifts = []
-    #expected_monetary_risks = []
-    #lower_bounds = []
-    #improvement_factors = []
-    #optimistic_daily_diffs = []
-    #optimistic_monetary_uplifts = []
-    #total_contributions = []
-
     def validate_inputs(visitors, conversions):
         if visitors is None or conversions is None:
             raise ValueError("Visitors and conversions cannot be zero")
@@ -129,10 +116,18 @@ def run():
                 if i == 1:
                     lower_bound_a = beta.ppf(.01, alpha_prior_business[0] + variant_conversions[0],
                                              beta_prior_business[0] + (variant_visitors[0] - variant_conversions[0])) * variant_visitors[0] / runtime_days
-                if lower_bound_a > 0 and lower_bound < lower_bound_a:
-                    expected_monetary_risk = -round(abs((lower_bound_a - lower_bound) * variant_aov[0] * projection_period * probability_better_than_all[0]), 2)
+                if lower_bound_a > 0:
+                    # Calculate the potential downside risk relative to the control's lower bound.
+                    if lower_bound < lower_bound_a:
+                        expected_monetary_risk = -round(abs((lower_bound_a - lower_bound) * variant_aov[i] * projection_period * probability_better_than_all[0]), 2)
+                    else:
+                        # Even if the lower bound is higher, consider a minimal risk due to variability or overestimation.
+                        variance_factor = beta.var(alpha_post, beta_post)
+                        expected_monetary_risk = -round(variance_factor * variant_aov[i] * projection_period, 2)
                 else:
                     expected_monetary_risk = 0
+
+                expected_monetary_risks.append(expected_monetary_risk)
                 expected_monetary_risks.append(expected_monetary_risk)
                 improvement_factor = (expected_conv_rate - expected_conv_rates[0]) / expected_conv_rates[0]
                 improvement_factors.append(improvement_factor)
