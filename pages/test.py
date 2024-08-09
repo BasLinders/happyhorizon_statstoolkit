@@ -285,8 +285,9 @@ def run():
                 df = calculate_business_risk(num_variants, variant_visitors, variant_conversions, variant_aov, alpha_prior_business, beta_prior_business, 
                                              probability_better_than_all, runtime_days, projection_period)
                 st.write("### Results Summary\n")
-                st.write("The table below shows the contribution to the revenue over the projection period, with the AOVs as constants (meaning they are equal for every conversion count). " \
-                "The calculator uses a conservative approach where extreme values are avoided to make it more realistic for most situations. This is purely a measurement for potential impact - no guarantee!\n")
+                st.write("The table below shows the contribution to the revenue over the projection period, with the AOVs as constants (meaning they are equal for every conversion count). "
+                "The calculator uses a conservative approach where extreme values are avoided to make it more realistic for most situations. "
+                "It doesn't completely account for higher variability in the estimates. This is purely a measurement for potential impact - no guarantee!\n")
                 st.dataframe(df)
         else:
             st.write("<span style='color: #ff6600;'>*Please enter valid inputs for all fields (business case is optional)</span>", unsafe_allow_html=True)
