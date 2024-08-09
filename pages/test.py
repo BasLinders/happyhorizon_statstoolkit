@@ -21,18 +21,18 @@ def run():
     alphabet = string.ascii_uppercase
 
     # Lists for business risk assessment
-    """
-    expected_conv_rates = []
-    expected_daily_conversions = []
-    daily_uplifts = []
-    expected_monetary_uplifts = []
-    expected_monetary_risks = []
-    lower_bounds = []
-    improvement_factors = []
-    optimistic_daily_diffs = []
-    optimistic_monetary_uplifts = []
-    total_contributions = []
-    """
+
+    #expected_conv_rates = []
+    #expected_daily_conversions = []
+    #daily_uplifts = []
+    #expected_monetary_uplifts = []
+    #expected_monetary_risks = []
+    #lower_bounds = []
+    #improvement_factors = []
+    #optimistic_daily_diffs = []
+    #optimistic_monetary_uplifts = []
+    #total_contributions = []
+
     def validate_inputs(visitors, conversions):
         if visitors is None or conversions is None:
             raise ValueError("Visitors and conversions cannot be zero")
