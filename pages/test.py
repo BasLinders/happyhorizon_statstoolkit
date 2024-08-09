@@ -185,21 +185,21 @@ def run():
     
     for i in range(num_variants):
         with col1:
-            visitors = st.number_input(f"How many visitors did variant {alphabet[i]} have? ", min_value=1, step=1, key=f"visitors_{i}")
+            visitors = st.number_input(f"How many visitors did variant {alphabet[i]} have? ", min_value=0, step=1, key=f"visitors_{i}")
             variant_visitors.append(visitors)
         with col2:
-            conversions = st.number_input(f"How many conversions did variant {alphabet[i]} have? ", min_value=1, step=1, key=f"conversions_{i}")
+            conversions = st.number_input(f"How many conversions did variant {alphabet[i]} have? ", min_value=0, step=1, key=f"conversions_{i}")
             variant_conversions.append(conversions)
     
-    probability_winner = st.number_input("What is your minimum probability for a winner? ", min_value=1.0, max_value=100.0, step=1.0, format="%.2f")
+    probability_winner = st.number_input("What is your minimum probability for a winner? ", min_value=0.0, max_value=100.0, step=1.0, format="%.2f")
     
     st.write("\n### Business case data (optional)")
     for i in range(num_variants):
-        aov = st.number_input(f"What is the average order value of variant {alphabet[i]}? ", min_value=1.0, step=0.1, key=f"aov_{i}")
+        aov = st.number_input(f"What is the average order value of variant {alphabet[i]}? ", min_value=0.0, step=0.1, key=f"aov_{i}")
         variant_aov.append(aov)
         
-    runtime_days = st.number_input("For how many days did your test run? ", min_value=1, step=1)
-    projection_period = st.number_input("Over how many days should we project the contribution in revenue? ", min_value=1, step=1)
+    runtime_days = st.number_input("For how many days did your test run? ", min_value=0, step=1)
+    projection_period = st.number_input("Over how many days should we project the contribution in revenue? ", min_value=0, step=1)
     
     for i in range(num_variants):
         cr = variant_conversions[i] / variant_visitors[i] if variant_visitors[i] != 0 else 0
