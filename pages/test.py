@@ -102,7 +102,7 @@ def run():
     # Business risk calculation
     def calculate_business_risk(num_variants, variant_visitors, variant_conversions, variant_aov, 
                                 alpha_prior_business, beta_prior_business, probability_better_than_all, 
-                                runtime_days, projection_period):
+                                runtime_days, projection_period, confidence_level=0.95):
         
         # Initialize lists with default values
         expected_conv_rates = [0] * num_variants
@@ -114,12 +114,13 @@ def run():
         conservative_improvement_factors = [0] * num_variants
         total_contributions = [0] * num_variants
 
-        # Using a slightly higher percentile for a more conservative control lower bound
-        lower_bound_a = beta.ppf(0.05, alpha_prior_business[0] + variant_conversions[0],
+        # Calculate the confidence interval bounds for the control variant
+        alpha = (1 - confidence_level) / 2
+        lower_bound_a = beta.ppf(alpha, alpha_prior_business[0] + variant_conversions[0],
                                 beta_prior_business[0] + (variant_visitors[0] - variant_conversions[0])) * variant_visitors[0] / runtime_days
 
         for i in range(num_variants):
-            # Apply winsorization to limit the influence of outliers
+            # Apply truncation or winsorization to limit the influence of outliers
             variant_conversions[i] = min(max(variant_conversions[i], np.percentile(variant_conversions, 5)), np.percentile(variant_conversions, 95))
             
             alpha_post = alpha_prior_business[i] + variant_conversions[i]
@@ -130,31 +131,32 @@ def run():
             
             expected_daily_conversions[i] = round((expected_conv_rate * variant_visitors[i]) / runtime_days)
             
-            if i > 0:  # Skip the control variant in this block (assess whether or not this is useful)
+            if i > 0:  # Skip the control variant in this block
                 daily_uplifts[i] = expected_daily_conversions[i] - expected_daily_conversions[0]
                 
-                # Use lower bound for more conservative estimate
-                conservative_conv_rate = beta.ppf(0.25, alpha_post, beta_post)  # 25th percentile
-                conservative_daily_conversions = round((conservative_conv_rate * variant_visitors[i]) / runtime_days)
-                conservative_daily_uplift = conservative_daily_conversions - expected_daily_conversions[0]
+                # Calculate the lower and upper bounds of the confidence interval
+                lower_bound = beta.ppf(alpha, alpha_post, beta_post) * variant_visitors[i] / runtime_days
+                upper_bound = beta.ppf(1 - alpha, alpha_post, beta_post) * variant_visitors[i] / runtime_days
                 
-                # Applying a cap to the improvement factor to avoid overestimation
-                conservative_improvement_factors[i] = min((conservative_conv_rate - expected_conv_rates[0]) / expected_conv_rates[0], 0.2)  # cap at 20%
+                # Use the lower bound for a conservative estimate of uplift
+                conservative_daily_uplift = lower_bound - expected_daily_conversions[0]
+                
+                # Apply a cap to the improvement factor to avoid overestimation
+                conservative_improvement_factors[i] = min((lower_bound - expected_conv_rates[0]) / expected_conv_rates[0], 0.2)  # cap at 20%
                 
                 conservative_monetary_uplifts[i] = round(max(0, conservative_daily_uplift * variant_aov[i] * projection_period * (1 + conservative_improvement_factors[i])), 2)
                 
-                # Conservative approach for risk calculation
-                conservative_lower_bound = beta.ppf(0.10, alpha_post, beta_post) * variant_visitors[i] / runtime_days  # 10th percentile
-                lower_bounds[i] = conservative_lower_bound
+                # Use the lower bound of the confidence interval for risk calculation
+                lower_bounds[i] = lower_bound
                 
-                # Adjusting risk based on probability of success and cap extreme variability
-                base_risk = -round(abs((lower_bound_a - conservative_lower_bound) * variant_aov[0] * projection_period), 2)
+                # Adjust risk based on probability of success and cap extreme variability
+                base_risk = -round(abs((lower_bound_a - lower_bound) * variant_aov[0] * projection_period), 2)
                 adjusted_risk = base_risk * (1 - probability_better_than_all[i])
                 if adjusted_risk < -0.2 * variant_aov[i] * projection_period:
                     adjusted_risk = -0.2 * variant_aov[i] * projection_period  # cap at 20% potential loss
                 conservative_monetary_risks[i] = adjusted_risk
 
-                # Calculating the total contribution more conservatively
+                # Calculate the total contribution more conservatively
                 total_contributions[i] = round(conservative_monetary_uplifts[i] + conservative_monetary_risks[i], 2)
             else:
                 # Set default values for control (i == 0)
@@ -165,7 +167,7 @@ def run():
                 conservative_improvement_factors[i] = 0
                 total_contributions[i] = 0
 
-        # All lists must have the same length
+        # Assert that all lists have the same length
         assert len(expected_conv_rates) == len(conservative_monetary_risks) == len(total_contributions), "Inconsistent lengths detected."
 
         results = {
