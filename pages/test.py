@@ -157,7 +157,7 @@ def run():
                 total_contributions[i] = 0
 
         # Print lengths for debugging
-        print(f"Lengths: conv_rates={len(expected_conv_rates)}, daily_conversions={len(expected_daily_conversions)}, "
+        st.write(f"Lengths: conv_rates={len(expected_conv_rates)}, daily_conversions={len(expected_daily_conversions)}, "
             f"uplifts={len(daily_uplifts)}, monetary_uplifts={len(expected_monetary_uplifts)}, "
             f"risks={len(expected_monetary_risks)}, contributions={len(total_contributions)}")
 
