@@ -7,10 +7,10 @@ import matplotlib.patches as mpatches
 import string
 
 def run():
-    st.set_page_config(
-        page_title="Bayesian calculator",
-        page_icon="🔢",
-    )
+    #st.set_page_config(
+    #    page_title="Bayesian calculator",
+    #    page_icon="🔢",
+    #)
 
     # Generate fields for variants
     variant_visitors = []
