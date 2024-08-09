@@ -109,34 +109,48 @@ def run():
             if i > 0:
                 daily_uplift = expected_daily_conversions_i - expected_daily_conversions[0]
                 daily_uplifts.append(daily_uplift)
+                
                 expected_monetary_uplift = max(0, daily_uplift * variant_aov[i] * projection_period)
                 expected_monetary_uplifts.append(expected_monetary_uplift)
+                
                 lower_bound = beta.ppf(.01, alpha_post, beta_post) * variant_visitors[i] / runtime_days
                 lower_bounds.append(lower_bound)
+                
                 if i == 1:
                     lower_bound_a = beta.ppf(.01, alpha_prior_business[0] + variant_conversions[0],
-                                             beta_prior_business[0] + (variant_visitors[0] - variant_conversions[0])) * variant_visitors[0] / runtime_days
-                if lower_bound_a > 0:
-                    # Calculate the potential downside risk relative to the control's lower bound.
-                    if lower_bound < lower_bound_a:
-                        expected_monetary_risk = -round(abs((lower_bound_a - lower_bound) * variant_aov[i] * projection_period * probability_better_than_all[0]), 2)
-                    else:
-                        # Even if the lower bound is higher, consider a minimal risk due to variability or overestimation.
-                        variance_factor = beta.var(alpha_post, beta_post)
-                        expected_monetary_risk = -round(variance_factor * variant_aov[i] * projection_period, 2)
+                                            beta_prior_business[0] + (variant_visitors[0] - variant_conversions[0])) * variant_visitors[0] / runtime_days
+                
+                if lower_bound_a > 0 and lower_bound < lower_bound_a:
+                    expected_monetary_risk = -round(abs((lower_bound_a - lower_bound) * variant_aov[0] * projection_period * probability_better_than_all[0]), 2)
                 else:
-                    expected_monetary_risk = 0
-
+                    # Adding a minimal risk if the lower bound is not lower
+                    expected_monetary_risk = round(lower_bound * variant_aov[i] * projection_period, 2)
                 expected_monetary_risks.append(expected_monetary_risk)
-                expected_monetary_risks.append(expected_monetary_risk)
+                
                 improvement_factor = (expected_conv_rate - expected_conv_rates[0]) / expected_conv_rates[0]
                 improvement_factors.append(improvement_factor)
+                
                 optimistic_daily_diff = daily_uplift * (1 + improvement_factor)
                 optimistic_daily_diffs.append(optimistic_daily_diff)
+                
                 optimistic_monetary_uplift = round(max(0, optimistic_daily_diff * variant_aov[i] * projection_period), 2)
                 optimistic_monetary_uplifts.append(optimistic_monetary_uplift)
+                
                 total_contribution = round(optimistic_monetary_uplift + expected_monetary_risk, 2)
                 total_contributions.append(total_contribution)
+            else:
+                # Append default values for control (i == 0)
+                daily_uplifts.append(0)
+                expected_monetary_uplifts.append(0)
+                lower_bounds.append(0)
+                expected_monetary_risks.append(0)
+                improvement_factors.append(0)
+                optimistic_daily_diffs.append(0)
+                optimistic_monetary_uplifts.append(0)
+                total_contributions.append(0)
+
+        # Verify lengths before creating the DataFrame
+        assert len(expected_conv_rates) == len(expected_monetary_risks) == len(total_contributions), "Inconsistent lengths detected."
         results = {
             "Variant": [f"Variant {chr(i + ord('A'))}" for i in range(1, num_variants)],
             "Chance to win (%)": [round(prob * 100, 2) for prob in probability_better_than_all[1:]],
