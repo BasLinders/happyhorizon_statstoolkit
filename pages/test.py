@@ -183,13 +183,7 @@ def run():
 
     st.title("Bayesian Calculator")
     st.markdown("""
-    This calculator outputs the probability of a variant to generate more conversions than the other. 
-    Remember, you set the boundaries of success for the experiment; this calculator only helps you to translate it to numbers.
-
-    It also shows the distribution of conversion rates by running a simulation and estimates the potential effect on revenue 
-    over a chosen period after implementation with bayesian probability. Obviously, we make several statistical assumptions.
-
-    Enter your experiment values below. Happy learning!
+    Please note: This calculator for Bayesian multiple arm analysis is IN DEVELOPMENT and may contain errors and inconsistencies.
     """)
     num_variants = st.number_input("How many variants did your experiment have (including control)?", min_value=2, max_value=10, step=1)
     variant_visitors = []
