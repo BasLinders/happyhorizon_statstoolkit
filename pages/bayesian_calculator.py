@@ -305,23 +305,23 @@ def run():
                 })
 
                 # Display results in Streamlit
-                '''
-                st.write("## Results")
-                st.write("### Expected Daily Conversions")
-                st.write(f"A: {expected_daily_conversions_a}")
-                st.write(f"B: {expected_daily_conversions_b}")
+                
+                #st.write("## Results")
+                #st.write("### Expected Daily Conversions")
+                #st.write(f"A: {expected_daily_conversions_a}")
+                #st.write(f"B: {expected_daily_conversions_b}")
 
-                st.write("### Lower Bounds")
-                st.write(f"A: {lower_bound_a}")
-                st.write(f"B: {lower_bound_b}")
+                #st.write("### Lower Bounds")
+                #st.write(f"A: {lower_bound_a}")
+                #st.write(f"B: {lower_bound_b}")
 
-                st.write("### Priors")
-                st.write(f"Alpha Prior: {alpha_prior_business}")
-                st.write(f"Beta Prior: {beta_prior_business}")
-                st.write(f"Probability A better: {probability_a_better:.2%}")
-                st.write(f"Probability B better: {probability_b_better:.2%}")
-                st.write(f"Optimistic uplift: €{optimistic_monetary_uplift:.2f}")
-                '''
+                #st.write("### Priors")
+                #st.write(f"Alpha Prior: {alpha_prior_business}")
+                #st.write(f"Beta Prior: {beta_prior_business}")
+                #st.write(f"Probability A better: {probability_a_better:.2%}")
+                #st.write(f"Probability B better: {probability_b_better:.2%}")
+                #st.write(f"Optimistic uplift: €{optimistic_monetary_uplift:.2f}")
+                
 
                 st.write("### Results Summary")
                 st.write("")
