@@ -60,6 +60,7 @@ def run():
 
             # Baseline conversion rate (shared across all variants)
             baseline_rate = conversions_per_variant / visitors_per_variant
+            baseline_rate = round(baseline_rate, 2)
 
             # Initialize results list
             weeks = range(1, 7)  # For 6 weeks
