@@ -16,8 +16,9 @@ def run():
 
     Happy learning!
     """
-    col1, col2 = st.columns(2)
     num_variants = st.number_input("Number of variants (including control):", min_value=2, step=1)
+    col1, col2 = st.columns(2)
+
     # Inputs
     with col1:
         baseline_visitors = st.number_input("Amount of visitors per week:", min_value=0, step=1)
