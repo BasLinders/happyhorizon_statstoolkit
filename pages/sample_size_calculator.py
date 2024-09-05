@@ -24,8 +24,8 @@ def run():
     with col2:
         baseline_conversions = st.number_input("Number of conversions per week:", min_value=0, step=1)
 
-    risk = st.number_input("In %, enter the desired confidence level (e.g. 90):", min_value=0.0, max_value=100.0, step=0.1)
-    trust = st.number_input("In %, enter the minimum trustworthiness (Power) (e.g. 80):", min_value=0.0, max_value=100.0, step=0.1)
+    risk = st.number_input("In %, enter the desired confidence level (e.g. 90):", min_value=0, max_value=100, step=1)
+    trust = st.number_input("In %, enter the minimum trustworthiness (Power) (e.g. 80):", min_value=0, max_value=100, step=1)
     tails = st.selectbox("Do you want to know if B is better than A, or also the other way around ('Greater' or 'Two-sided)?", ('Greater', 'Two-sided'))
 
     st.write("")
