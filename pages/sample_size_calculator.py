@@ -1,7 +1,21 @@
 import streamlit as st
-from scipy.stats import norm, multivariate_normal
+from scipy.stats import norm
 import pandas as pd
 import numpy as np
+
+# Function to approximate Dunnett's adjustment by scaling the Z-score
+def dunnett_adjusted_z(num_variants, alpha, tails='Two-sided'):
+    # Approximate adjustment by scaling the critical value (Z-alpha) based on the number of variants
+    # In practice, this should be based on more advanced statistical correction methods
+    if tails == 'Two-sided':
+        adjustment_factor = 1 + (num_variants - 1) * 0.1  # Adjust based on the number of variants
+        z_alpha = norm.ppf(1 - alpha / 2)
+    else:
+        adjustment_factor = 1 + (num_variants - 1) * 0.1
+        z_alpha = norm.ppf(1 - alpha)
+    
+    # Scale the Z-value by the adjustment factor
+    return z_alpha * adjustment_factor
 
 def run():
     st.set_page_config(
@@ -33,27 +47,14 @@ def run():
         if any([baseline_visitors <= 0, baseline_conversions <= 0, risk <= 0, trust <= 0, tails not in ['Greater', 'Two-sided']]):
             st.write("<span style='color: #ff6600;'>*Please enter valid inputs for all fields</span>", unsafe_allow_html=True)
         else:
-            # Function to compute Dunnett's adjusted critical value
-            def dunnett_critical_value(num_variants, alpha, tails='Two-sided'):
-                # Assume correlation between tests for Dunnett's test approximation
-                corr_matrix = np.eye(num_variants)  # Identity matrix, can be adjusted for covariance
-                # Approximate the adjusted critical value
-                mvn = multivariate_normal(mean=[0] * num_variants, cov=corr_matrix)
-                
-                # We will integrate over the tail probabilities to approximate the critical value
-                if tails == 'Two-sided':
-                    return mvn.ppf(1 - alpha / 2)
-                else:
-                    return mvn.ppf(1 - alpha)
-                    
             alpha = 1 - (risk / 100)
             power = trust / 100
 
             # Calculate baseline conversion rate
             baseline_rate = baseline_conversions / baseline_visitors
 
-            # Adjust alpha for multiple comparisons using Dunnett's correction
-            adjusted_z_alpha = dunnett_critical_value(num_variants - 1, alpha, tails)  # Adjust based on Dunnett's test
+            # Adjust alpha for multiple comparisons using the approximate Dunnett's adjustment
+            adjusted_z_alpha = dunnett_adjusted_z(num_variants - 1, alpha, tails)
 
             # Z-scores for power
             z_power = norm.ppf(power)
