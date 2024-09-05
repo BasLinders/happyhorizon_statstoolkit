@@ -31,8 +31,8 @@ def run():
         total_conversions = st.number_input("Number of conversions per week:", min_value=0, step=1)
 
     # Trust (Power) and Risk (Confidence level) inputs
+    risk = st.number_input("In %, enter the desired confidence level (e.g. 95)", min_value=0, max_value=100, step=1)
     trust = st.number_input("In %, enter the minimum trustworthiness (Power) (e.g. 80)", min_value=0, max_value=100, step=1)
-    risk = st.number_input("In %, enter the desired confidence rate (e.g. 95)", min_value=0, max_value=100, step=1)
     tails = st.selectbox("Do you want to know if B is better than A, or also the other way around ('greater', 'two-sided')?", ('Greater', 'Two-sided'))
 
     st.write("")
