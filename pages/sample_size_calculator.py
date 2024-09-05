@@ -86,16 +86,25 @@ def run():
             df = pd.DataFrame(results, columns=['Week', 'Visitors / Variant', 'Relative MDE'])
 
             # Format the Relative MDE as a percentage for better readability
+            #df['Absolute MDE'] = df['Absolute MDE'].map(lambda x: f"{x:.2%}")
             df['Relative MDE'] = df['Relative MDE'].map(lambda x: f"{x:.2f}%")
 
-            # Display the DataFrame as output
+            df = df.reset_index(drop=True)
+
+            # Print the DataFrame
             st.write("")
-            st.write("### Relative MDE over 6 Weeks")
+            st.write("### MDE table")
             st.write("""
-                This table shows the relative Minimum Detectable Effect (MDE) per week as the sample size grows. 
-                A lower MDE means you can detect smaller changes in conversion rate.
+                This table tells you what the minimum effect is that you need to see in order to reach statistical significance 
+                for the amount of weeks that your test has run. A relative MDE of < 5% is generally testworthy, 5-10% is debatable. For everything 
+                above that, you should consider if the experiment will be able to achieve this effect and evaluate testworthiness.
             """)
-            st.dataframe(df)
+
+            # Convert DataFrame to HTML table without the index
+            html_table = df.to_html(index=False)
+
+            # Display the HTML table
+            st.write(html_table, unsafe_allow_html=True)
 
 if __name__ == "__main__":
     run()
