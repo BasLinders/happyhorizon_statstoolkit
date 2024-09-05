@@ -22,9 +22,13 @@ def run():
     # Input: number of variants (arms)
     num_variants = st.number_input("How many variants (including control)?", min_value=2, step=1)
 
+    col1, col2 = st.columns(2)
+
     # Input: total weekly visitors and conversions
-    total_visitors = st.number_input("Amount of visitors per week:", min_value=0, step=1)
-    total_conversions = st.number_input("Number of conversions per week:", min_value=0, step=1)
+    with col1:
+        total_visitors = st.number_input("Amount of visitors per week:", min_value=0, step=1)
+    with col2:
+        total_conversions = st.number_input("Number of conversions per week:", min_value=0, step=1)
 
     # Trust (Power) and Risk (Confidence level) inputs
     trust = st.number_input("In %, enter the minimum trustworthiness (Power) (e.g. 80)", min_value=0, max_value=100, step=1)
