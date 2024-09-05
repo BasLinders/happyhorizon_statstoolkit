@@ -96,7 +96,11 @@ def run():
                 for the amount of weeks that your test has run. A relative MDE of < 5% is generally testworthy, 5-10% is debatable. For everything 
                 above that, you should consider if the experiment will be able to achieve this effect and evaluate testworthiness.
             """)
-            st.dataframe(df)
+            # Convert DataFrame to HTML table without the index
+            html_table = df.to_html(index=False)
+
+            # Display the HTML table
+            st.write(html_table, unsafe_allow_html=True)
 
 if __name__ == "__main__":
     run()
