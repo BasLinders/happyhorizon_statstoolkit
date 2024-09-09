@@ -7,6 +7,8 @@ scipy.stats
 pandas
 numpy
 matplotlib.pyplot
+matplotlib.patches
+matplotlib.ticker
 pingouin
 statsmodels.formula.api
 statsmodels.api
