@@ -1,10 +1,12 @@
 altair
 streamlit
-scikit-learn
+sklearn
 seaborn
-scipy
+scipy.linalg
+scipy.stats
 pandas
 numpy
 matplotlib
 pingouin
-statsmodels
+statsmodels.formula.api
+statsmodels.api
