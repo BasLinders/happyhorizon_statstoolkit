@@ -1,6 +1,6 @@
 altair
 streamlit
-sklearn
+scikit-learn
 seaborn
 scipy
 pandas
