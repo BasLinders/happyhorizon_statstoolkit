@@ -3,15 +3,6 @@ from scipy.stats import norm
 import pandas as pd
 import numpy as np
 
-# Function for the Holm-Bonferroni correction
-def holm_bonferroni_adjusted_z(num_variants, alpha, tails='Two-sided'):
-    adjusted_alpha = alpha / np.arange(num_variants, 0, -1)
-    if tails == 'Two-sided':
-        z_alpha = norm.ppf(1 - adjusted_alpha / 2)
-    else:
-        z_alpha = norm.ppf(1 - adjusted_alpha)
-    return z_alpha
-
 def run():
     st.set_page_config(
         page_title="Sample Size / MDE calculator",
@@ -48,6 +39,15 @@ def run():
             # Calculate baseline conversion rate
             baseline_rate = baseline_conversions / baseline_visitors
 
+            # Function for the Holm-Bonferroni correction
+            def holm_bonferroni_adjusted_z(num_variants, alpha, tails='Two-sided'):
+                adjusted_alpha = alpha / np.arange(num_variants, 0, -1)
+                if tails == 'Two-sided':
+                    z_alpha = norm.ppf(1 - adjusted_alpha / 2)
+                else:
+                    z_alpha = norm.ppf(1 - adjusted_alpha)
+                return z_alpha
+            
             # Adjust alpha for multiple comparisons using the approximate Dunnett's adjustment
             adjusted_z_alpha = holm_bonferroni_adjusted_z(num_variants - 1, alpha, tails)
 
