@@ -3,19 +3,14 @@ from scipy.stats import norm
 import pandas as pd
 import numpy as np
 
-# Function to approximate Dunnett's adjustment by scaling the Z-score
-def dunnett_adjusted_z(num_variants, alpha, tails='Two-sided'):
-    # Approximate adjustment by scaling the critical value (Z-alpha) based on the number of variants
-    # In practice, this should be based on more advanced statistical correction methods
+# Function for the Holm-Bonferroni correction
+def holm_bonferroni_adjusted_z(num_variants, alpha, tails='Two-sided'):
+    adjusted_alpha = alpha / np.arange(num_variants, 0, -1)
     if tails == 'Two-sided':
-        adjustment_factor = 1 + (num_variants - 1) * 0.1  # Adjust based on the number of variants
-        z_alpha = norm.ppf(1 - alpha / 2)
+        z_alpha = norm.ppf(1 - adjusted_alpha / 2)
     else:
-        adjustment_factor = 1 + (num_variants - 1) * 0.1
-        z_alpha = norm.ppf(1 - alpha)
-    
-    # Scale the Z-value by the adjustment factor
-    return z_alpha * adjustment_factor
+        z_alpha = norm.ppf(1 - adjusted_alpha)
+    return z_alpha
 
 def run():
     st.set_page_config(
@@ -54,7 +49,7 @@ def run():
             baseline_rate = baseline_conversions / baseline_visitors
 
             # Adjust alpha for multiple comparisons using the approximate Dunnett's adjustment
-            adjusted_z_alpha = dunnett_adjusted_z(num_variants - 1, alpha, tails)
+            adjusted_z_alpha = holm_bonferroni_adjusted_z(num_variants - 1, alpha, tails)
 
             # Z-scores for power
             z_power = norm.ppf(power)
