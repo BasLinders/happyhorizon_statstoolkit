@@ -78,7 +78,8 @@ def run():
             df = pd.DataFrame(results, columns=['Week', 'Visitors / Variant', 'Relative MDE'])
 
             # Adjust formatting for better readability
-            df['Relative MDE'] = df['Relative MDE'].map(lambda x: f"{x:.2f}%")
+            #df['Relative MDE'] = df['Relative MDE'].map(lambda x: f"{x:.2f}%")
+            df['Relative MDE'] = df['Relative MDE'].map(lambda x: f"{x:.2f}%" if pd.notnull(x) and isinstance(x, (int, float)) else "N/A")
 
             df = df.reset_index(drop=True)
 
