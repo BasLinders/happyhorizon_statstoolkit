@@ -6,7 +6,8 @@ scipy.linalg
 scipy.stats
 pandas
 numpy
-matplotlib
+matplotlib.pyplot
 pingouin
 statsmodels.formula.api
 statsmodels.api
+statistics
