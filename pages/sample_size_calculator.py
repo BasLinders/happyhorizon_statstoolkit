@@ -46,8 +46,9 @@ def run():
                     z_alpha = norm.ppf(1 - adjusted_alpha / 2)
                 else:
                     z_alpha = norm.ppf(1 - adjusted_alpha)
-                return z_alpha
-            
+                #return z_alpha
+                return np.min(z_alpha)
+
             # Adjust alpha for multiple comparisons using the approximate Dunnett's adjustment
             if num_variants > 2:
                 adjusted_z_alpha = holm_bonferroni_adjusted_z(num_variants - 1, alpha, tails)
