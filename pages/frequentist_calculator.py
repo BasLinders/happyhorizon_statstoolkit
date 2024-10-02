@@ -161,7 +161,7 @@ def run():
                     st.markdown(f"  *Observed power for {alphabet[i]} vs {alphabet[0]}: {observed_powers[i-1] * 100:.2f}%")
 
             st.write("")
-            st.write("### Probability Density Graphs:")
+            st.write("### Probability Density Graph:")
 
             # Probability density graph
             plt.figure(figsize=(10, 6))
@@ -194,7 +194,7 @@ def run():
 
             # Adjust x-axis for percentages and add legend, titles, and labels
             plt.xlabel('Conversion rate (%)')
-            plt.ylabel('Probability')
+            plt.ylabel('Probability density')
             plt.title('Comparison of distributed conversion rates')
             plt.legend()
             st.pyplot(plt)
