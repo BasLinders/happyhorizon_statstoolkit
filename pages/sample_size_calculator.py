@@ -40,7 +40,7 @@ def run():
             baseline_rate = baseline_conversions / baseline_visitors
 
             # Function for the Holm-Bonferroni correction
-            def holm_bonferroni_adjusted_z(num_variants, alpha, tails='Two-sided'):
+            def holm_bonferroni_adjusted_z(num_variants, alpha, tails=tails):
                 adjusted_alpha = alpha / np.arange(num_variants, 0, -1)
                 if tails == 'Two-sided':
                     z_alpha = norm.ppf(1 - adjusted_alpha / 2)
