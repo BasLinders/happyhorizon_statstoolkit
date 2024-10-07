@@ -167,32 +167,30 @@ def run():
             plt.figure(figsize=(10, 6))
 
             # Define x_range dynamically based on the conversion rates
-            min_conversion_rate = min(conversion_rates)
-            max_conversion_rate = max(conversion_rates)
-            x_min = min_conversion_rate - 0.01  # Extend the range slightly to the left
-            x_max = max_conversion_rate + 0.01  # Extend the range slightly to the right
+            min_conversion_rate = min(conversion_rates) - 4 * max(se_list)
+            max_conversion_rate = max(conversion_rates) + 4 * max(se_list)
+            x_min = max(0, min_conversion_rate)
+            x_max = min(1, max_conversion_rate)
             x_range = np.linspace(x_min, x_max, 1000)
 
             colors = ['#FF5733', '#3498DB', '#9B59B6', '#E74C3C', '#1ABC9C', '#F39C12', '#2980B9', '#D35400', '#C0392B', '#7D3C98']
 
+            # Plot the probability density functions
             for i in range(num_variants):
                 pdf = norm.pdf(x_range, conversion_rates[i], se_list[i])
                 plt.plot(x_range * 100, pdf, label=f'Variant {alphabet[i]}', color=colors[i])
                 plt.axvline(conversion_rates[i] * 100, color=colors[i], linestyle='--')
                 plt.text(conversion_rates[i] * 100, plt.ylim()[1] * 0.50, f'Mean {alphabet[i]}', color=colors[i], ha='right', rotation=90, va='bottom')
 
-                # Shading the regions for winners and losers
-                if significant_results[i-1]:
+                # Add shading for significant results
+                if i > 0 and significant_results[i - 1]:
                     if conversion_rates[i] > conversion_rates[0]:
-                        # Shade only the upper tail in light green
                         upper_critical_value = norm.ppf(1 - sidak_alpha, loc=conversion_rates[i], scale=se_list[i])
                         plt.fill_between(x_range * 100, pdf, where=(x_range * 100 >= upper_critical_value * 100), color='lightgreen', alpha=0.3)
                     elif conversion_rates[i] < conversion_rates[0]:
-                        # Shade only the lower tail in light red
                         lower_critical_value = norm.ppf(sidak_alpha, loc=conversion_rates[i], scale=se_list[i])
                         plt.fill_between(x_range * 100, pdf, where=(x_range * 100 <= lower_critical_value * 100), color='lightcoral', alpha=0.3)
 
-            # Adjust x-axis for percentages and add legend, titles, and labels
             plt.xlabel('Conversion rate (%)')
             plt.ylabel('Probability density')
             plt.title('Comparison of distributed conversion rates')
