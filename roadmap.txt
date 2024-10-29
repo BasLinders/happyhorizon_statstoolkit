@@ -1,5 +1,15 @@
-# Roadmap toolkit
-- Frequentist: Integratie CUPED (Controlled experiment Using Pre-Experiment Data) variantiereductiemethode in frequentist calculator
-- Bayesian: Bayesiaanse calculator multi-arm maken
-- mSPRT: mixture Sequential Probability Ratio Test kaders vaststellen en in Colaboratory operationeel maken voor dagelijkse runs (Maarten Kaaij voor meer info vragen)
-- Continuous: Winsorizing (capping) mogelijkheden onderzoeken i.p.v. huidige outlier-removal oplossing voor variantiereductie
+# Roadmap toolkit (lange termijn)
+- Frequentist calculator: Integratie CUPED (Controlled experiment Using Pre-Experiment Data) variantiereductiemethode in frequentist calculator
+- Bayesian calculator: Bayesiaanse calculator multi-arm maken (kansberekening, bar chart, business case)
+- mSPRT app: mixture Sequential Probability Ratio Test kaders vaststellen (of user laten bepalen) en in Colaboratory operationeel maken voor dagelijkse runs (Maarten Kaaij voor meer info vragen)
+- Continuous: Winsorizing (capping) mogelijkheden onderzoeken i.p.v. huidige outlier-removal oplossing voor variantiereductie om geen bias te introduceren
+
+2024
+- Groeperen van statstieken waarop een conclusie wordt genomen (p-value, power, uplift, kans op meer conversie)
+  - Toepassen op: frequentist calculator, bayesian calculator
+- Business case 'vaste' projectieperiode gebruiken zodat deze niet hoeft worden ingevuld.
+- Frequentist calculator: integratie CUPED
+
+Beperkingen Streamlit:
+- Geen session storage voor ingevulde waarden
+- Geen 100% uptime: app moet na 3 dagen inactiviteit opnieuw worden geactiveerd door de gebruiker
