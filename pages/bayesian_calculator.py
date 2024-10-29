@@ -322,7 +322,7 @@ def run():
                 #st.write(f"Probability B better: {probability_b_better:.2%}")
                 #st.write(f"Optimistic uplift: €{optimistic_monetary_uplift:.2f}")
 
-                bayesian_result = 'Winner!' if {round(probability_b_better * 100,2)} >= {round(probability_winner * 100,2)} else 'Loss averted.' 
+                bayesian_result = 'Winner!' if {round(probability_b_better * 100,2)} >= {round(probability_winner)} else 'Loss averted.' 
 
                 st.write("### Results Summary")
                 st.write("")
