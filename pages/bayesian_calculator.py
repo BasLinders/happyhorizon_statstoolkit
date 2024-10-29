@@ -322,12 +322,18 @@ def run():
                 #st.write(f"Probability B better: {probability_b_better:.2%}")
                 #st.write(f"Optimistic uplift: €{optimistic_monetary_uplift:.2f}")
 
-                bayesian_result = 'Winner!' if {round(probability_b_better * 100,2)} >= {round(probability_winner)} else 'Loss averted.' 
+                if round(probability_b_better * 100, 2) >= probability_winner:
+                    bayesian_result = "<span style='color: green; font-weight: bold;'>Winner</span>"
+                else:
+                    bayesian_result = "<span style='color: red; font-weight: bold;'>Loss averted</span>"
 
                 st.write("### Results Summary")
                 st.write("")
-                st.write(f"Variant B  has a {round(probability_b_better * 100,2)}% chance to win with a relative change of {round(observed_uplift * 100,2)}. "
-                         f"Because your winning threshold was set to {probability_winner}%, this experiment is a {bayesian_result}")
+                st.markdown(
+                    f"Variant B has a {round(probability_b_better * 100, 2)}% chance to win with a relative change of {round(observed_uplift * 100, 2)}%. "
+                    f"Because your winning threshold was set to {probability_winner}%, this experiment is a {bayesian_result}.",
+                    unsafe_allow_html=True
+                )
                 st.write("")
                 st.write("The table below shows the contribution to the revenue over the projection period, with the AOVs as constants. This is purely a measurement for potential impact - no guarantee!")
                 st.write("")
