@@ -32,15 +32,21 @@ def run():
 
     # Use session state values
     num_variants = st.session_state.num_variants
-    visitor_counts = st.session_state.visitor_counts
-    variant_conversions = st.session_state.variant_conversions
     alphabet = string.ascii_uppercase
 
     # Number of variants input
-    st.session_state.num_variants = st.number_input(
+    num_variants = st.number_input(
         "How many variants did your experiment have (including control)?",
         min_value=2, max_value=10, step=1, value=st.session_state.num_variants
     )
+
+    # Update the session state lists to match the number of variants
+    st.session_state.visitor_counts = [0] * num_variants
+    st.session_state.variant_conversions = [0] * num_variants
+
+    # Assign local variables for convenience
+    visitor_counts = st.session_state.visitor_counts
+    variant_conversions = st.session_state.variant_conversions
 
     col1, col2 = st.columns(2)
 
