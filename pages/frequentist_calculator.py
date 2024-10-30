@@ -17,9 +17,9 @@ def run():
     if "num_variants" not in st.session_state:
         st.session_state.num_variants = 2
     if "visitor_counts" not in st.session_state:
-        st.session_state.visitor_counts = [0] * 10
+        st.session_state.visitor_counts = [0] * st.session_state.num_variants
     if "variant_conversions" not in st.session_state:
-        st.session_state.variant_conversions = [0] * 10
+        st.session_state.variant_conversions = [0] * st.session_state.num_variants
     if "risk" not in st.session_state:
         st.session_state.risk = 90
     if "tail" not in st.session_state:
@@ -30,23 +30,23 @@ def run():
     This calculator tests your data against the null-hypothesis (= there's no difference between 'A' and 'B')...
     """)
 
-    # Use session state values
-    num_variants = st.session_state.num_variants
-    alphabet = string.ascii_uppercase
-
     # Number of variants input
-    num_variants = st.number_input(
+    st.session_state.num_variants = st.number_input(
         "How many variants did your experiment have (including control)?",
         min_value=2, max_value=10, step=1, value=st.session_state.num_variants
     )
 
-    # Update the session state lists to match the number of variants
-    st.session_state.visitor_counts = [0] * num_variants
-    st.session_state.variant_conversions = [0] * num_variants
+    # Adjust visitor_counts and variant_conversions to match num_variants without overwriting existing values
+    if len(st.session_state.visitor_counts) != st.session_state.num_variants:
+        st.session_state.visitor_counts = st.session_state.visitor_counts[:st.session_state.num_variants] + [0] * (st.session_state.num_variants - len(st.session_state.visitor_counts))
+    if len(st.session_state.variant_conversions) != st.session_state.num_variants:
+        st.session_state.variant_conversions = st.session_state.variant_conversions[:st.session_state.num_variants] + [0] * (st.session_state.num_variants - len(st.session_state.variant_conversions))
 
     # Assign local variables for convenience
+    num_variants = st.session_state.num_variants
     visitor_counts = st.session_state.visitor_counts
     variant_conversions = st.session_state.variant_conversions
+    alphabet = string.ascii_uppercase
 
     col1, col2 = st.columns(2)
 
@@ -58,14 +58,14 @@ def run():
     # Update visitor_counts and variant_conversions for each variant
     for i in range(num_variants):
         with col1:
-            visitor_counts[i] = st.number_input(
+            st.session_state.visitor_counts[i] = st.number_input(
                 f"How many visitors did variant {alphabet[i]} have?",
-                min_value=0, step=1, value=visitor_counts[i]
+                min_value=0, step=1, value=st.session_state.visitor_counts[i]
             )
         with col2:
-            variant_conversions[i] = st.number_input(
+            st.session_state.variant_conversions[i] = st.number_input(
                 f"How many conversions did variant {alphabet[i]} have?",
-                min_value=0, step=1, value=variant_conversions[i]
+                min_value=0, step=1, value=st.session_state.variant_conversions[i]
             )
 
     # Confidence level and test type inputs
@@ -80,7 +80,7 @@ def run():
         index=['greater', 'two-sided'].index(st.session_state.tail)
     )
 
-    # Validation check - place here to ensure updated inputs are checked
+    # Validation check
     valid_inputs = all(v > 0 for v in visitor_counts[:num_variants]) and all(
         0 <= c <= v for c, v in zip(variant_conversions[:num_variants], visitor_counts[:num_variants])
     )
