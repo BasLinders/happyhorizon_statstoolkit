@@ -27,8 +27,11 @@ def run():
 
     st.write("# Frequentist Calculator")
     st.markdown("""
-    This calculator tests your data against the null-hypothesis (= there's no difference between 'A' and 'B')...
-    """)
+                This calculator tests your data for statistical significance against the null-hypothesis (= there's no difference between 'A' and 'B'). 
+                Input your experiment data and read the results at the bottom of the page.
+
+                Happy learning!
+                """)
 
     # Number of variants input
     st.session_state.num_variants = st.number_input(
