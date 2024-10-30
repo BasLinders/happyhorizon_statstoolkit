@@ -43,7 +43,8 @@ def run():
     aov_a = st.number_input("What is the average order value of A? ", min_value=0.0, step=0.01)
     aov_b = st.number_input("What is the average order value of B? ", min_value=0.0, step=0.01)
     runtime_days = st.number_input("For how many days did your test run?", min_value=0, step=1)
-    projection_period = st.number_input("Over how many days should we project the contribution in revenue?", min_value=0, step=1)
+    #projection_period = st.number_input("Over how many days should we project the contribution in revenue?", min_value=0, step=1)
+    projection_period = 183
     conv_rate_a = conversions_a / visitors_a if visitors_a != 0 else 0
     conv_rate_b = conversions_b / visitors_b if visitors_b != 0 else 0
     uplift = (conv_rate_b - conv_rate_a) / conv_rate_a if conv_rate_a != 0 else 0
@@ -59,7 +60,8 @@ def run():
             st.write(f"Variant B: {visitors_b} visitors, {conversions_b} conversions, AOV: {aov_b}")
             st.write(f"Measured change in conversion rate: {uplift * 100:.2f}%")
             st.write(f"Minimum chance to win: {probability_winner}%")
-            st.write(f"Test runtime: {runtime_days} days, Projection period: {projection_period} days")
+            st.write(f"Test runtime: {runtime_days} days")
+            #st.write(f"Test runtime: {runtime_days} days, Projection period: {projection_period} days")
 
             probability_threshold = probability_winner / 100
 
@@ -334,10 +336,15 @@ def run():
                     f"Because your winning threshold was set to {int(probability_winner)}%, this experiment is a {bayesian_result}.",
                     unsafe_allow_html=True
                 )
-                st.write("")
-                st.write("The table below shows the contribution to the revenue over the projection period, with the AOVs as constants. This is purely a measurement for potential impact - no guarantee!")
-                st.write("")
-                st.dataframe(df)
+                if aov_a and aov_b > 0:
+                    st.write("")
+                    st.write("""
+                             The table below shows the potential contribution to the revenue over a period of 6 months, with the AOVs as constants.
+                             Please note: on smaller data sets of < 1000 conversions, the simulation might find more extreme values for a variant. 
+                             This could lead to inflated contributions; interpret with care. This table is purely a measurement for potential impact - no guarantee!
+                             """)
+                    st.write("")
+                    st.dataframe(df)
         else:
             st.write("")
             st.write("<span style='color: #ff6600;'>*Please enter valid inputs for all fields (business case is optional)</span>", unsafe_allow_html=True)
