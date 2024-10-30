@@ -51,21 +51,6 @@ def run():
     with col2:
         st.write("### Conversions")
 
-    # Experiment inputs
-    """
-    for i in range(st.session_state.num_variants):
-        with col1:
-            visitor_counts.append(st.number_input(f"How many visitors did variant {alphabet[i]} have?", min_value=0, step=1))
-        with col2:
-            variant_conversions.append(st.number_input(f"How many conversions did variant {alphabet[i]} have?", min_value=0, step=1))
-
-    risk = st.number_input("In %, how confident do you want to be in the results (enter 90, 95, etc)?", min_value=90, step=1)
-    tail = st.selectbox("Do you only want to know if B is better than A ('greater'), or if B is worse than A ('two-sided')?", options=['greater', 'two-sided'])
-
-    # Ensure inputs are valid before performing calculations
-    valid_inputs = all(v > 0 for v in visitor_counts) and all(0 <= c <= v for c, v in zip(variant_conversions, visitor_counts))
-    """
-
     # Update visitor_counts and variant_conversions for each variant
     for i in range(num_variants):
         with col1:
