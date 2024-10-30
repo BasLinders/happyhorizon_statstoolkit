@@ -83,9 +83,9 @@ def run():
     if st.button("Calculate my test results"):
 
         if valid_inputs:
-            alpha = 1 - (risk / 100)
             tail = st.session_state.tail
             risk = st.session_state.risk
+            alpha = 1 - (risk / 100)
 
             # Apply Sidak's correction if there are 3 or more variants
             if num_variants >= 3:
