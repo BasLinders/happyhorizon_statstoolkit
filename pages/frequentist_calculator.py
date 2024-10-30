@@ -13,6 +13,18 @@ def run():
         page_icon="🔢",
     )
 
+    # Initialize session state for inputs
+    if "num_variants" not in st.session_state:
+        st.session_state.num_variants = 2
+    if "visitor_counts" not in st.session_state:
+        st.session_state.visitor_counts = [0] * 10
+    if "variant_conversions" not in st.session_state:
+        st.session_state.variant_conversions = [0] * 10
+    if "risk" not in st.session_state:
+        st.session_state.risk = 90
+    if "tail" not in st.session_state:
+        st.session_state.tail = 'greater'
+
     st.write("# Frequentist Calculator")
     st.markdown("""
     This calculator tests your data against the null-hypothesis (= there's no difference between 'A' and 'B'). If your results deviate significantly from the null-
@@ -23,12 +35,15 @@ def run():
     Enter your experiment values below. Happy learning!
     """)
 
-    num_variants = st.number_input("How many variants did your experiment have (including control)?", min_value=2, max_value=10, step=1)
+    st.session_state.num_variants = st.number_input("How many variants did your experiment have (including control)?", min_value=2, max_value=10, step=1, value=st.session_state.num_variants)
     col1, col2 = st.columns(2)
-
-    # Generate fields for variants
-    visitor_counts = []
-    variant_conversions = []
+    
+    # Set fields to session states
+    num_variants = st.session_state.num_variants
+    visitor_counts = st.session_state.visitor_counts
+    variant_conversions = st.session_state.variant_conversions
+    risk = st.session_state.risk
+    tail = st.session_state.tail
     alphabet = string.ascii_uppercase
 
     with col1:
@@ -37,7 +52,8 @@ def run():
         st.write("### Conversions")
 
     # Experiment inputs
-    for i in range(num_variants):
+    """
+    for i in range(st.session_state.num_variants):
         with col1:
             visitor_counts.append(st.number_input(f"How many visitors did variant {alphabet[i]} have?", min_value=0, step=1))
         with col2:
@@ -46,6 +62,35 @@ def run():
     risk = st.number_input("In %, how confident do you want to be in the results (enter 90, 95, etc)?", min_value=90, step=1)
     tail = st.selectbox("Do you only want to know if B is better than A ('greater'), or if B is worse than A ('two-sided')?", options=['greater', 'two-sided'])
 
+    # Ensure inputs are valid before performing calculations
+    valid_inputs = all(v > 0 for v in visitor_counts) and all(0 <= c <= v for c, v in zip(variant_conversions, visitor_counts))
+    """
+
+    # Update visitor_counts and variant_conversions for each variant
+    for i in range(num_variants):
+        with col1:
+            visitor_counts[i] = st.number_input(
+                f"How many visitors did variant {alphabet[i]} have?",
+                min_value=0, step=1, value=visitor_counts[i]
+            )
+        with col2:
+            variant_conversions[i] = st.number_input(
+                f"How many conversions did variant {alphabet[i]} have?",
+                min_value=0, step=1, value=variant_conversions[i]
+            )
+
+    # Confidence level
+    risk = st.number_input(
+        "In %, how confident do you want to be in the results (enter 90, 95, etc)?",
+        min_value=90, step=1, value=risk
+    )
+
+    # Test type
+    tail = st.selectbox(
+        "Do you only want to know if B is better than A ('greater'), or if B is worse than A ('two-sided')?",
+        options=['greater', 'two-sided'], index=['greater', 'two-sided'].index(tail)
+    )
+    
     # Ensure inputs are valid before performing calculations
     valid_inputs = all(v > 0 for v in visitor_counts) and all(0 <= c <= v for c, v in zip(variant_conversions, visitor_counts))
 
