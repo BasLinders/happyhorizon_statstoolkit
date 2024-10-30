@@ -27,24 +27,22 @@ def run():
 
     st.write("# Frequentist Calculator")
     st.markdown("""
-    This calculator tests your data against the null-hypothesis (= there's no difference between 'A' and 'B'). If your results deviate significantly from the null-
-    hypothesis, that means that the change you tested did indeed shift user behavior for your chosen metric. 
-
-    The calculator will output the results at the very bottom, but will also display relevant statistics for your data.
-
-    Enter your experiment values below. Happy learning!
+    This calculator tests your data against the null-hypothesis (= there's no difference between 'A' and 'B')...
     """)
 
-    st.session_state.num_variants = st.number_input("How many variants did your experiment have (including control)?", min_value=2, max_value=10, step=1, value=st.session_state.num_variants)
-    col1, col2 = st.columns(2)
-    
-    # Set fields to session states
+    # Use session state values
     num_variants = st.session_state.num_variants
     visitor_counts = st.session_state.visitor_counts
     variant_conversions = st.session_state.variant_conversions
-    risk = st.session_state.risk
-    tail = st.session_state.tail
     alphabet = string.ascii_uppercase
+
+    # Number of variants input
+    st.session_state.num_variants = st.number_input(
+        "How many variants did your experiment have (including control)?",
+        min_value=2, max_value=10, step=1, value=st.session_state.num_variants
+    )
+
+    col1, col2 = st.columns(2)
 
     with col1:
         st.write("### Visitors")
@@ -64,26 +62,30 @@ def run():
                 min_value=0, step=1, value=variant_conversions[i]
             )
 
-    # Confidence level
-    risk = st.number_input(
+    # Confidence level and test type inputs
+    st.session_state.risk = st.number_input(
         "In %, how confident do you want to be in the results (enter 90, 95, etc)?",
-        min_value=90, step=1, value=risk
+        min_value=90, step=1, value=st.session_state.risk
     )
 
-    # Test type
-    tail = st.selectbox(
+    st.session_state.tail = st.selectbox(
         "Do you only want to know if B is better than A ('greater'), or if B is worse than A ('two-sided')?",
-        options=['greater', 'two-sided'], index=['greater', 'two-sided'].index(tail)
+        options=['greater', 'two-sided'],
+        index=['greater', 'two-sided'].index(st.session_state.tail)
     )
-    
-    # Ensure inputs are valid before performing calculations
-    valid_inputs = all(v > 0 for v in visitor_counts) and all(0 <= c <= v for c, v in zip(variant_conversions, visitor_counts))
+
+    # Validation check - place here to ensure updated inputs are checked
+    valid_inputs = all(v > 0 for v in visitor_counts[:num_variants]) and all(
+        0 <= c <= v for c, v in zip(variant_conversions[:num_variants], visitor_counts[:num_variants])
+    )
 
     st.write("")
     if st.button("Calculate my test results"):
 
         if valid_inputs:
             alpha = 1 - (risk / 100)
+            tail = st.session_state.tail
+            risk = st.session_state.risk
 
             # Apply Sidak's correction if there are 3 or more variants
             if num_variants >= 3:
