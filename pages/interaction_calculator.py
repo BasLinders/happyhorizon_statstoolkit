@@ -38,11 +38,11 @@ def run():
         st.write("### Visitors")
         st.session_state.AA_u = st.number_input("AA Visitors", value=st.session_state.AA_u)
         AA_u = st.session_state.AA_u
-        st.session_state.AB_u = st.number_input("AB Visitors", value=st.session_state.AA_u)
+        st.session_state.AB_u = st.number_input("AB Visitors", value=st.session_state.AB_u)
         AB_u = st.session_state.AB_u
-        st.session_state.BA_u = st.number_input("BA Visitors", value=st.session_state.AA_u)
+        st.session_state.BA_u = st.number_input("BA Visitors", value=st.session_state.BA_u)
         BA_u = st.session_state.BA_u
-        st.session_state.BB_u = st.number_input("BB Visitors", value=st.session_state.AA_u)
+        st.session_state.BB_u = st.number_input("BB Visitors", value=st.session_state.BB_u)
         BB_u = st.session_state.BB_u
 
     with col2:
