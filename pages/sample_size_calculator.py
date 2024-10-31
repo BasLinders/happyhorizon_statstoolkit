@@ -23,27 +23,34 @@ def run():
     Enter the values below to start. The calculator dynamically adjusts for the number of variants in the experiment.
     Happy learning!
     """
-    num_variants = st.number_input("Number of variants (including control):", min_value=2, step=1)
+    num_variants = st.number_input("Number of variants (including control):", min_value=2, step=1, value=st.session_state.num_variants)
     if num_variants != st.session_state.num_variants:
+        # Update num_variants and resize lists
         st.session_state.num_variants = num_variants
         st.session_state.baseline_visitors = [0] * num_variants
         st.session_state.baseline_conversions = [0] * num_variants
 
-    # Input fields for baseline visitors and conversions
-    col1, col2 = st.columns(2)
-    with col1:
-        baseline_visitors = st.number_input("Amount of visitors per week:", min_value=0, step=1)
-        st.session_state.baseline_visitors = [baseline_visitors] * st.session_state.num_variants
-    with col2:
-        baseline_conversions = st.number_input("Number of conversions per week:", min_value=0, step=1)
-        st.session_state.baseline_conversions = [baseline_conversions] * st.session_state.num_variants
+    # Input fields for baseline visitors and conversions per variant
+    st.write("### Baseline Data per Variant")
+    for i in range(st.session_state.num_variants):
+        col1, col2 = st.columns(2)
+        with col1:
+            st.session_state.baseline_visitors[i] = st.number_input(f"Visitors for Variant {i+1}", min_value=0, step=1, value=st.session_state.baseline_visitors[i])
+        with col2:
+            st.session_state.baseline_conversions[i] = st.number_input(f"Conversions for Variant {i+1}", min_value=0, step=1, value=st.session_state.baseline_conversions[i])
 
-    st.session_state.risk = st.number_input("In %, enter the desired confidence level (e.g. 90):", min_value=0, max_value=100, step=1)
+    # Additional inputs
+    st.session_state.risk = st.number_input("In %, enter the desired confidence level (e.g. 90):", min_value=0, max_value=100, step=1, value=st.session_state.risk)
+    st.session_state.trust = st.number_input("In %, enter the minimum trustworthiness (Power) (e.g. 80):", min_value=0, max_value=100, step=1, value=st.session_state.trust)
+    st.session_state.tails = st.selectbox("Do you want to know if B is better than A, or also the other way around ('Greater' or 'Two-sided)?", 
+                                        options=['Greater', 'Two-sided'], index=['Greater', 'Two-sided'].index(st.session_state.tails))
+
+    # Access variables for further use
     risk = st.session_state.risk
-    st.session_state.trust = st.number_input("In %, enter the minimum trustworthiness (Power) (e.g. 80):", min_value=0, max_value=100, step=1)
     trust = st.session_state.trust
-    st.session_state.tails = st.selectbox("Do you want to know if B is better than A, or also the other way around ('Greater' or 'Two-sided)?", ('Greater', 'Two-sided'))
     tails = st.session_state.tails
+    baseline_visitors = st.session_state.baseline_visitors
+    baseline_conversions = st.session_state.baseline_conversions
 
     st.write("")
     if st.button("Calculate Sample size and MDE"):
