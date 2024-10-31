@@ -18,7 +18,7 @@ def run():
     st.session_state.setdefault("visitor_counts", [0] * st.session_state.num_variants)
     st.session_state.setdefault("variant_conversions", [0] * st.session_state.num_variants)
     st.session_state.setdefault("risk", 0)
-    st.session_state.setdefault("tail", 'Greater')
+    st.session_state.setdefault("tail", 'greater')
 
     st.write("# Frequentist Calculator")
     st.markdown("""
