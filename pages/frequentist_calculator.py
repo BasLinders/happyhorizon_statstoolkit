@@ -17,7 +17,7 @@ def run():
     st.session_state.setdefault("num_variants", 2)
     st.session_state.setdefault("visitor_counts", [0] * st.session_state.num_variants)
     st.session_state.setdefault("variant_conversions", [0] * st.session_state.num_variants)
-    st.session_state.setdefault("risk", 90)
+    st.session_state.setdefault("risk", 0)
     st.session_state.setdefault("tail", 'Greater')
 
     st.write("# Frequentist Calculator")
@@ -69,7 +69,7 @@ def run():
     # Confidence level and test type inputs
     st.session_state.risk = st.number_input(
         "In %, how confident do you want to be in the results (enter 90, 95, etc)?",
-        min_value=90, step=1, value=st.session_state.risk
+        min_value=0, step=1, value=st.session_state.risk
     )
 
     st.session_state.tail = st.selectbox(
