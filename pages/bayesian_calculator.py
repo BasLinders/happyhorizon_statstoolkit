@@ -11,6 +11,16 @@ def run():
         page_icon="🔢",
     )
 
+    # Initialize session state for inputs
+    st.session_state.setdefault("visitors_a", 0)
+    st.session_state.setdefault("visitors_b", 0)
+    st.session_state.setdefault("conversions_a", 0)
+    st.session_state.setdefault("conversions_b", 0)
+    st.session_state.setdefault("probability_winner", 0.0)
+    st.session_state.setdefault("aov_a", 0.0)
+    st.session_state.setdefault("aov_b", 0.0)
+    st.session_state.setdefault("runtime_days", 0)
+
     st.title("Bayesian Calculator")
     """
     This calculator outputs the probability of a variant to generate more conversions than the other. 
@@ -22,27 +32,36 @@ def run():
     Enter your experiment values below. Happy learning!
     """
     col1, col2 = st.columns(2)
+
     # Get visitor and conversion inputs with validation
     with col1:
         st.write("### Visitors")
-        visitors_a = st.number_input("How many visitors does variant A have?", min_value=0, step=1)
-        visitors_b = st.number_input("How many visitors does variant B have?", min_value=0, step=1)
+        st.session_state.visitors_a = st.number_input("How many visitors does variant A have?", min_value=0, step=1)
+        st.session_state.visitors_b = st.number_input("How many visitors does variant B have?", min_value=0, step=1)
+        visitors_a = st.session_state.visitors_a
+        visitors_b = st.session_state.visitors_b
     with col2:
         st.write("### Conversions")
-        conversions_a = st.number_input("How many conversions does variant A have?", min_value=0, step=1)
-        conversions_b = st.number_input("How many conversions does variant B have?", min_value=0, step=1)
-    
+        st.session_state.conversions_a = st.number_input("How many conversions does variant A have?", min_value=0, step=1)
+        st.session_state.conversions_b = st.number_input("How many conversions does variant B have?", min_value=0, step=1)
+        conversions_a = st.session_state.conversions_a
+        conversions_b = st.session_state.conversions_b
+
     all_variant_conversions = [conversions_a, conversions_b]
     all_variant_visitors = [visitors_a, visitors_b]
 
-    probability_winner = st.number_input("What is your minimum probability for a winner?", min_value=0.0, max_value=100.0, step=0.01)
+    st.session_state.probability_winner = st.number_input("What is your minimum probability for a winner?", min_value=0.0, max_value=100.0, step=0.01)
+    probability_winner = st.session_state.probability_winner
     
     # Get projection period with validation
     st.write("")
     st.write("### Business case data")
-    aov_a = st.number_input("What is the average order value of A? ", min_value=0.0, step=0.01)
-    aov_b = st.number_input("What is the average order value of B? ", min_value=0.0, step=0.01)
-    runtime_days = st.number_input("For how many days did your test run?", min_value=0, step=1)
+    st.session_state.aov_a = st.number_input("What is the average order value of A? ", min_value=0.0, step=0.01)
+    st.session_state.aov_b = st.number_input("What is the average order value of B? ", min_value=0.0, step=0.01)
+    st.session_state.runtime_days = st.number_input("For how many days did your test run?", min_value=0, step=1)
+    aov_a = st.session_state.aov_a
+    aov_b = st.session_state.aov_b
+    runtime_days = st.session_state.runtime_days
     #projection_period = st.number_input("Over how many days should we project the contribution in revenue?", min_value=0, step=1)
     projection_period = 183
     conv_rate_a = conversions_a / visitors_a if visitors_a != 0 else 0
@@ -51,6 +70,8 @@ def run():
 
     valid_inputs = all(v > 0 for v in all_variant_visitors) and all(0 <= c <= v for c, v in zip(all_variant_conversions, all_variant_visitors))
 
+    # Computations below use session stored values
+    
     st.write("")
     if st.button("Calculate my test results"):
         if valid_inputs: 
