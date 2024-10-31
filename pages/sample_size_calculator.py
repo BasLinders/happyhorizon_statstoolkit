@@ -54,7 +54,11 @@ def run():
 
     st.write("")
     if st.button("Calculate Sample size and MDE"):
-        if any([baseline_visitors <= 0, baseline_conversions <= 0, risk <= 0, trust <= 0, tails not in ['Greater', 'Two-sided']]):
+        if any(visitor <= 0 for visitor in baseline_visitors) or \
+            any(conversion <= 0 for conversion in baseline_conversions) or \
+            not (0 < risk <= 100) or \
+            not (0 < trust <= 100) or \
+            tails not in ['Greater', 'Two-sided']:
             st.write("<span style='color: #ff6600;'>*Please enter valid inputs for all fields</span>", unsafe_allow_html=True)
         else:
             alpha = 1 - (risk / 100)
