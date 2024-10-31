@@ -20,6 +20,8 @@ def run():
     st.title("Sample Size Calculator")
     """
     This calculator provides you with a representative sample size and Minimum Detectable Effect (MDE) for your online experiment. 
+
+    The calculator will use baseline data to solve for the relative MDE and estimate it for a runtime of 
     Enter the values below to start.
     Happy learning!
     """
@@ -35,13 +37,13 @@ def run():
     # Gather baseline data per variant into temporary lists
     temp_visitors = st.session_state.baseline_visitors[:]
     temp_conversions = st.session_state.baseline_conversions[:]
-    st.write("### Baseline Data per Variant")
+    st.write("### Baseline Data")
     for i in range(st.session_state.num_variants):
         col1, col2 = st.columns(2)
         with col1:
-            temp_visitors[i] = st.number_input(f"Visitors baseline", min_value=0, step=1, value=st.session_state.baseline_visitors[i])
+            temp_visitors[i] = st.number_input(f"Visitors", min_value=0, step=1, value=st.session_state.baseline_visitors[i])
         with col2:
-            temp_conversions[i] = st.number_input(f"Conversions baseline", min_value=0, step=1, value=st.session_state.baseline_conversions[i])
+            temp_conversions[i] = st.number_input(f"Conversions", min_value=0, step=1, value=st.session_state.baseline_conversions[i])
 
     # Update session state lists after gathering inputs
     st.session_state.baseline_visitors = temp_visitors
