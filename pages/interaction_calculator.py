@@ -11,6 +11,16 @@ def run():
         page_icon="🔢",
     )
 
+    # Initialize session state defaults
+    st.session_state.setdefault("AA_u", 0)
+    st.session_state.setdefault("AB_u", 0)
+    st.session_state.setdefault("BA_u", 0)
+    st.session_state.setdefault("BB_u", 0)
+    st.session_state.setdefault("AA_c", 0)
+    st.session_state.setdefault("AB_c", 0)
+    st.session_state.setdefault("BA_c", 0)
+    st.session_state.setdefault("BB_c", 0)
+
     st.title("Interaction Effect Calculator")
     """
     This calculator lets you see if your variants from two experiments that ran concurrently influenced eachother on the KPI that
@@ -26,16 +36,25 @@ def run():
     col1, col2 = st.columns(2)
     with col1:
         st.write("### Visitors")
-        AA_u = st.number_input("AA Visitors", value=0)
-        AB_u = st.number_input("AB Visitors", value=0)
-        BA_u = st.number_input("BA Visitors", value=0)
-        BB_u = st.number_input("BB Visitors", value=0)
+        st.session_state.AA_u = st.number_input("AA Visitors", value=st.session_state.AA_u)
+        AA_u = st.session_state.AA_u
+        st.session_state.AB_u.AB_u = st.number_input("AB Visitors", value=st.session_state.AA_u)
+        AB_u = st.session_state.AB_u
+        st.session_state.BA_u = st.number_input("BA Visitors", value=st.session_state.AA_u)
+        BA_u = st.session_state.BA_u
+        st.session_state.BB_u = st.number_input("BB Visitors", value=st.session_state.AA_u)
+        BB_u = st.session_state.BB_u
+
     with col2:
         st.write("### Conversions")
-        AA_c = st.number_input("AA Conversions", value=0)
-        AB_c = st.number_input("AB Conversions", value=0)
-        BA_c = st.number_input("BA Conversions", value=0)
-        BB_c = st.number_input("BB Conversions", value=0)
+        st.session_state.AA_c = st.number_input("AA Conversions", value=st.session_state.AA_c)
+        AA_c = st.session_state.AA_c
+        st.sesson_state.AB_c = st.number_input("AB Conversions", value=st.sesson_state.AB_c)
+        AB_c = st.sesson_state.AB_c
+        st.session_state.BA_c = st.number_input("BA Conversions", value=st.session_state.BA_c)
+        BA_c = st.session_state.BA_c
+        st.session_state.BB_c = st.number_input("BB Conversions", value=st.session_state.BB_c)
+        BB_c = st.session_state.BB_c
 
     st.write("")
     if st.button("Calculate interaction effect"):
