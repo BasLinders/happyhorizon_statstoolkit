@@ -123,20 +123,32 @@ def run():
                 worst_combination = p_values.idxmax()
                 worst_p_value = p_values.max()
 
-                st.write("")
-                st.write(f"\nThe best performing combination based on p-value is {best_combination} (P-value = {best_p_value:.2e}).")
-                st.write(f"The worst performing combination based on p-value is {worst_combination} (P-value = {worst_p_value:.2e}).")
+                #st.write("")
+                #st.write(f"\nThe best performing combination based on p-value is {best_combination} (P-value = {best_p_value:.2e}).")
+                #st.write(f"The worst performing combination based on p-value is {worst_combination} (P-value = {worst_p_value:.2e}).")
 
                 # Extract scalar value for the p-value of Combination_BB
                 bb_p_value = coefficients_table.loc['Combination_BB', 'P>|z|'] 
+                st.write("### Results summary")
                 if bb_p_value < .05:
                     st.write("")
                     st.write(f"\nVisitors that saw both your test variants converted significantly worse at p-value {bb_p_value:.2e}. " \
                             f"Interpret your experiment results with care.")
                 else:
-                    st.write("")
-                    st.write("\nVisitors who interacted with both your test variants didn't react significantly more negatively than other visitors." \
-                            " You can interpret your experiments as you would normally.")
+                    for combination in ['Combination_AB', 'Combination_BA', 'Combination_BB']:
+                        coef = coefficients_table.loc[combination, 'Coef.']
+                        p_value = coefficients_table.loc[combination, 'P>|z|']
+
+                        if p_value < 0.05 and coef < 0:
+                            st.write(f"Combination {combination} has a significant impact on the likelihood of conversion, with a p-value of {p_value:.2e} "
+                                     f"and a negative coefficient of {coef:.4f}.")
+                            st.write("")
+                            st.write("\nVisitors who interacted with both your test variants (group BB) didn't react significantly more negatively than other visitors, " \
+                                    "but the impact on this group indicates a possibly negative impact when implenting this change and warrants caution.")
+                        else:
+                            st.write("")
+                            st.write("\nVisitors who interacted with both your test variants (group BB) didn't react significantly more negatively than other visitors; "\
+                                     "you can interpet the results of your experiments as you normally would.")
 
             except Exception as e:
                 st.write(f"Error fitting the model: {e}")
