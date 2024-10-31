@@ -20,7 +20,7 @@ def run():
     st.title("Sample Size Calculator")
     """
     This calculator provides you with a representative sample size and Minimum Detectable Effect (MDE) for your online experiment. 
-    Enter the values below to start. The calculator dynamically adjusts for the number of variants in the experiment.
+    Enter the values below to start.
     Happy learning!
     """
     #num_variants = st.number_input("Number of variants (including control):", min_value=2, step=1, value=st.session_state.num_variants)
@@ -39,9 +39,9 @@ def run():
     for i in range(st.session_state.num_variants):
         col1, col2 = st.columns(2)
         with col1:
-            temp_visitors[i] = st.number_input(f"Visitors for Variant {i+1}", min_value=0, step=1, value=st.session_state.baseline_visitors[i])
+            temp_visitors[i] = st.number_input(f"Visitors baseline", min_value=0, step=1, value=st.session_state.baseline_visitors[i])
         with col2:
-            temp_conversions[i] = st.number_input(f"Conversions for Variant {i+1}", min_value=0, step=1, value=st.session_state.baseline_conversions[i])
+            temp_conversions[i] = st.number_input(f"Conversions baseline", min_value=0, step=1, value=st.session_state.baseline_conversions[i])
 
     # Update session state lists after gathering inputs
     st.session_state.baseline_visitors = temp_visitors
