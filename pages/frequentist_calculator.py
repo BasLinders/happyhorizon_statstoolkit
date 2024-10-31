@@ -263,8 +263,9 @@ def run():
                 confidence_interval = stats.norm.interval(1 - alpha_noninf, loc=(conversion_rates[i] - conversion_rates[0]), scale=pooled_se)
                 lower_bound, upper_bound = confidence_interval
 
+                st.write("### Results summary")
                 if p_values[i - 1] > sidak_alpha:
-                    st.write(f"### Non-inferiority test results for {alphabet[i]} vs {alphabet[0]}:")
+                    st.write(f"Non-inferiority test results for {alphabet[i]} vs {alphabet[0]}:")
                     st.markdown(f" * Confidence interval for difference in conversion rates: ({lower_bound:.4f}, {upper_bound:.4f})")
                     st.markdown(f" * P-value (non-inferiority test): {p_value_noninf:.4f}")
                     if p_value_noninf <= alpha_noninf:
