@@ -20,10 +20,9 @@ def run():
     st.title("Sample Size Calculator")
     """
     This calculator provides you with a representative sample size and Minimum Detectable Effect (MDE) for your online experiment. 
+    The calculator will use baseline data to solve for the relative MDE and estimate it over a period of 6 weeks, so you can plan accordingly.
 
-    The calculator will use baseline data to solve for the relative MDE and estimate it for a runtime of 
-    Enter the values below to start.
-    Happy learning!
+    Enter the values below to start. Happy learning!
     """
     #num_variants = st.number_input("Number of variants (including control):", min_value=2, step=1, value=st.session_state.num_variants)
     num_variants = 1
