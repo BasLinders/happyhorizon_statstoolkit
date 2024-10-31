@@ -10,7 +10,7 @@ def run():
     )
 
     # Initialize session state for inputs
-    st.session_state.setdefault("num_variants", 2)
+    st.session_state.setdefault("num_variants", 1)
     st.session_state.setdefault("baseline_visitors", [0] * st.session_state.num_variants)
     st.session_state.setdefault("baseline_conversions", [0] * st.session_state.num_variants)
     st.session_state.setdefault("risk", 90)
@@ -23,7 +23,7 @@ def run():
     Enter the values below to start. The calculator dynamically adjusts for the number of variants in the experiment.
     Happy learning!
     """
-    num_variants = st.number_input("Number of variants (including control):", min_value=2, step=1, value=st.session_state.num_variants)
+    #num_variants = st.number_input("Number of variants (including control):", min_value=2, step=1, value=st.session_state.num_variants)
 
     # Resize lists if num_variants has changed, keeping previous values where possible
     if num_variants != st.session_state.num_variants:

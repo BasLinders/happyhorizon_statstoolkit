@@ -9,6 +9,14 @@ def run():
         page_icon="🔢",
     )
 
+    st.title("Sample Ratio Mismatch (SRM) Checker")
+    """
+    This calculator lets you see if your online experiment correctly divided visitors among the variants, or if something went wrong and there was a mismatch with 
+    the expected amount of visitors per variant. Enter the values below to get started. 
+
+    Happy Learning!
+    """
+    
     num_variants = st.number_input("How many variants did your experiment have (including control)?", min_value=2, max_value=26, step=1)
     st.session_state.setdefault('visitor_counts', [0] * num_variants)
     st.session_state.setdefault('expected_proportions', [0.0] * num_variants)
@@ -17,14 +25,6 @@ def run():
     if num_variants != len(st.session_state.visitor_counts):
         st.session_state.visitor_counts = (st.session_state.visitor_counts[:num_variants] + [0] * num_variants)[:num_variants]
         st.session_state.expected_proportions = (st.session_state.expected_proportions[:num_variants] + [0] * num_variants)[:num_variants]
-
-    st.title("Sample Ratio Mismatch (SRM) Checker")
-    """
-    This calculator lets you see if your online experiment correctly divided visitors among the variants, or if something went wrong and there was a mismatch with 
-    the expected amount of visitors per variant. Enter the values below to get started. 
-
-    Happy Learning!
-    """
 
     # Display headers
     col1, col2 = st.columns(2)
