@@ -15,7 +15,7 @@ def run():
     st.session_state.setdefault("baseline_conversions", [0] * st.session_state.num_variants)
     st.session_state.setdefault("risk", 90)
     st.session_state.setdefault("tails", 'Greater')
-    st.session_state.setdefault("trust", 0)
+    st.session_state.setdefault("trust", 80)
 
     st.title("Sample Size Calculator")
     """
@@ -67,8 +67,8 @@ def run():
             alpha = 1 - (risk / 100)
             power = trust / 100
 
-            # Calculate baseline conversion rate
-            baseline_rate = baseline_conversions / baseline_visitors
+            # Calculate baseline conversion rate for each variant
+            baseline_rates = [conv / vis if vis > 0 else 0 for conv, vis in zip(baseline_conversions, baseline_visitors)]
 
             # Function for the Holm-Bonferroni correction
             def holm_bonferroni_adjusted_z(num_variants, alpha, tails=tails):
@@ -77,7 +77,6 @@ def run():
                     z_alpha = norm.ppf(1 - adjusted_alpha / 2)
                 else:
                     z_alpha = norm.ppf(1 - adjusted_alpha)
-                #return z_alpha
                 return np.min(z_alpha)
 
             # Adjust alpha for multiple comparisons using the approximate Dunnett's adjustment
@@ -91,31 +90,29 @@ def run():
 
             # Weekly increments
             weeks = range(1, 7)  # For 6 weeks
-            weekly_visitors_per_variant = np.ceil(baseline_visitors / num_variants)
+            weekly_visitors_per_variant = np.ceil(sum(baseline_visitors) / num_variants)
 
             # Prepare a list to store the results for each week
             results = []
             for week in weeks:
                 visitors_per_variant_weekly = int(weekly_visitors_per_variant * week)
-                variant_cr = baseline_rate  # Assuming constant conversion rate over weeks for simplicity
+                
+                # Assuming constant conversion rate over weeks for simplicity; averaging baseline rates for simplicity
+                avg_baseline_rate = np.mean(baseline_rates)
 
                 # Standard error calculation for MDE
-                se = np.sqrt(2 * variant_cr * (1 - variant_cr) / visitors_per_variant_weekly)
+                se = np.sqrt(2 * avg_baseline_rate * (1 - avg_baseline_rate) / visitors_per_variant_weekly)
 
                 # Absolute and relative MDE calculation
                 mde_absolute = (adjusted_z_alpha + z_power) * se
-                mde_relative = (mde_absolute / variant_cr) * 100  # Relative MDE as a percentage
+                mde_relative = (mde_absolute / avg_baseline_rate) * 100  # Relative MDE as a percentage
 
                 # Append results for this week to the list
                 results.append([week, visitors_per_variant_weekly, mde_relative])
 
             # Convert the list of results into a DataFrame
             df = pd.DataFrame(results, columns=['Week', 'Visitors / Variant', 'Relative MDE'])
-
-            # Adjust formatting for better readability
-            #df['Relative MDE'] = df['Relative MDE'].map(lambda x: f"{x:.2f}%")
             df['Relative MDE'] = df['Relative MDE'].map(lambda x: f"{x:.2f}%" if pd.notnull(x) and isinstance(x, (int, float)) else "N/A")
-
             df = df.reset_index(drop=True)
 
             # Display the DataFrame
