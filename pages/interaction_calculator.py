@@ -144,14 +144,17 @@ def run():
                     coef = coefficients_table.loc[combination, 'Coef.']
                     p_value = coefficients_table.loc[combination, 'P>|z|']
 
-                    # Scenario 1: Significant impact specifically on BB
+                    # Scenario 1: Significant impact on BB
                     if combination == 'Combination_BB' and p_value < 0.05:
                         bb_impact = True
                         no_significant_outcomes = False
                         st.write(f"Visitors that saw both test variants (BB) have a significant impact on conversion with a p-value of {p_value:.2e} and a coefficient of {coef:.4f}.")
                         # Display an additional warning if impact is negative
                         if coef < 0:
-                            st.write("This impact is negative, indicating a potential negative interaction effect.")
+                            st.write("The coefficient is negative, indicating a potential negative interaction effect. Interpret your individual test results with caution.")
+                        else:
+                            st.write("The coefficient is positive, indicating a potential positive interaction effect. Keeping both variants would likely "\
+                                     "be beneficial to user behavior.")
                         st.write("")
 
                     # Scenario 2: Significant negative coefficient for AB or BA
