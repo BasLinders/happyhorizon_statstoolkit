@@ -36,29 +36,29 @@ def run():
     # Get visitor and conversion inputs with validation
     with col1:
         st.write("### Visitors")
-        st.session_state.visitors_a = st.number_input("How many visitors does variant A have?", min_value=0, step=1)
-        st.session_state.visitors_b = st.number_input("How many visitors does variant B have?", min_value=0, step=1)
+        st.session_state.visitors_a = st.number_input("How many visitors does variant A have?", min_value=0, step=1, value=st.session_state.visitors_a)
+        st.session_state.visitors_b = st.number_input("How many visitors does variant B have?", min_value=0, step=1, value=st.session_state.visitors_b)
         visitors_a = st.session_state.visitors_a
         visitors_b = st.session_state.visitors_b
     with col2:
         st.write("### Conversions")
-        st.session_state.conversions_a = st.number_input("How many conversions does variant A have?", min_value=0, step=1)
-        st.session_state.conversions_b = st.number_input("How many conversions does variant B have?", min_value=0, step=1)
+        st.session_state.conversions_a = st.number_input("How many conversions does variant A have?", min_value=0, step=1, value=st.session_state.conversions_a)
+        st.session_state.conversions_b = st.number_input("How many conversions does variant B have?", min_value=0, step=1, value=st.session_state.conversions_b)
         conversions_a = st.session_state.conversions_a
         conversions_b = st.session_state.conversions_b
 
     all_variant_conversions = [conversions_a, conversions_b]
     all_variant_visitors = [visitors_a, visitors_b]
 
-    st.session_state.probability_winner = st.number_input("What is your minimum probability for a winner?", min_value=0.0, max_value=100.0, step=0.01)
+    st.session_state.probability_winner = st.number_input("What is your minimum probability for a winner?", min_value=0.0, max_value=100.0, step=0.01, value=st.session_state.probability_winner)
     probability_winner = st.session_state.probability_winner
     
     # Get projection period with validation
     st.write("")
     st.write("### Business case data")
-    st.session_state.aov_a = st.number_input("What is the average order value of A? ", min_value=0.0, step=0.01)
-    st.session_state.aov_b = st.number_input("What is the average order value of B? ", min_value=0.0, step=0.01)
-    st.session_state.runtime_days = st.number_input("For how many days did your test run?", min_value=0, step=1)
+    st.session_state.aov_a = st.number_input("What is the average order value of A? ", min_value=0.0, step=0.01, value=st.session_state.aov_a)
+    st.session_state.aov_b = st.number_input("What is the average order value of B? ", min_value=0.0, step=0.01, value=st.session_state.aov_b)
+    st.session_state.runtime_days = st.number_input("For how many days did your test run?", min_value=0, step=1, value=st.session_state.runtime_days)
     aov_a = st.session_state.aov_a
     aov_b = st.session_state.aov_b
     runtime_days = st.session_state.runtime_days
@@ -71,7 +71,7 @@ def run():
     valid_inputs = all(v > 0 for v in all_variant_visitors) and all(0 <= c <= v for c, v in zip(all_variant_conversions, all_variant_visitors))
 
     # Computations below use session stored values
-    
+
     st.write("")
     if st.button("Calculate my test results"):
         if valid_inputs: 
