@@ -11,7 +11,7 @@ def run():
 
     num_variants = st.number_input("How many variants did your experiment have (including control)?", min_value=2, max_value=26, step=1)
     st.session_state.setdefault('visitor_counts', [0] * num_variants)
-    st.session_state.setdefault('expected_proportions', [0] * num_variants)
+    st.session_state.setdefault('expected_proportions', [0.0] * num_variants)
 
     # Resize lists if `num_variants` has changed, while preserving existing values
     if num_variants != len(st.session_state.visitor_counts):
