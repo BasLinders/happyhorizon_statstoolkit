@@ -49,8 +49,8 @@ def run():
         st.write("### Conversions")
         st.session_state.AA_c = st.number_input("AA Conversions", value=st.session_state.AA_c)
         AA_c = st.session_state.AA_c
-        st.session_state.AB_c = st.number_input("AB Conversions", value=st.sesson_state.AB_c)
-        AB_c = st.sesson_state.AB_c
+        st.session_state.AB_c = st.number_input("AB Conversions", value=st.session_state.AB_c)
+        AB_c = st.session_state.AB_c
         st.session_state.BA_c = st.number_input("BA Conversions", value=st.session_state.BA_c)
         BA_c = st.session_state.BA_c
         st.session_state.BB_c = st.number_input("BB Conversions", value=st.session_state.BB_c)
