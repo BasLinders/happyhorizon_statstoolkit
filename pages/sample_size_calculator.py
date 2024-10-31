@@ -9,6 +9,14 @@ def run():
         page_icon="🔢",
     )
 
+    # Initialize session state for inputs
+    st.session_state.setdefault("num_variants", 2)
+    st.session_state.setdefault("baseline_visitors", [0] * st.session_state.num_variants)
+    st.session_state.setdefault("baseline_conversions", [0] * st.session_state.num_variants)
+    st.session_state.setdefault("risk", 90)
+    st.session_state.setdefault("tails", 'Greater')
+    st.session_state.setdefault("trust", 0)
+
     st.title("Sample Size Calculator")
     """
     This calculator provides you with a representative sample size and Minimum Detectable Effect (MDE) for your online experiment. 
@@ -16,17 +24,26 @@ def run():
     Happy learning!
     """
     num_variants = st.number_input("Number of variants (including control):", min_value=2, step=1)
-    col1, col2 = st.columns(2)
+    if num_variants != st.session_state.num_variants:
+        st.session_state.num_variants = num_variants
+        st.session_state.baseline_visitors = [0] * num_variants
+        st.session_state.baseline_conversions = [0] * num_variants
 
-    # Inputs
+    # Input fields for baseline visitors and conversions
+    col1, col2 = st.columns(2)
     with col1:
         baseline_visitors = st.number_input("Amount of visitors per week:", min_value=0, step=1)
+        st.session_state.baseline_visitors = [baseline_visitors] * st.session_state.num_variants
     with col2:
         baseline_conversions = st.number_input("Number of conversions per week:", min_value=0, step=1)
+        st.session_state.baseline_conversions = [baseline_conversions] * st.session_state.num_variants
 
-    risk = st.number_input("In %, enter the desired confidence level (e.g. 90):", min_value=0, max_value=100, step=1)
-    trust = st.number_input("In %, enter the minimum trustworthiness (Power) (e.g. 80):", min_value=0, max_value=100, step=1)
-    tails = st.selectbox("Do you want to know if B is better than A, or also the other way around ('Greater' or 'Two-sided)?", ('Greater', 'Two-sided'))
+    st.session_state.risk = st.number_input("In %, enter the desired confidence level (e.g. 90):", min_value=0, max_value=100, step=1)
+    risk = st.session_state.risk
+    st.session_state.trust = st.number_input("In %, enter the minimum trustworthiness (Power) (e.g. 80):", min_value=0, max_value=100, step=1)
+    trust = st.session_state.trust
+    st.session_state.tails = st.selectbox("Do you want to know if B is better than A, or also the other way around ('Greater' or 'Two-sided)?", ('Greater', 'Two-sided'))
+    tails = st.session_state.tails
 
     st.write("")
     if st.button("Calculate Sample size and MDE"):

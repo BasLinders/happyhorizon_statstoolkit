@@ -14,16 +14,11 @@ def run():
     )
 
     # Initialize session state for inputs
-    if "num_variants" not in st.session_state:
-        st.session_state.num_variants = 2
-    if "visitor_counts" not in st.session_state:
-        st.session_state.visitor_counts = [0] * st.session_state.num_variants
-    if "variant_conversions" not in st.session_state:
-        st.session_state.variant_conversions = [0] * st.session_state.num_variants
-    if "risk" not in st.session_state:
-        st.session_state.risk = 90
-    if "tail" not in st.session_state:
-        st.session_state.tail = 'greater'
+    st.session_state.setdefault("num_variants", 2)
+    st.session_state.setdefault("visitor_counts", [0] * st.session_state.num_variants)
+    st.session_state.setdefault("variant_conversions", [0] * st.session_state.num_variants)
+    st.session_state.setdefault("risk", 90)
+    st.session_state.setdefault("tail", 'Greater')
 
     st.write("# Frequentist Calculator")
     st.markdown("""
