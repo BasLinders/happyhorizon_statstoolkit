@@ -350,7 +350,7 @@ def run():
                 elif round(probability_a_better * 100, 2) >= probability_winner:
                     bayesian_result = "a <span style='color: red; font-weight: bold;'>loss averted</span>"
                 else:
-                    bayesian_result = "<span style-'color: black; font-weight: bold;'>inconclusive</span>. There is no real effect to be found, or you need to collect more data"
+                    bayesian_result = "<span style='color: black; font-weight: bold;'>inconclusive</span>. There is no real effect to be found, or you need to collect more data"
 
                 st.write("### Results Summary")
                 st.write("")
