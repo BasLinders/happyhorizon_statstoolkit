@@ -9,6 +9,15 @@ def run():
         page_icon="🔢",
     )
 
+    num_variants = st.number_input("How many variants did your experiment have (including control)?", min_value=2, max_value=26, step=1)
+    st.session_state.setdefault('visitor_counts', [0] * num_variants)
+    st.session_state.setdefault('expected_proportions', [0] * num_variants)
+
+    # Resize lists if `num_variants` has changed, while preserving existing values
+    if num_variants != len(st.session_state.visitor_counts):
+        st.session_state.visitor_counts = (st.session_state.visitor_counts[:num_variants] + [0] * num_variants)[:num_variants]
+        st.session_state.expected_proportions = (st.session_state.expected_proportions[:num_variants] + [0] * num_variants)[:num_variants]
+
     st.title("Sample Ratio Mismatch (SRM) Checker")
     """
     This calculator lets you see if your online experiment correctly divided visitors among the variants, or if something went wrong and there was a mismatch with 
@@ -16,25 +25,33 @@ def run():
 
     Happy Learning!
     """
-    num_variants = st.number_input("How many variants did your experiment have (including control)?", min_value=2, max_value=26, step=1)
+
+    # Display headers
     col1, col2 = st.columns(2)
-
-    # Dynamically generate input fields for visitor counts and expected proportions
-    visitor_counts = []
-    expected_proportions = []
-    alphabet = string.ascii_uppercase
-
-    # Display headers only once
     with col1:
         st.write("### Visitors")
     with col2:
-        st.write("### Portions")
+        st.write("### Expected Proportion (%)")
 
+    # Alphabet for variant labels (up to 26 variants)
+    alphabet = string.ascii_uppercase
+
+    # Generate input fields for each variant dynamically
     for i in range(num_variants):
         with col1:
-            visitor_counts.append(st.number_input(f"How many visitors did variant {alphabet[i]} have?", min_value=0, step=1))
+            st.session_state.visitor_counts[i] = st.number_input(
+                f"How many visitors did variant {alphabet[i]} have?",
+                min_value=0, step=1, value=st.session_state.visitor_counts[i]
+            )
         with col2:
-            expected_proportions.append(st.number_input(f"What percentage of users should be in variant {alphabet[i]}?", min_value=0.0, max_value=100.0, step=0.01))
+            st.session_state.expected_proportions[i] = st.number_input(
+                f"What percentage of users should be in variant {alphabet[i]}?",
+                min_value=0.0, max_value=100.0, step=0.01, value=st.session_state.expected_proportions[i]
+            )
+
+    # Assign session state values to 'normal' variables for further processing
+    visitor_counts = st.session_state.visitor_counts
+    expected_proportions = st.session_state.expected_proportions
 
     st.write("")
     if st.button("Check for Sample Ratio Mismatch"):
