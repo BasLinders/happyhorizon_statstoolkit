@@ -104,15 +104,15 @@ def run():
                 #st.write(f"Log-Likelihood (Null Model): {model.llnull}")
 
                 # Analyzing the interaction effect
-                st.write("")
-                st.write("\n# Insights from the logistic regression model:")
-                st.write("The coefficients of the model suggest these influences of the combinations on conversion rates:")
-                for combination in ['Combination_AB', 'Combination_BA', 'Combination_BB']:
-                    coef = coefficients_table.loc[combination, 'Coef.']
-                    p_value = coefficients_table.loc[combination, 'P>|z|']
-                    st.write(f"- {combination}: Coef = {coef:.4f}, P-value = {p_value:.2e}")
-                    if p_value < 0.05:
-                        st.write(f" This combination has a significant impact on the likelihood of conversion, with a coefficient of {coef:.4f}.")
+                #st.write("")
+                #st.write("\n# Insights from the logistic regression model:")
+                #st.write("The coefficients of the model suggest these influences of the combinations on conversion rates:")
+                #for combination in ['Combination_AB', 'Combination_BA', 'Combination_BB']:
+                #    coef = coefficients_table.loc[combination, 'Coef.']
+                #    p_value = coefficients_table.loc[combination, 'P>|z|']
+                #    st.write(f"- {combination}: Coef = {coef:.4f}, P-value = {p_value:.2e}")
+                #    if p_value < 0.05:
+                #        st.write(f" This combination has a significant impact on the likelihood of conversion, with a coefficient of {coef:.4f}.")
 
                 # Extracting p-values for each combination
                 p_values = coefficients_table.loc[['Combination_AB', 'Combination_BA', 'Combination_BB'], 'P>|z|']
@@ -130,6 +130,8 @@ def run():
                 # Extract scalar value for the p-value of Combination_BB
                 bb_p_value = coefficients_table.loc['Combination_BB', 'P>|z|'] 
                 st.write("### Results summary")
+                st.write("Below is an interpretation of the coefficients and p-values in the model. The focus lies on the interaction between both 'B' variants. " \
+                         "If there is no measurable negative interaction in that group or other groups, you're safe to rely on individual test results for inference.")
                 if bb_p_value < .05:
                     st.write("")
                     st.write(f"\nVisitors that saw both your test variants converted significantly worse at p-value {bb_p_value:.2e}. " \
@@ -145,10 +147,12 @@ def run():
                             st.write("")
                             st.write("\nVisitors who interacted with both your test variants (group BB) didn't react significantly more negatively than other visitors, " \
                                     "but the impact on this group indicates a possibly negative impact when implenting this change and warrants caution.")
+                            st.write("")
                         else:
                             st.write("")
                             st.write("\nVisitors who interacted with both your test variants (group BB) didn't react significantly more negatively than other visitors; "\
                                      "you can interpet the results of your experiments as you normally would.")
+                            st.write("")
 
             except Exception as e:
                 st.write(f"Error fitting the model: {e}")
