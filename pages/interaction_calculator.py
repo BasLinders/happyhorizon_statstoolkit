@@ -132,27 +132,40 @@ def run():
                 st.write("### Results summary")
                 st.write("Below is an interpretation of the coefficients and p-values in the model. The focus lies on the interaction between both 'B' variants. " \
                          "If there is no measurable negative interaction in that group or other groups, you're safe to rely on individual test results for inference.")
-                if bb_p_value < .05:
-                    st.write("")
-                    st.write(f"\nVisitors that saw both your test variants converted significantly worse at p-value {bb_p_value:.2e}. " \
-                            f"Interpret your experiment results with care.")
-                else:
-                    for combination in ['Combination_AB', 'Combination_BA', 'Combination_BB']:
-                        coef = coefficients_table.loc[combination, 'Coef.']
-                        p_value = coefficients_table.loc[combination, 'P>|z|']
+                st.write("")
+                
+                # Initialize flags and message variables
+                bb_impact = False
+                negative_impact_ab_ba = False
+                no_significant_outcomes = True
 
-                        if p_value < 0.05 and coef < 0:
-                            st.write(f"Combination {combination} has a significant impact on the likelihood of conversion, with a p-value of {p_value:.2e} "
-                                     f"and a negative coefficient of {coef:.4f}.")
-                            st.write("")
-                            st.write("\nVisitors who interacted with both your test variants (group BB) didn't react significantly more negatively than other visitors, " \
-                                    "but the impact on this group indicates a possibly negative impact when implenting this change and warrants caution.")
-                            st.write("")
-                        else:
-                            st.write("")
-                            st.write("\nVisitors who interacted with both your test variants (group BB) didn't react significantly more negatively than other visitors; "\
-                                     "you can interpet the results of your experiments as you normally would.")
-                            st.write("")
+                # Retrieve coefficient and p-value for each combination
+                for combination in ['Combination_AB', 'Combination_BA', 'Combination_BB']:
+                    coef = coefficients_table.loc[combination, 'Coef.']
+                    p_value = coefficients_table.loc[combination, 'P>|z|']
+
+                    # Scenario 1: Significant impact specifically on BB
+                    if combination == 'Combination_BB' and p_value < 0.05:
+                        bb_impact = True
+                        no_significant_outcomes = False
+                        st.write(f"Visitors that saw both test variants (BB) have a significant impact on conversion with a p-value of {p_value:.2e} and a coefficient of {coef:.4f}.")
+                        # Display an additional warning if impact is negative
+                        if coef < 0:
+                            st.write("This impact is negative, indicating a potential negative interaction effect.")
+                        st.write("")
+
+                    # Scenario 2: Significant negative coefficient for AB or BA
+                    elif combination in ['Combination_AB', 'Combination_BA'] and p_value < 0.05 and coef < 0:
+                        negative_impact_ab_ba = True
+                        no_significant_outcomes = False
+                        st.write(f"Combination {combination} shows a significant negative impact with a p-value of {p_value:.2e} and a coefficient of {coef:.4f}.")
+                        st.write("While there is no significant impact on users who saw both variants (BB), you should interpret your test results with care.")
+                        st.write("")
+
+                # Scenario 3: No significant outcomes
+                if no_significant_outcomes:
+                    st.write("No significant interaction effects were observed across the combinations. You can interpret the results of your experiments as usual.")
+                    st.write("")
 
             except Exception as e:
                 st.write(f"Error fitting the model: {e}")
@@ -195,6 +208,7 @@ def run():
 
             # Display the plot in Streamlit
             st.pyplot(fig)
+
         else:
             st.write("")
             st.write("<span style='color: #ff6600;'>*Please enter valid inputs for all fields</span>", unsafe_allow_html=True)
