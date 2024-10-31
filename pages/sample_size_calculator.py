@@ -24,6 +24,7 @@ def run():
     Happy learning!
     """
     #num_variants = st.number_input("Number of variants (including control):", min_value=2, step=1, value=st.session_state.num_variants)
+    num_variants = 1
 
     # Resize lists if num_variants has changed, keeping previous values where possible
     if num_variants != st.session_state.num_variants:
