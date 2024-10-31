@@ -24,20 +24,27 @@ def run():
     Happy learning!
     """
     num_variants = st.number_input("Number of variants (including control):", min_value=2, step=1, value=st.session_state.num_variants)
-    if num_variants != st.session_state.num_variants:
-        # Update num_variants and resize lists
-        st.session_state.num_variants = num_variants
-        st.session_state.baseline_visitors = [0] * num_variants
-        st.session_state.baseline_conversions = [0] * num_variants
 
-    # Input fields for baseline visitors and conversions per variant
+    # Resize lists if num_variants has changed, keeping previous values where possible
+    if num_variants != st.session_state.num_variants:
+        st.session_state.num_variants = num_variants
+        st.session_state.baseline_visitors = (st.session_state.baseline_visitors[:num_variants] + [0] * num_variants)[:num_variants]
+        st.session_state.baseline_conversions = (st.session_state.baseline_conversions[:num_variants] + [0] * num_variants)[:num_variants]
+
+    # Gather baseline data per variant into temporary lists
+    temp_visitors = st.session_state.baseline_visitors[:]
+    temp_conversions = st.session_state.baseline_conversions[:]
     st.write("### Baseline Data per Variant")
     for i in range(st.session_state.num_variants):
         col1, col2 = st.columns(2)
         with col1:
-            st.session_state.baseline_visitors[i] = st.number_input(f"Visitors for Variant {i+1}", min_value=0, step=1, value=st.session_state.baseline_visitors[i])
+            temp_visitors[i] = st.number_input(f"Visitors for Variant {i+1}", min_value=0, step=1, value=st.session_state.baseline_visitors[i])
         with col2:
-            st.session_state.baseline_conversions[i] = st.number_input(f"Conversions for Variant {i+1}", min_value=0, step=1, value=st.session_state.baseline_conversions[i])
+            temp_conversions[i] = st.number_input(f"Conversions for Variant {i+1}", min_value=0, step=1, value=st.session_state.baseline_conversions[i])
+
+    # Update session state lists after gathering inputs
+    st.session_state.baseline_visitors = temp_visitors
+    st.session_state.baseline_conversions = temp_conversions
 
     # Additional inputs
     st.session_state.risk = st.number_input("In %, enter the desired confidence level (e.g. 90):", min_value=0, max_value=100, step=1, value=st.session_state.risk)
