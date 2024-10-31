@@ -346,15 +346,17 @@ def run():
                 #st.write(f"Optimistic uplift: €{optimistic_monetary_uplift:.2f}")
 
                 if round(probability_b_better * 100, 2) >= probability_winner:
-                    bayesian_result = "<span style='color: green; font-weight: bold;'>winner</span>"
+                    bayesian_result = "a <span style='color: green; font-weight: bold;'>winner</span>"
+                elif round(probability_a_better * 100, 2) >= probability_winner:
+                    bayesian_result = "a <span style='color: red; font-weight: bold;'>loss averted</span>"
                 else:
-                    bayesian_result = "<span style='color: red; font-weight: bold;'>loss averted</span>"
+                    bayesian_result = "<span style-'color: black; font-weight: bold;'>inconclusive</span>. There is no real effect to be found, or you need to collect more data"
 
                 st.write("### Results Summary")
                 st.write("")
                 st.markdown(
                     f"Variant B has a {round(probability_b_better * 100, 2)}% chance to win with a relative change of {round(observed_uplift,2)}%. "
-                    f"Because your winning threshold was set to {int(probability_winner)}%, this experiment is a {bayesian_result}.",
+                    f"Because your winning threshold was set to {int(probability_winner)}%, this experiment is {bayesian_result}.",
                     unsafe_allow_html=True
                 )
                 if aov_a and aov_b > 0:
