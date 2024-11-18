@@ -250,7 +250,7 @@ def run():
                 if significant_results[i - 1]:
                     st.write(f"Superiority test results for {alphabet[i]} vs {alphabet[0]}")
                     st.markdown(f" * Statistically significant result for {alphabet[i]} with p-value: {p_values[i-1]:.4f} and a power of {observed_powers[i-1] * 100:.2f}%!")
-                    st.markdown(f" * Conversion rate change for {alphabet[i]}: {(conversion_rates[i] - conversion_rates[0]) * 100:.2f}%")
+                    st.markdown(f" * Conversion rate change for {alphabet[i]}: {((conversion_rates[i] - conversion_rates[0]) / conversion_rates[0]) * 100:.2f}%")
                     if conversion_rates[i] > conversion_rates[0]:
                         st.write(f"Variant {alphabet[i]} is a <span style='color: #009900; font-weight: 600;'>winner</span>, congratulations!", unsafe_allow_html=True)
                     else:
@@ -270,12 +270,12 @@ def run():
                     st.markdown(f" * P-value (non-inferiority test): {p_value_noninf:.4f}")
                     if p_value_noninf <= alpha_noninf:
                         st.write(f"The test result for {alphabet[i]} vs {alphabet[0]} is not statistically significant in the Z-test with p-value {p_values[i-1]:.4f}, a power of {observed_powers[i-1] * 100:.2f}% \
-                                 and a conversion rate change of {(conversion_rates[i] - conversion_rates[0]) * 100:.2f}%, \
+                                 and a conversion rate change of {((conversion_rates[i] - conversion_rates[0]) / conversion_rates[0]) * 100:.2f}%, \
                                  but this variant likely generates at least the same number of conversions as the control variant. \
                                  You may need to collect more data, or there is no real effect to be found.", unsafe_allow_html=True)
                     else:
                         st.write(f"The test result for {alphabet[i]} vs {alphabet[0]} is not statistically significant in the Z-test with p-value {p_values[i-1]:.4f}, a power of {observed_powers[i-1] * 100:.2f}% \
-                                 and a conversion rate change of {(conversion_rates[i] - conversion_rates[0]) * 100:.2f}%, \
+                                 and a conversion rate change of {((conversion_rates[i] - conversion_rates[0]) / conversion_rates[0]) * 100:.2f}%, \
                                  but this variant likely won't generate at least the same number of conversions as the control variant.", unsafe_allow_html=True)
 
             # Main logic
