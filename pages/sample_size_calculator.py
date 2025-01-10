@@ -79,7 +79,7 @@ def run():
 
             # Weekly increments
             weeks = range(1, 7)  # For 6 weeks
-            weekly_visitors = int(np.ceil(baseline_visitors))
+            weekly_visitors = int(np.ceil(baseline_visitors / 2))
 
             # Prepare list to store results
             results = []
