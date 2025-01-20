@@ -188,3 +188,6 @@ def run():
     # Show Plot
     st.pyplot(plt)
     plt.close()
+
+if __name__ == "__main__":
+    run()
