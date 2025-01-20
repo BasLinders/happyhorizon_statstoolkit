@@ -34,7 +34,7 @@ def run():
         st.session_state.conv_base = st.number_input("How many conversions will you use in the estimate?", min_value=0, step=1, value=st.session_state.conv_base)
     with col2:
         st.write("### Input for estimation")
-        st.session_state.winrate = st.number_input("What is the desired winrate (proportion)?", min_value=0.01, step=0.01, value=max(0.01, st.session_state.winrate))
+        st.session_state.winrate = st.number_input("What is the desired proportion of wins overall?", min_value=0.01, step=0.01, value=max(0.01, st.session_state.winrate))
         st.session_state.n_experiments_max = st.number_input("Max amount of experiments in the estimate?", min_value = 1, step=1, value=max(1, int(st.session_state.n_experiments_max)))
 
     # Variables for computation
