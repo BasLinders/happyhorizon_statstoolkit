@@ -35,7 +35,7 @@ def run():
     with col2:
         st.write("### Input for estimation")
         st.session_state.winrate = st.number_input("What is the desired winrate?", min_value=0.01, step=0.01, value=max(0.01, st.session_state.winrate))
-        st.session_state.n_experiments_max = st.number_input("Max amount of experiments in the estimate?", min_value = 1, step=1, value=int(st.session_state.n_experiments_max))
+        st.session_state.n_experiments_max = st.number_input("Max amount of experiments in the estimate?", min_value = 1, step=1, value=max(1, int(st.session_state.n_experiments_max)))
 
     # Variables for computation
     used_months = st.session_state.used_months
