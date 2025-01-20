@@ -5,11 +5,12 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter
 import streamlit as st
 
+st.set_page_config(
+    page_title="Interaction Effect calculator",
+    page_icon="🔢",
+)
+
 def run():
-    st.set_page_config(
-        page_title="Interaction Effect calculator",
-        page_icon="🔢",
-    )
 
     # Initialize session state defaults
     st.session_state.setdefault("AA_u", 0)

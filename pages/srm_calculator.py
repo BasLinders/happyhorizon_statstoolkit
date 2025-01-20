@@ -3,11 +3,12 @@ import scipy.stats as stats
 import statistics
 import string
 
+st.set_page_config(
+    page_title="SRM calculator",
+    page_icon="🔢",
+)
+
 def run():
-    st.set_page_config(
-        page_title="SRM calculator",
-        page_icon="🔢",
-    )
 
     st.title("Sample Ratio Mismatch (SRM) Checker")
     """

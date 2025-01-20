@@ -12,11 +12,12 @@ from pingouin import welch_anova, qqplot
 import re
 import streamlit as st
 
+st.set_page_config(
+    page_title="Continuous data calculator",
+    page_icon="🔢",
+)
+
 def run():
-    st.set_page_config(
-        page_title="Continuous data calculator",
-        page_icon="🔢",
-    )
 
     st.title("Continuous Data Calculator")
     """

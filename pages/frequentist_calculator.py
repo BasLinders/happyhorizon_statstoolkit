@@ -7,12 +7,13 @@ import matplotlib.pyplot as plt
 import string
 import concurrent.futures
 
-def run():
-    st.set_page_config(
-        page_title="Frequentist Calculator",
-        page_icon="🔢",
-    )
+st.set_page_config(
+    page_title="Frequentist Calculator",
+    page_icon="🔢",
+)
 
+def run():
+    
     # Initialize session state for inputs
     st.session_state.setdefault("num_variants", 2)
     st.session_state.setdefault("visitor_counts", [0] * st.session_state.num_variants)
