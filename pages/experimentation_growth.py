@@ -81,8 +81,8 @@ def run():
             relative_mde = mde / cr_base
 
             st.write("### Computed statistics")
-            st.write(f"The minimum conversion rate is {cr_min * 100:.2f}")
-            st.write(f"The maximum conversion rate is {cr_max * 100:.2f}")
+            #st.write(f"The minimum conversion rate is {cr_min * 100:.2f}")
+            #st.write(f"The maximum conversion rate is {cr_max * 100:.2f}")
             st.write(f"The relative MDE is {relative_mde * 100:.2f}%")
             st.write(f"The absolute MDE is {mde:.6f}.")
             st.write(f"The minimum relative MDE is {relative_mde_min * 100:.2f}%.")
