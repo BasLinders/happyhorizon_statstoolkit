@@ -20,6 +20,7 @@ This toolkit has been created for the purposes of analyzing data from online con
 <span style='color:#009900; font-weight: 600; margin-right: 6px;'>&#10003;</span>**Bayesian calculator**: Calculate the probability of a winner and make a business case<br>
 <span style='color:#009900; font-weight: 600; margin-right: 6px;'>&#10003;</span>**Frequentist calculator**: Calculate significance for your test variant as tangible proof for a winner<br>
 <span style='color:#009900; font-weight: 600; margin-right: 6px;'>&#10003;</span>**Continuous data calculator**: Analyze metrics such as revenue / items per transaction<br>
+<span style='color:#009900; font-weight: 600; margin-right: 6px;'>&#10003;</span>**Experimentation growth calculator**: Calculate annual compound growth for experimentation<br>         
 <span style='color:#009900; font-weight: 600; margin-right: 6px;'>&#10003;</span>**Interaction Effect calculator**: Verify if your experiments negatively impacted each other or not<br>
 <span style='color:#009900; font-weight: 600; margin-right: 6px;'>&#10003;</span>**SRM calculator**: Identify if your visitors were distributed as expected in your experiment<br>
 <span style='color:#009900; font-weight: 600; margin-right: 6px;'>&#10003;</span>**Sample Size / MDE calculator**: Calculate the runtime to reach an effect
