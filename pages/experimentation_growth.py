@@ -5,12 +5,13 @@ import os
 import matplotlib.pyplot as plt
 from scipy.stats import binom, norm, beta
 
-def run():
-    st.set_page_config(
-        page_title="Continuous data calculator",
-        page_icon="🔢",
-    )
+st.set_page_config(
+    page_title="Continuous data calculator",
+    page_icon="🔢",
+)
 
+
+def run():
     # Initialize session state for inputs
     st.session_state.setdefault("visitors_base", 0)
     st.session_state.setdefault("conv_base", 0)

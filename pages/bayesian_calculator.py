@@ -5,11 +5,12 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 from scipy.stats import beta
 
+st.set_page_config(
+    page_title="Bayesian calculator",
+    page_icon="🔢",
+)
+
 def run():
-    st.set_page_config(
-        page_title="Bayesian calculator",
-        page_icon="🔢",
-    )
 
     # Initialize session state for inputs
     st.session_state.setdefault("visitors_a", 0)
