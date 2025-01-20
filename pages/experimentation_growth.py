@@ -47,9 +47,6 @@ def run():
 
     if st.button("Calculate my test results"):    
         # Check if visitors and conversions are > 0
-        if visitors_base == 0 or conv_base == 0:
-            st.error("Visitors and conversions must be greater than 0.")
-            st.stop()
         if used_months > 0 and visitors_base > 0 and conv_base > 0 and n_experiments_max > 0:
 
             # Calculated or hardcoded statistics
@@ -186,9 +183,9 @@ def run():
             # Show Plot
             st.pyplot(plt)
             plt.close()
-    else:
-        st.write("")
-        st.write("<span style='color: #ff6600;'>*Please enter valid inputs for all fields</span>", unsafe_allow_html=True)
+        else:
+            st.write("")
+            st.write("<span style='color: #ff6600;'>*Please enter valid inputs for all fields</span>", unsafe_allow_html=True)
 
 if __name__ == "__main__":
     run()
