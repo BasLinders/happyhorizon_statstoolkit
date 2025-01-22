@@ -113,8 +113,8 @@ def run():
                         #random_cr_max = np.random.beta(conv_base, visitors_base - conv_base)
 
                         # Use Gaussian noise for increased variability
-                        random_cr_min = np.clip(np.random.normal(loc=conv_base / visitors_base, scale=0.02), 0, 1)
-                        random_cr_max = np.clip(np.random.normal(loc=conv_base / visitors_base, scale=0.05), 0, 1)
+                        random_cr_min = np.clip(np.random.normal(loc=conv_base / visitors_base, scale=0.002), 0, 1)
+                        random_cr_max = np.clip(np.random.normal(loc=conv_base / visitors_base, scale=0.005), 0, 1)
 
                         # Calculate uplift with randomness
                         uplift_min = (1 + (random_cr_min * (1 - haircut)))**(n_experiments * winrate * (relative_mde_min * 100)) - 1
