@@ -202,7 +202,7 @@ def run():
             plt.fill_between(simulation_df['Experiments'],
                             simulation_df['Min_Lower_Bound'],
                             simulation_df['Min_Upper_Bound'],
-                            color='blue', alpha=0.2)
+                            color='blue', alpha=0.2, label='Variability in min. uplift')
 
             # Plot Max Uplift and its Confidence Interval
             plt.plot(simulation_df['Experiments'], simulation_df['Max_Mean_Uplift'],
@@ -210,7 +210,7 @@ def run():
             plt.fill_between(simulation_df['Experiments'],
                             simulation_df['Max_Lower_Bound'],
                             simulation_df['Max_Upper_Bound'],
-                            color='green', alpha=0.2)
+                            color='green', alpha=0.2, label='Variability in max. uplift')
 
             # Add Zero Baseline for Reference
             plt.axhline(y=0, color='gray', linestyle='--', linewidth=1)
