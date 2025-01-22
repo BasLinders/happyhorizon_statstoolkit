@@ -130,8 +130,8 @@ def run():
                             )
 
                             # Calculate uplift with scaled randomness
-                            uplift_min = (1 + (random_cr_min * (1 - haircut)))**(n_experiments * winrate * (relative_mde_min * 100)) - 1
-                            uplift_max = (1 + (random_cr_max * (1 - haircut)))**(n_experiments * winrate * (relative_mde_max * 100)) - 1
+                            uplift_min = (1 + (random_cr_min * (1 - haircut)))**(n_experiments * winrate * (relative_mde_min * 10)) - 1
+                            uplift_max = (1 + (random_cr_max * (1 - haircut)))**(n_experiments * winrate * (relative_mde_max * 10)) - 1
                         else:
                             # For smaller datasets, introduce Beta-distributed random noise
                             random_cr_min = np.random.beta(conv_base, max(1, visitors_base - conv_base))
