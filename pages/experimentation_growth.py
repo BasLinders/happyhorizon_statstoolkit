@@ -103,9 +103,21 @@ def run():
                 results = []
 
                 for n_experiments in n_experiments_range:
-                    # Generate random uplifts for min and max
-                    simulated_uplifts_min = (1 + (relative_mde_min * (1 - haircut)))**(n_experiments * winrate) - 1
-                    simulated_uplifts_max = (1 + (relative_mde_max * (1 - haircut)))**(n_experiments * winrate) - 1
+                    # Simulate variability for minimum and maximum uplifts
+                    simulated_uplifts_min = []
+                    simulated_uplifts_max = []
+
+                    for _ in range(iterations):
+                        # Introduce random noise into the conversion rate with beta distributions
+                        random_cr_min = np.random.beta(conv_base, visitors_base - conv_base)
+                        random_cr_max = np.random.beta(conv_base, visitors_base - conv_base)
+
+                        # Calculate uplift with randomness
+                        uplift_min = (1 + (random_cr_min * (1 - haircut)))**(n_experiments * winrate) - 1
+                        uplift_max = (1 + (random_cr_max * (1 - haircut)))**(n_experiments * winrate) - 1
+
+                        simulated_uplifts_min.append(uplift_min)
+                        simulated_uplifts_max.append(uplift_max)
 
                     # Summarize results
                     results.append({
