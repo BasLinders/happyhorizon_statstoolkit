@@ -22,7 +22,16 @@ def run():
 
     st.title("Annual Compound Growth Calculator")
     """
-    This calculator will estimate annual compound growth for experimentation in a standard and optimal scenario. 
+    This calculator will estimate annual compound growth for experimentation: Each table row corresponds to the cumulative impact of conducting more experiments.
+    The confidence intervals per row provide the minimum (lower bound) and maximum (upper bound) uplifts in the 95% simulations conducted by the tool.
+
+    This demonstrates the power of running more experiments over time.
+
+    The table provides powerful insights into the expected performance of your experiments. You can use it to:
+
+    - Estimate the impact of running multiple experiments.
+    - Communicate realistic expectations (with uncertainty ranges).
+    - Make informed decisions about whether the potential rewards justify the effort.
     """
 
     col1, col2 = st.columns(2)
