@@ -99,7 +99,7 @@ def run():
             st.write(f"The maximum relative MDE is {relative_mde_max * 100:.2f}%.")
 
             # Uplift calculation for range of experiments
-            def monte_carlo_simulation(visitors_base, conv_base, n_experiments_range, winrate, relative_mde_min, relative_mde_max, iterations=1000):
+            def monte_carlo_simulation(visitors_base, conv_base, n_experiments_range, winrate, relative_mde_min, relative_mde_max, iterations=5000):
                 results = []
 
                 for n_experiments in n_experiments_range:
@@ -109,8 +109,12 @@ def run():
 
                     for _ in range(iterations):
                         # Introduce random noise into the conversion rate with beta distributions
-                        random_cr_min = np.random.beta(conv_base, visitors_base - conv_base)
-                        random_cr_max = np.random.beta(conv_base, visitors_base - conv_base)
+                        #random_cr_min = np.random.beta(conv_base, visitors_base - conv_base)
+                        #random_cr_max = np.random.beta(conv_base, visitors_base - conv_base)
+
+                        # Use Gaussian noise for increased variability
+                        random_cr_min = np.clip(np.random.normal(loc=conv_base / visitors_base, scale=0.02), 0, 1)
+                        random_cr_max = np.clip(np.random.normal(loc=conv_base / visitors_base, scale=0.05), 0, 1)
 
                         # Calculate uplift with randomness
                         uplift_min = (1 + (random_cr_min * (1 - haircut)))**(n_experiments * winrate * (relative_mde_min * 100)) - 1
