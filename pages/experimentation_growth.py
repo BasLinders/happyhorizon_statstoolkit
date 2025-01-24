@@ -181,19 +181,16 @@ def run():
                     for _ in range(iterations):
                         if visitors_base >= large_dataset_threshold:
                             # For large datasets, use Gaussian noise for conversion rates
-                            #random_cr_min = np.clip(
-                            #    np.random.normal(loc=conv_base / visitors_base, scale=gaussian_noise_min_scale), 0, 1
-                            #)
-                            #random_cr_max = np.clip(
-                            #    np.random.normal(loc=conv_base / visitors_base, scale=gaussian_noise_max_scale), 0, 1
-                            #)
-                            
-                            random_cr_min = np.random.beta(conv_base + 5, max(1, visitors_base - conv_base + 5))
-                            random_cr_max = np.random.beta(conv_base + 5, max(1, visitors_base - conv_base + 5))
+                            random_cr_min = np.clip(
+                                np.random.normal(loc=conv_base / visitors_base, scale=gaussian_noise_min_scale), 0, 1
+                            )
+                            random_cr_max = np.clip(
+                                np.random.normal(loc=conv_base / visitors_base, scale=gaussian_noise_max_scale), 0, 1
+                            )
 
                             # Calculate uplift with scaled randomness
-                            uplift_min = (1 + (random_cr_min * (1 - haircut)))**(n_experiments * winrate * (relative_mde_min * 50)) - 1
-                            uplift_max = (1 + (random_cr_max * (1 - haircut)))**(n_experiments * winrate * (relative_mde_max * 50)) - 1
+                            uplift_min = (1 + (random_cr_min * (1 - haircut)))**(n_experiments * winrate * (relative_mde_min * 20)) - 1
+                            uplift_max = (1 + (random_cr_max * (1 - haircut)))**(n_experiments * winrate * (relative_mde_max * 20)) - 1
                         else:
                             random_cr_min = np.random.beta(conv_base + 2, max(1, visitors_base - conv_base + 2))
                             random_cr_max = np.random.beta(conv_base + 2, max(1, visitors_base - conv_base + 2))
