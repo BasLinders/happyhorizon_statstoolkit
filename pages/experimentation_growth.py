@@ -188,8 +188,8 @@ def run():
                             adjusted_mde_min = relative_mde_min / (n_experiments / max_experiments_for_scaling)
                             adjusted_mde_max = relative_mde_max / (n_experiments / max_experiments_for_scaling)
                         else:
-                            adjusted_mde_min = relative_mde_min
-                            adjusted_mde_max = relative_mde_max
+                            adjusted_mde_min = relative_mde_min * 10
+                            adjusted_mde_max = relative_mde_max * 10
 
                         # Apply sigmoid scaling and exponent adjustment
                         effective_winrate = max(winrate, 0.05)  # Ensure minimum winrate
