@@ -167,7 +167,7 @@ def run():
                 relative_mde_max,
                 iterations=5000,
                 small_dataset_mde_scale=10,  # Amplified scaling factor for small datasets
-                large_dataset_threshold=100_000,  # Threshold for large datasets
+                large_dataset_threshold=500_000,  # Threshold for large datasets
                 gaussian_noise_min_scale=0.0005,  # Noise scale for min CR
                 gaussian_noise_max_scale=0.001,  # Noise scale for max CR
                 sigmoid_threshold=19,  # Start diminishing returns after 19 experiments
