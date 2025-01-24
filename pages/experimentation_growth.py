@@ -184,7 +184,7 @@ def run():
                         random_cr_max = np.random.beta(conv_base, max(1, visitors_base - conv_base))
 
                         # Debug: Print the sampled conversion rates
-                        print(f"[DEBUG] Random CR Min: {random_cr_min}, Random CR Max: {random_cr_max}")
+                        st.write(f"[DEBUG] Random CR Min: {random_cr_min}, Random CR Max: {random_cr_max}")
 
                         # Dynamically adjust MDE for large experiment numbers
                         if n_experiments > max_experiments_for_scaling:
@@ -195,14 +195,14 @@ def run():
                             adjusted_mde_max = relative_mde_max
 
                         # Debug: Print adjusted MDE values
-                        print(f"[DEBUG] Adjusted MDE Min: {adjusted_mde_min}, Adjusted MDE Max: {adjusted_mde_max}")
+                        st.write(f"[DEBUG] Adjusted MDE Min: {adjusted_mde_min}, Adjusted MDE Max: {adjusted_mde_max}")
 
                         # Apply sigmoid scaling for soft capping and scale the exponentiation term
                         uplift_min = sigmoid(n_experiments) * ((1 + (random_cr_min * (1 - haircut)))**(n_experiments * winrate * adjusted_mde_min * 10) - 1)
                         uplift_max = sigmoid(n_experiments) * ((1 + (random_cr_max * (1 - haircut)))**(n_experiments * winrate * adjusted_mde_max * 10) - 1)
 
                         # Debug: Print calculated uplifts before scaling to percentages
-                        print(f"[DEBUG] Raw Uplift Min: {uplift_min}, Raw Uplift Max: {uplift_max}")
+                        st.write(f"[DEBUG] Raw Uplift Min: {uplift_min}, Raw Uplift Max: {uplift_max}")
 
                         # Append to simulation results
                         simulated_uplifts_min.append(uplift_min)
