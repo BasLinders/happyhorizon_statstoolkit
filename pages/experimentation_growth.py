@@ -192,8 +192,8 @@ def run():
                             adjusted_mde_max = relative_mde_max
 
                         # Apply sigmoid scaling for soft capping
-                        uplift_min = sigmoid(n_experiments) * ((1 + (random_cr_min * (1 - haircut)))**(n_experiments * winrate * adjusted_mde_min) - 1)
-                        uplift_max = sigmoid(n_experiments) * ((1 + (random_cr_max * (1 - haircut)))**(n_experiments * winrate * adjusted_mde_max) - 1)
+                        uplift_min = sigmoid(n_experiments) * ((1 + (random_cr_min * (1 - haircut)))**(n_experiments * winrate * adjusted_mde_min) - 1) * 10
+                        uplift_max = sigmoid(n_experiments) * ((1 + (random_cr_max * (1 - haircut)))**(n_experiments * winrate * adjusted_mde_max) - 1) * 10
 
                         simulated_uplifts_min.append(uplift_min)
                         simulated_uplifts_max.append(uplift_max)
@@ -226,11 +226,6 @@ def run():
             #clean_df = filtered_df.to_string(index=False)
             st.dataframe(filtered_df)
             #st.text(clean_df)
-            print(f"Uplift Min: {uplift_min}, Uplift Max: {uplift_max}")
-            print(f"Random CR Min: {random_cr_min}, Random CR Max: {random_cr_max}")
-            print(f"Adjusted MDE Min: {adjusted_mde_min}, Adjusted MDE Max: {adjusted_mde_max}")
-            exp_min = n_experiments * winrate * adjusted_mde_min
-            print(f"Exponent Min: {exp_min}")
 
             # Download simulation results
             csv = simulation_df.to_csv(index=False)
