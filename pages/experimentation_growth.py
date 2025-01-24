@@ -174,8 +174,8 @@ def run():
                 sigmoid_k=0.2  # Sigmoid slope
             ):
                 def sigmoid(x, x0, k):
-                    # Sigmoid function for diminishing returns
-                    return 1 / (1 + np.exp(-k * (x - x0)))
+                    # Reverse sigmoid: starts at 1 and decreases to 0
+                    return 1 - (1 / (1 + np.exp(-k * (x - x0))))
 
                 results = []
 
