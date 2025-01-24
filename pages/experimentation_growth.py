@@ -171,10 +171,9 @@ def run():
                 gaussian_noise_min_scale=0.0005,  # Noise scale for min CR
                 gaussian_noise_max_scale=0.001,  # Noise scale for max CR
                 sigmoid_threshold=19,  # Start diminishing returns after 19 experiments
-                sigmoid_k=0.2  # Sigmoid slope
+                sigmoid_k=0.1  # Sigmoid slope
             ):
                 def sigmoid(x, x0, k):
-                    # Reverse sigmoid: starts at 1 and decreases to 0
                     return 1 - (1 / (1 + np.exp(-k * (x - x0))))
 
                 results = []
@@ -194,8 +193,8 @@ def run():
                             random_cr_max = np.clip(
                                 np.random.normal(loc=conv_base / visitors_base, scale=gaussian_noise_max_scale), 0, 1
                             )
-                            uplift_min = sigmoid_multiplier * ((1 + (random_cr_min * (1 - haircut)))**(n_experiments * winrate * (relative_mde_min * 30)) - 1)
-                            uplift_max = sigmoid_multiplier * ((1 + (random_cr_max * (1 - haircut)))**(n_experiments * winrate * (relative_mde_max * 30)) - 1)
+                            uplift_min = sigmoid_multiplier * ((1 + (random_cr_min * (1 - haircut)))**(n_experiments * winrate * (relative_mde_min * 50)) - 1)
+                            uplift_max = sigmoid_multiplier * ((1 + (random_cr_max * (1 - haircut)))**(n_experiments * winrate * (relative_mde_max * 50)) - 1)
                         else:
                             random_cr_min = np.random.beta(conv_base, max(1, visitors_base - conv_base))
                             random_cr_max = np.random.beta(conv_base, max(1, visitors_base - conv_base))
@@ -248,7 +247,7 @@ def run():
             yticks_range = np.arange(
                 int(np.floor(min(simulation_df[['Min_Lower_Bound', 'Max_Lower_Bound']].min())) - 1),
                 int(np.ceil(max(simulation_df[['Min_Upper_Bound', 'Max_Upper_Bound']].max())) + 1),
-                step=2
+                step=1
             )
 
             # Plotting the Graph
