@@ -179,36 +179,28 @@ def run():
                     simulated_uplifts_max = []
 
                     for _ in range(iterations):
-                        # Use Beta noise for conversion rate variability
-                        random_cr_min = np.random.beta(conv_base, max(1, visitors_base - conv_base))
-                        random_cr_max = np.random.beta(conv_base, max(1, visitors_base - conv_base))
-
-                        # Debug: Print the sampled conversion rates
-                        st.write(f"[DEBUG] Random CR Min: {random_cr_min}, Random CR Max: {random_cr_max}")
+                        # Adjust Beta noise to increase variability
+                        random_cr_min = np.random.beta(conv_base + 1, max(1, visitors_base - conv_base + 1))
+                        random_cr_max = np.random.beta(conv_base + 1, max(1, visitors_base - conv_base + 1))
 
                         # Dynamically adjust MDE for large experiment numbers
                         if n_experiments > max_experiments_for_scaling:
-                            adjusted_mde_min = relative_mde_min / (n_experiments / max_experiments_for_scaling)
-                            adjusted_mde_max = relative_mde_max / (n_experiments / max_experiments_for_scaling)
+                            adjusted_mde_min = relative_mde_min * 100 / (n_experiments / max_experiments_for_scaling)
+                            adjusted_mde_max = relative_mde_max * 100 / (n_experiments / max_experiments_for_scaling)
                         else:
-                            adjusted_mde_min = relative_mde_min
-                            adjusted_mde_max = relative_mde_max
+                            adjusted_mde_min = relative_mde_min * 100
+                            adjusted_mde_max = relative_mde_max * 100
 
-                        # Debug: Print adjusted MDE values
-                        st.write(f"[DEBUG] Adjusted MDE Min: {adjusted_mde_min}, Adjusted MDE Max: {adjusted_mde_max}")
+                        # Apply sigmoid scaling and exponent adjustment
+                        effective_winrate = max(winrate, 0.05)  # Ensure minimum winrate
+                        uplift_min = sigmoid(n_experiments) * ((1 + (random_cr_min * (1 - haircut)))**(n_experiments * effective_winrate * adjusted_mde_min * 10) - 1)
+                        uplift_max = sigmoid(n_experiments) * ((1 + (random_cr_max * (1 - haircut)))**(n_experiments * effective_winrate * adjusted_mde_max * 10) - 1)
 
-                        # Apply sigmoid scaling for soft capping and scale the exponentiation term
-                        uplift_min = sigmoid(n_experiments) * ((1 + (random_cr_min * (1 - haircut)))**(n_experiments * winrate * adjusted_mde_min * 10) - 1)
-                        uplift_max = sigmoid(n_experiments) * ((1 + (random_cr_max * (1 - haircut)))**(n_experiments * winrate * adjusted_mde_max * 10) - 1)
-
-                        # Debug: Print calculated uplifts before scaling to percentages
-                        st.write(f"[DEBUG] Raw Uplift Min: {uplift_min}, Raw Uplift Max: {uplift_max}")
-
-                        # Append to simulation results
+                        # Append uplifts
                         simulated_uplifts_min.append(uplift_min)
                         simulated_uplifts_max.append(uplift_max)
 
-                    # Summarize results for this experiment count
+                    # Summarize results
                     results.append({
                         "Experiments": n_experiments,
                         "Min_Mean_Uplift": round(np.mean(simulated_uplifts_min) * 100, 2),
@@ -220,7 +212,7 @@ def run():
                     })
 
                     # Debug: Summarize uplifts for current n_experiments
-                    print(f"[DEBUG] Results for {n_experiments} Experiments: {results[-1]}")
+                    #st.write(f"[DEBUG] Results for {n_experiments} Experiments: {results[-1]}")
 
                 return pd.DataFrame(results)
 
