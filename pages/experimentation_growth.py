@@ -188,8 +188,8 @@ def run():
                         if visitors_base >= large_dataset_threshold:
                             random_cr_min = np.random.beta(conv_base + 5, max(1, visitors_base - conv_base + 5))
                             random_cr_max = np.random.beta(conv_base + 5, max(1, visitors_base - conv_base + 5))
-                            uplift_min = ((1 + (random_cr_min * (1 - haircut)))**(sigmoid_multiplier * n_experiments * winrate * adjusted_mde_min) - 1)
-                            uplift_max = ((1 + (random_cr_max * (1 - haircut)))**(sigmoid_multiplier * n_experiments * winrate * adjusted_mde_max) - 1)
+                            uplift_min = ((1 + (random_cr_min * (1 - haircut)))**(sigmoid_multiplier * n_experiments * winrate * (relative_mde_min * 10)) - 1)
+                            uplift_max = ((1 + (random_cr_max * (1 - haircut)))**(sigmoid_multiplier * n_experiments * winrate * (relative_mde_max * 10)) - 1)
 
                         else:
                             random_cr_min = np.random.beta(conv_base + 2, max(1, visitors_base - conv_base + 2))
