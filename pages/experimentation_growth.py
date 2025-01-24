@@ -226,6 +226,11 @@ def run():
             #clean_df = filtered_df.to_string(index=False)
             st.dataframe(filtered_df)
             #st.text(clean_df)
+            print(f"Uplift Min: {uplift_min}, Uplift Max: {uplift_max}")
+            print(f"Random CR Min: {random_cr_min}, Random CR Max: {random_cr_max}")
+            print(f"Adjusted MDE Min: {adjusted_mde_min}, Adjusted MDE Max: {adjusted_mde_max}")
+            exp_min = n_experiments * winrate * adjusted_mde_min
+            print(f"Exponent Min: {exp_min}")
 
             # Download simulation results
             csv = simulation_df.to_csv(index=False)
