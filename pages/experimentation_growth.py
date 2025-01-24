@@ -166,7 +166,7 @@ def run():
                 relative_mde_min,
                 relative_mde_max,
                 iterations=5000,
-                large_dataset_threshold=1_000_000,
+                large_dataset_threshold=100_000,
                 haircut=0.13,
                 gaussian_noise_min_scale=0.002,
                 gaussian_noise_max_scale=0.005
