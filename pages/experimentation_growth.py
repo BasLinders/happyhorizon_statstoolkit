@@ -167,7 +167,7 @@ def run():
                 relative_mde_max,
                 iterations=5000,
                 small_dataset_mde_scale=10,  # Amplified scaling factor for small datasets
-                large_dataset_threshold=1_000_000,  # Threshold for large datasets
+                large_dataset_threshold=100_000,  # Threshold for large datasets
                 gaussian_noise_min_scale=0.0005,  # Noise scale for min CR
                 gaussian_noise_max_scale=0.001,  # Noise scale for max CR
                 sigmoid_threshold=19,  # Start diminishing returns after 19 experiments
@@ -199,8 +199,8 @@ def run():
                         else:
                             random_cr_min = np.random.beta(conv_base, max(1, visitors_base - conv_base))
                             random_cr_max = np.random.beta(conv_base, max(1, visitors_base - conv_base))
-                            uplift_min = sigmoid_multiplier * ((1 + (random_cr_min * (1 - haircut)))**(n_experiments * winrate * (relative_mde_min * small_dataset_mde_scale)) - 1)
-                            uplift_max = sigmoid_multiplier * ((1 + (random_cr_max * (1 - haircut)))**(n_experiments * winrate * (relative_mde_max * small_dataset_mde_scale)) - 1)
+                            uplift_min = (1 + (random_cr_min * (1 - haircut)))**(n_experiments * winrate * (relative_mde_min * small_dataset_mde_scale)) - 1
+                            uplift_max = (1 + (random_cr_max * (1 - haircut)))**(n_experiments * winrate * (relative_mde_max * small_dataset_mde_scale)) - 1
 
                         simulated_uplifts_min.append(uplift_min)
                         simulated_uplifts_max.append(uplift_max)
