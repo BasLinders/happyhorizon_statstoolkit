@@ -195,7 +195,7 @@ def run():
                             )
                             # multiply by sigmoid multiplier if appliccable
                             uplift_min = sigmoid_multiplier * ((1 + (random_cr_min * (1 - haircut)))**(n_experiments * winrate * (relative_mde_min * 20)) - 1)
-                            uplift_max = sigmoid_multiplier ((1 + (random_cr_max * (1 - haircut)))**(n_experiments * winrate * (relative_mde_max * 20)) - 1)
+                            uplift_max = sigmoid_multiplier * ((1 + (random_cr_max * (1 - haircut)))**(n_experiments * winrate * (relative_mde_max * 20)) - 1)
                         else:
                             random_cr_min = np.random.beta(conv_base, max(1, visitors_base - conv_base))
                             random_cr_max = np.random.beta(conv_base, max(1, visitors_base - conv_base))
