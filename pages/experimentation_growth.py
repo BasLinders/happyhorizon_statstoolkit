@@ -156,7 +156,7 @@ def run():
             #        })
 
             #    return pd.DataFrame(results)
-            
+
             def monte_carlo_simulation(
                 visitors_base,
                 conv_base,
@@ -165,13 +165,10 @@ def run():
                 relative_mde_min,
                 relative_mde_max,
                 iterations=5000,
-                haircut=0.13,
-                max_experiments_for_scaling=19,  # Threshold for scaling MDE dynamically
+                small_dataset_mde_scale=10,
+                large_dataset_threshold=1_000_000,
+                haircut=0.13
             ):
-                def sigmoid(x, k=0.1):
-                    #Sigmoid function for soft-capping uplifts
-                    return 1 / (1 + np.exp(-k * (x - 10)))
-
                 results = []
 
                 for n_experiments in n_experiments_range:
@@ -179,28 +176,20 @@ def run():
                     simulated_uplifts_max = []
 
                     for _ in range(iterations):
-                        # Adjust Beta noise to increase variability
-                        random_cr_min = np.random.beta(conv_base + 1, max(1, visitors_base - conv_base + 1))
-                        random_cr_max = np.random.beta(conv_base + 1, max(1, visitors_base - conv_base + 1))
-
-                        # Dynamically adjust MDE for large experiment numbers
-                        if n_experiments > max_experiments_for_scaling:
-                            adjusted_mde_min = relative_mde_min / (n_experiments / max_experiments_for_scaling)
-                            adjusted_mde_max = relative_mde_max / (n_experiments / max_experiments_for_scaling)
+                        if visitors_base >= large_dataset_threshold:
+                            random_cr_min = np.random.beta(conv_base + 5, max(1, visitors_base - conv_base + 5))
+                            random_cr_max = np.random.beta(conv_base + 5, max(1, visitors_base - conv_base + 5))
+                            uplift_min = (1 + (random_cr_min * (1 - haircut)))**(n_experiments * winrate * (relative_mde_min * 50)) - 1
+                            uplift_max = (1 + (random_cr_max * (1 - haircut)))**(n_experiments * winrate * (relative_mde_max * 50)) - 1
                         else:
-                            adjusted_mde_min = relative_mde_min * 10
-                            adjusted_mde_max = relative_mde_max * 10
+                            random_cr_min = np.random.beta(conv_base + 2, max(1, visitors_base - conv_base + 2))
+                            random_cr_max = np.random.beta(conv_base + 2, max(1, visitors_base - conv_base + 2))
+                            uplift_min = (1 + (random_cr_min * (1 - haircut)))**(n_experiments * winrate * (relative_mde_min * small_dataset_mde_scale)) - 1
+                            uplift_max = (1 + (random_cr_max * (1 - haircut)))**(n_experiments * winrate * (relative_mde_max * small_dataset_mde_scale)) - 1
 
-                        # Apply sigmoid scaling and exponent adjustment
-                        effective_winrate = max(winrate, 0.05)  # Ensure minimum winrate
-                        uplift_min = sigmoid(n_experiments) * ((1 + (random_cr_min * (1 - haircut)))**(n_experiments * effective_winrate * adjusted_mde_min * 10) - 1)
-                        uplift_max = sigmoid(n_experiments) * ((1 + (random_cr_max * (1 - haircut)))**(n_experiments * effective_winrate * adjusted_mde_max * 10) - 1)
-
-                        # Append uplifts
                         simulated_uplifts_min.append(uplift_min)
                         simulated_uplifts_max.append(uplift_max)
 
-                    # Summarize results
                     results.append({
                         "Experiments": n_experiments,
                         "Min_Mean_Uplift": round(np.mean(simulated_uplifts_min) * 100, 2),
@@ -211,10 +200,9 @@ def run():
                         "Max_Upper_Bound": round(np.percentile(simulated_uplifts_max, 95) * 100, 2),
                     })
 
-                    # Debug: Summarize uplifts for current n_experiments
-                    #st.write(f"[DEBUG] Results for {n_experiments} Experiments: {results[-1]}")
-
                 return pd.DataFrame(results)
+
+            
 
             # Run simulation with additional parameters
             simulation_df = monte_carlo_simulation(
