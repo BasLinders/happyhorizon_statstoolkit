@@ -188,8 +188,9 @@ def run():
                         if visitors_base >= large_dataset_threshold:
                             random_cr_min = np.random.beta(conv_base + 5, max(1, visitors_base - conv_base + 5))
                             random_cr_max = np.random.beta(conv_base + 5, max(1, visitors_base - conv_base + 5))
-                            uplift_min = sigmoid_multiplier * ((1 + (random_cr_min * (1 - haircut)))**(n_experiments * winrate * (relative_mde_min * 50)) - 1)
-                            uplift_max = sigmoid_multiplier * ((1 + (random_cr_max * (1 - haircut)))**(n_experiments * winrate * (relative_mde_max * 50)) - 1)
+                            uplift_min = ((1 + (random_cr_min * (1 - haircut)))**(sigmoid_multiplier * n_experiments * winrate * adjusted_mde_min) - 1)
+                            uplift_max = ((1 + (random_cr_max * (1 - haircut)))**(sigmoid_multiplier * n_experiments * winrate * adjusted_mde_max) - 1)
+
                         else:
                             random_cr_min = np.random.beta(conv_base + 2, max(1, visitors_base - conv_base + 2))
                             random_cr_max = np.random.beta(conv_base + 2, max(1, visitors_base - conv_base + 2))
@@ -242,7 +243,7 @@ def run():
             yticks_range = np.arange(
                 int(np.floor(min(simulation_df[['Min_Lower_Bound', 'Max_Lower_Bound']].min())) - 1),
                 int(np.ceil(max(simulation_df[['Min_Upper_Bound', 'Max_Upper_Bound']].max())) + 1),
-                step=1
+                step=2
             )
 
             # Plotting the Graph
