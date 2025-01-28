@@ -28,7 +28,10 @@ def run():
 
     This demonstrates the power of running more experiments over time.
 
-    The table provides powerful insights into the expected performance of your experiments. You can use it to:
+    Choose a representative time frame for your business goals and enter the respective visitors and conversions for that time frame. 
+    The tool will then return compound effects for the chosen range of experiments, projected over the course of 12 months.
+
+    The resulting table provides powerful insights into the expected performance of your experiments. You can use it to:
 
     - Estimate the impact of running multiple experiments.
     - Communicate realistic expectations (with uncertainty ranges).
@@ -40,8 +43,8 @@ def run():
     with col1:
         st.write("### Baseline data")
         st.session_state.used_months = st.number_input("Over how many months is the data below been collected?", min_value=1, max_value=12, step=1, value=st.session_state.used_months)
-        st.session_state.visitors_base = st.number_input("How many visitors will you use in the estimate?", min_value=0, step=1, value=st.session_state.visitors_base)
-        st.session_state.conv_base = st.number_input("How many conversions will you use in the estimate?", min_value=0, step=1, value=st.session_state.conv_base)
+        st.session_state.visitors_base = st.number_input("How many visitors should be used in the estimate?", min_value=0, step=1, value=st.session_state.visitors_base)
+        st.session_state.conv_base = st.number_input("How many conversions should be used in the estimate?", min_value=0, step=1, value=st.session_state.conv_base)
     with col2:
         st.write("### Input for estimation")
         st.session_state.winrate = st.number_input("What is the desired proportion of wins overall?", min_value=0.01, step=0.01, value=max(0.01, st.session_state.winrate))
