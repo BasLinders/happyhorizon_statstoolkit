@@ -194,10 +194,12 @@ def run():
         kpi = st.selectbox("Select the KPI to analyze:", ['purchase_revenue', 'total_item_quantity'])
         outlier_handling = st.selectbox("Select how to handle outliers:", ['Winsorizing + IQR', 'Log Transform', 'Removal'], help='Choose the method for handling outliers.')
         
+        method = None
+        outlier_stdev = None
+        percentile = None
+        
         if outlier_handling != 'Log Transform':
             method = st.selectbox("Select outlier detection method:", ['Standard Deviation', 'Percentile'])
-            outlier_stdev = None
-            percentile = None
             if method == 'Standard Deviation':
                 outlier_stdev = st.selectbox("How many standard deviations define an outlier?", [2, 3, 4, 5])
             elif method == 'Percentile':
