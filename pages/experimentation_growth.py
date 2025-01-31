@@ -99,8 +99,8 @@ def run():
             scaled_mde_max = mde_max * scaling_factor_max
 
             # Calculate relative MDE for the scaled scenarios
-            relative_mde_min = max(scaled_mde_min / cr_min, 0.002) if cr_min > 0 else 0
-            relative_mde_max = max(scaled_mde_max / cr_max, 0.002) if cr_max > 0 else 0
+            relative_mde_min = max(scaled_mde_min / cr_min, 0.02) if cr_min > 0 else 0
+            relative_mde_max = max(scaled_mde_max / cr_max, 0.02) if cr_max > 0 else 0
             relative_mde = mde / cr_base if cr_base > 0 else 0
 
             st.write("### Computed statistics")
