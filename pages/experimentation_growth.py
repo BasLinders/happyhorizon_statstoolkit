@@ -199,8 +199,8 @@ def run():
                     diminishing_returns = np.log1p(n_experiments) / np.log1p(sigmoid_threshold)
 
                     # Dynamically adjust MDE scaling to prevent excessive compounding
-                    adjusted_mde_min = relative_mde_min / (1 + np.log1p(conv_base / visitors_base) * 0.5)
-                    adjusted_mde_max = relative_mde_max / (1 + np.log1p(conv_base / visitors_base) * 0.5)
+                    adjusted_mde_min = relative_mde_min / (1 + np.log1p(conv_base / visitors_base))
+                    adjusted_mde_max = relative_mde_max / (1 + np.log1p(conv_base / visitors_base))
 
                     for _ in range(iterations):
                         if visitors_base >= large_dataset_threshold:
@@ -210,8 +210,8 @@ def run():
                             random_cr_max = np.clip(
                                 np.random.lognormal(mean=np.log(conv_base / visitors_base), sigma=0.1), 0, 1
                             )
-                            uplift_min = diminishing_returns * ((1 + (random_cr_min * 0.99))**(n_experiments * winrate * (adjusted_mde_min * 50)) - 1)
-                            uplift_max = diminishing_returns * ((1 + (random_cr_max * 0.99))**(n_experiments * winrate * (adjusted_mde_max * 50)) - 1)
+                            uplift_min = diminishing_returns * ((1 + (random_cr_min * 0.99))**(n_experiments * winrate * (adjusted_mde_min * 100)) - 1)
+                            uplift_max = diminishing_returns * ((1 + (random_cr_max * 0.99))**(n_experiments * winrate * (adjusted_mde_max * 100)) - 1)
                         else:
                             random_cr_min = np.random.beta(conv_base, max(1, visitors_base - conv_base))
                             random_cr_max = np.random.beta(conv_base, max(1, visitors_base - conv_base))
@@ -219,7 +219,7 @@ def run():
                             uplift_max = (1 + (random_cr_max * 0.99))**(n_experiments * winrate * (adjusted_mde_max * small_dataset_mde_scale)) - 1
 
                         # Apply cap to avoid extreme growth
-                        cap_factor = min(1, (0.2 / ((adjusted_mde_min + (1 / np.sqrt(visitors_base))) * 50 * n_experiments * winrate))** 0.9)
+                        cap_factor = min(1, (0.2 / ((adjusted_mde_min + (1 / np.sqrt(visitors_base))) * 100 * n_experiments * winrate))** 0.9)
                         uplift_min *= cap_factor
                         uplift_max *= cap_factor
 
