@@ -206,6 +206,12 @@ def run():
                     else:
                         sigmoid_multiplier = sigmoid(n_experiments, x0=sigmoid_threshold, k=sigmoid_k)
 
+                    # Introduce a cap factor for high conversion rates
+                    cap_factor = 1.0  # Default cap factor (no restriction)
+
+                    if cr_base > 0.10:
+                        cap_factor = min(1, (0.10 / (relative_mde_min * 50 * n_experiments * winrate)) ** 0.8)
+
                     for _ in range(iterations):
                         if visitors_base >= large_dataset_threshold:
                             random_cr_min = np.clip(
@@ -214,14 +220,24 @@ def run():
                             random_cr_max = np.clip(
                                 np.random.normal(loc=conv_base / visitors_base, scale=gaussian_noise_max_scale), 0, 1
                             )
-                            # multiply by sigmoid multiplier if appliccable
-                            uplift_min = sigmoid_multiplier * ((1 + (random_cr_min * (1 - haircut)))**(n_experiments * winrate * (relative_mde_min * 50)) - 1)
-                            uplift_max = sigmoid_multiplier * ((1 + (random_cr_max * (1 - haircut)))**(n_experiments * winrate * (relative_mde_max * 50)) - 1)
+
+                            uplift_min = cap_factor * sigmoid_multiplier * (
+                                (1 + (random_cr_min * (1 - haircut))) ** (n_experiments * winrate * (relative_mde_min * 50)) - 1
+                            )
+                            uplift_max = cap_factor * sigmoid_multiplier * (
+                                (1 + (random_cr_max * (1 - haircut))) ** (n_experiments * winrate * (relative_mde_max * 50)) - 1
+                            )
+
                         else:
                             random_cr_min = np.random.beta(conv_base, max(1, visitors_base - conv_base))
                             random_cr_max = np.random.beta(conv_base, max(1, visitors_base - conv_base))
-                            uplift_min = (1 + (random_cr_min * (1 - haircut)))**(n_experiments * winrate * (relative_mde_min * small_dataset_mde_scale)) - 1
-                            uplift_max = (1 + (random_cr_max * (1 - haircut)))**(n_experiments * winrate * (relative_mde_max * small_dataset_mde_scale)) - 1
+
+                            uplift_min = cap_factor * (
+                                (1 + (random_cr_min * (1 - haircut))) ** (n_experiments * winrate * (relative_mde_min * small_dataset_mde_scale)) - 1
+                            )
+                            uplift_max = cap_factor * (
+                                (1 + (random_cr_max * (1 - haircut))) ** (n_experiments * winrate * (relative_mde_max * small_dataset_mde_scale)) - 1
+                            )
 
                         simulated_uplifts_min.append(uplift_min)
                         simulated_uplifts_max.append(uplift_max)
@@ -237,6 +253,7 @@ def run():
                     })
 
                 return pd.DataFrame(results)
+
 
             # Run simulation with additional parameters
             simulation_df = monte_carlo_simulation(
