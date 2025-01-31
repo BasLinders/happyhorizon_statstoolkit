@@ -83,24 +83,24 @@ def run():
             # MDE calculation
             cr_base = conv_base / visitors_base if visitors_base > 0 else 0
             cr_min = cr_base # no deviation from base
-            cr_max = cr_base * (1 + np.log1p(1.2)) # most positive scenario with log dampening the extreme growth
-            mde = 4 * np.sqrt(max((cr_base * (1 - cr_base) / visitors_base), 1e-10))
+            cr_max = cr_base * (1 + np.log1p(1.5)) # most positive scenario with log dampening the extreme growth
+            mde = 4 * np.sqrt((cr_base * (1 - cr_base) / visitors_base))
 
             # Scaling factors
             scaling_factor_min = 1
             scaling_factor_max = 1 + np.log1p(1.5)
 
             # Minimum Conversion Rate scaling factor
-            mde_min = 4 * np.sqrt(max((cr_min * (1 - cr_min) / visitors_base), 1e-10))
+            mde_min = 4 * np.sqrt((cr_min * (1 - cr_min) / visitors_base))
             scaled_mde_min = mde_min * scaling_factor_min
 
             # Maximum Conversion Rate scaling factor
-            mde_max = 4 * np.sqrt(max((cr_max * (1 - cr_max) / visitors_base), 1e-10))
+            mde_max = 4 * np.sqrt((cr_max * (1 - cr_max) / visitors_base))
             scaled_mde_max = mde_max * scaling_factor_max
 
             # Calculate relative MDE for the scaled scenarios
-            relative_mde_min = max(scaled_mde_min / cr_min, 0.02) if cr_min > 0 else 0
-            relative_mde_max = max(scaled_mde_max / cr_max, 0.02) if cr_max > 0 else 0
+            relative_mde_min = scaled_mde_min / cr_min if cr_min > 0 else 0
+            relative_mde_max = scaled_mde_max / cr_max if cr_max > 0 else 0
             relative_mde = mde / cr_base if cr_base > 0 else 0
 
             st.write("### Computed statistics")
@@ -210,8 +210,8 @@ def run():
                             random_cr_max = np.clip(
                                 np.random.lognormal(mean=np.log(conv_base / visitors_base), sigma=0.1), 0, 1
                             )
-                            uplift_min = diminishing_returns * ((1 + (random_cr_min * 0.99))**(n_experiments * winrate * (adjusted_mde_min * 100)) - 1)
-                            uplift_max = diminishing_returns * ((1 + (random_cr_max * 0.99))**(n_experiments * winrate * (adjusted_mde_max * 100)) - 1)
+                            uplift_min = diminishing_returns * ((1 + (random_cr_min * 0.99))**(n_experiments * winrate * (adjusted_mde_min * 50)) - 1)
+                            uplift_max = diminishing_returns * ((1 + (random_cr_max * 0.99))**(n_experiments * winrate * (adjusted_mde_max * 50)) - 1)
                         else:
                             random_cr_min = np.random.beta(conv_base, max(1, visitors_base - conv_base))
                             random_cr_max = np.random.beta(conv_base, max(1, visitors_base - conv_base))
@@ -219,7 +219,7 @@ def run():
                             uplift_max = (1 + (random_cr_max * 0.99))**(n_experiments * winrate * (adjusted_mde_max * small_dataset_mde_scale)) - 1
 
                         # Apply cap to avoid extreme growth
-                        cap_factor = min(1, (0.2 / ((adjusted_mde_min + (1 / np.sqrt(visitors_base))) * 100 * n_experiments * winrate))** 0.9)
+                        cap_factor = min(1, 0.3 / (adjusted_mde_min * 50 * n_experiments * winrate))
                         uplift_min *= cap_factor
                         uplift_max *= cap_factor
 
@@ -278,11 +278,9 @@ def run():
 
             # Plotting the Graph
             plt.figure(figsize=(12, 6))
-            if len(yticks_range) > 0 and max(yticks_range) != min(yticks_range):
-                buffer = max((max(yticks_range) - min(yticks_range)) * 0.05, 1)  # 5% buffer
+            if len(yticks_range) > 0:
+                buffer = (max(yticks_range) - min(yticks_range)) * 0.05  # 5% buffer
                 plt.ylim(min(yticks_range) - buffer, max(yticks_range) + buffer)
-            else:
-                plt.ylim(auto=True)
 
             # Plot Min Uplift and its Confidence Interval
             plt.plot(simulation_df['Experiments'], simulation_df['Min_Mean_Uplift'],
