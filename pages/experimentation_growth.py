@@ -91,7 +91,7 @@ def run():
 
             # Scaling factors
             scaling_factor_min = 1
-            scaling_factor_max = 0.5
+            scaling_factor_max = 1.5
 
             # Minimum Conversion Rate scaling factor
             mde_min = 4 * np.sqrt((cr_min * (1 - cr_min) / visitors_base))
