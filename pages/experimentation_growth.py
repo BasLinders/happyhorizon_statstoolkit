@@ -210,7 +210,7 @@ def run():
                     cap_factor = 1.0  # Default cap factor (no restriction)
 
                     if cr_base > 0.10:
-                        cap_factor = min(1, (0.1 / (relative_mde_min * 30 * n_experiments * winrate)) ** 0.9)
+                        cap_factor = min(1, (0.12 / (relative_mde_min * 30 * n_experiments * winrate)) ** 0.9)
 
                     for _ in range(iterations):
                         if visitors_base >= large_dataset_threshold:
