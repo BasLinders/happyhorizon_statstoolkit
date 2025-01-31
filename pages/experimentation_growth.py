@@ -83,7 +83,10 @@ def run():
             # MDE calculation
             cr_base = conv_base / visitors_base
             cr_min = cr_base # no deviation from base
-            cr_max = cr_base * 2.5 # most positive scenario
+            if cr_base > 0.10:  
+                cr_max = cr_base * (1 + np.log1p(1.1))  # Lower log scaling for high CRs
+            else:
+                cr_max = cr_base * (1 + np.log1p(1.5))
             mde = 4 * np.sqrt((cr_base * (1 - cr_base) / visitors_base))
 
             # Scaling factors
@@ -198,7 +201,10 @@ def run():
                     simulated_uplifts_max = []
 
                     # Calculate sigmoid multiplier for diminishing returns
-                    sigmoid_multiplier = sigmoid(n_experiments, x0=sigmoid_threshold, k=sigmoid_k)
+                    if cr_base > 0.10:
+                        sigmoid_multiplier = sigmoid(n_experiments, x0=sigmoid_threshold - 2, k=sigmoid_k * 1.5)  # Earlier dampening
+                    else:
+                        sigmoid_multiplier = sigmoid(n_experiments, x0=sigmoid_threshold, k=sigmoid_k)
 
                     for _ in range(iterations):
                         if visitors_base >= large_dataset_threshold:
