@@ -86,7 +86,7 @@ def run():
             if cr_base > 0.10:  
                 cr_max = cr_base * (1 + np.log1p(1.1))  # Lower log scaling for high CRs
             else:
-                cr_max = cr_base * (1 + np.log1p(0.5))
+                cr_max = cr_base * (1 + np.log1p(1.5))
             mde = 4 * np.sqrt((cr_base * (1 - cr_base) / visitors_base))
 
             # Scaling factors
