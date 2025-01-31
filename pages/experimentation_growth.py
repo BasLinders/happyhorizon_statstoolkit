@@ -202,7 +202,7 @@ def run():
 
                     # Calculate sigmoid multiplier for diminishing returns
                     if cr_base > 0.10:
-                        sigmoid_multiplier = sigmoid(n_experiments, x0=sigmoid_threshold - 2, k=sigmoid_k * 1.2)  # Earlier dampening
+                        sigmoid_multiplier = sigmoid(n_experiments, x0=sigmoid_threshold - 1, k=sigmoid_k * 1.2)  # Earlier dampening
                     else:
                         sigmoid_multiplier = sigmoid(n_experiments, x0=sigmoid_threshold, k=sigmoid_k)
 
@@ -210,7 +210,7 @@ def run():
                     cap_factor = 1.0  # Default cap factor (no restriction)
 
                     if cr_base > 0.10:
-                        cap_factor = min(1, (0.15 / (relative_mde_min * 30 * n_experiments * winrate)) ** 0.9)
+                        cap_factor = min(1, (0.15 / (relative_mde_min * 30 * n_experiments * winrate)) ** 0.95)
 
                     for _ in range(iterations):
                         if visitors_base >= large_dataset_threshold:
