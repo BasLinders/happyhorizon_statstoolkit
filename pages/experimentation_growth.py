@@ -47,8 +47,18 @@ def run():
         st.session_state.conv_base = st.number_input("How many conversions should be used in the estimate?", min_value=0, step=1, value=st.session_state.conv_base)
     with col2:
         st.write("### Input for estimation")
-        st.session_state.winrate = st.number_input("What is the desired proportion of wins overall?", min_value=0.01, step=0.01, value=max(0.01, st.session_state.winrate))
-        st.session_state.n_experiments_max = st.number_input("Max amount of experiments in the estimate?", min_value = 1, step=1, value=max(1, int(st.session_state.n_experiments_max)))
+        st.session_state.winrate = st.number_input(
+            "What is the desired proportion of wins overall?",
+            min_value=0.01,
+            step=0.01,
+            value=max(0.01, float(st.session_state.get("winrate", 0.01)))
+        )
+        st.session_state.n_experiments_max = st.number_input(
+            "Max amount of experiments in the estimate?", 
+            min_value = 1, 
+            step=1, 
+            value=max(1, int(st.session_state.get("n_experiments_max", 1)))
+        )
 
     # Variables for computation
     used_months = st.session_state.used_months
@@ -63,7 +73,7 @@ def run():
         if used_months > 0 and visitors_base > 0 and conv_base > 0 and n_experiments_max > 0:
 
             # Calculated or hardcoded statistics
-            n_experiments_range = range(1, n_experiments_max + 1)
+            n_experiments_range = list(range(1, n_experiments_max + 1))
             v_twelve = round((visitors_base / used_months) * 12)
             c_twelve = round((conv_base / used_months) * 12)
             conv_base = c_twelve
@@ -71,27 +81,27 @@ def run():
             haircut = 0.13
 
             # MDE calculation
-            cr_base = conv_base / visitors_base
+            cr_base = conv_base / visitors_base if visitors_base > 0 else 0
             cr_min = cr_base # no deviation from base
-            cr_max = cr_base * 2.5 # most positive scenario
-            mde = 4 * np.sqrt((cr_base * (1 - cr_base) / visitors_base))
+            cr_max = cr_base * (1 + np.log1p(1.5)) # most positive scenario with log dampening the extreme growth
+            mde = 4 * np.sqrt(max((cr_base * (1 - cr_base) / visitors_base), 1e-10))
 
             # Scaling factors
             scaling_factor_min = 1
-            scaling_factor_max = 2.5
+            scaling_factor_max = 1 + np.log1p(1.5)
 
             # Minimum Conversion Rate scaling factor
-            mde_min = 4 * np.sqrt((cr_min * (1 - cr_min) / visitors_base))
+            mde_min = 4 * np.sqrt(max((cr_min * (1 - cr_min) / visitors_base), 1e-10))
             scaled_mde_min = mde_min * scaling_factor_min
 
             # Maximum Conversion Rate scaling factor
-            mde_max = 4 * np.sqrt((cr_max * (1 - cr_max) / visitors_base))
+            mde_max = 4 * np.sqrt(max((cr_max * (1 - cr_max) / visitors_base), 1e-10))
             scaled_mde_max = mde_max * scaling_factor_max
 
             # Calculate relative MDE for the scaled scenarios
-            relative_mde_min = scaled_mde_min / cr_min
-            relative_mde_max = scaled_mde_max / cr_max
-            relative_mde = mde / cr_base
+            relative_mde_min = scaled_mde_min / cr_min if cr_min > 0 else 0
+            relative_mde_max = scaled_mde_max / cr_max if cr_max > 0 else 0
+            relative_mde = mde / cr_base if cr_base > 0 else 0
 
             st.write("### Computed statistics")
             #st.write(f"The minimum conversion rate is {cr_min * 100:.2f}")
@@ -102,65 +112,65 @@ def run():
             st.write(f"The maximum relative MDE is {relative_mde_max * 100:.2f}%.")
 
             # Uplift calculation for range of experiments
-            #def monte_carlo_simulation(
-            #    visitors_base, 
-            #    conv_base, 
-            #    n_experiments_range, 
-            #    winrate, 
-            #    relative_mde_min, 
-            #    relative_mde_max, 
-            #    iterations=5000,
-            #    small_dataset_mde_scale=10, # Amplified scaling factor for small datasets
-            #    large_dataset_threshold=1_000_000,  # Threshold for large datasets
-            #    gaussian_noise_min_scale=0.0005,    # Noise scale for min CR
-            #    gaussian_noise_max_scale=0.001     # Noise scale for max CR
-            #):
-            #    results = []
+        #    def monte_carlo_simulation(
+        #        visitors_base,
+        #        conv_base,
+        #        n_experiments_range,
+        #        winrate,
+        #        relative_mde_min,
+        #        relative_mde_max,
+        #        iterations=5000,
+        #        small_dataset_mde_scale=10,  # Amplified scaling factor for small datasets
+        #        large_dataset_threshold=500_000,  # Threshold for large datasets
+        #        gaussian_noise_min_scale=0.0005,  # Noise scale for min CR
+        #        gaussian_noise_max_scale=0.001,  # Noise scale for max CR
+        #        sigmoid_threshold=19,  # Start diminishing returns after 19 experiments
+        #        sigmoid_k=0.05  # Sigmoid slope
+        #    ):
+        #        def sigmoid(x, x0, k):
+        #            return 1 - (1 / (1 + np.exp(-k * (x - x0))))
 
-            #    for n_experiments in n_experiments_range:
-            #        # Simulate variability for minimum and maximum uplifts
-            #        simulated_uplifts_min = []
-            #        simulated_uplifts_max = []
+        #        results = []
 
-            #        for _ in range(iterations):
-            #            if visitors_base >= large_dataset_threshold:
-            #                # For large datasets, use Gaussian noise for conversion rates
-            #                random_cr_min = np.clip(
-            #                    np.random.normal(loc=conv_base / visitors_base, scale=gaussian_noise_min_scale), 0, 1
-            #                )
-            #                random_cr_max = np.clip(
-            #                    np.random.normal(loc=conv_base / visitors_base, scale=gaussian_noise_max_scale), 0, 1
-            #                )
+        #        for n_experiments in n_experiments_range:
+        #            simulated_uplifts_min = []
+        #            simulated_uplifts_max = []
 
-            #                # Calculate uplift with scaled randomness
-            #                uplift_min = (1 + (random_cr_min * (1 - haircut)))**(n_experiments * winrate * (relative_mde_min * 50)) - 1
-            #                uplift_max = (1 + (random_cr_max * (1 - haircut)))**(n_experiments * winrate * (relative_mde_max * 50)) - 1
-            #            else:
-            #                # For smaller datasets, introduce Beta-distributed random noise
-            #                random_cr_min = np.random.beta(conv_base, max(1, visitors_base - conv_base))
-            #                random_cr_max = np.random.beta(conv_base, max(1, visitors_base - conv_base))
+                    # Calculate sigmoid multiplier for diminishing returns
+        #            sigmoid_multiplier = sigmoid(n_experiments, x0=sigmoid_threshold, k=sigmoid_k)
 
-                            # Calculate uplift without additional scaling
-            #                uplift_min = (1 + (random_cr_min * (1 - haircut)))**(n_experiments * winrate * (relative_mde_min * small_dataset_mde_scale)) - 1
-            #                uplift_max = (1 + (random_cr_max * (1 - haircut)))**(n_experiments * winrate * (relative_mde_max * small_dataset_mde_scale)) - 1
+        #            for _ in range(iterations):
+        #                if visitors_base >= large_dataset_threshold:
+        #                    random_cr_min = np.clip(
+        #                        np.random.normal(loc=conv_base / visitors_base, scale=gaussian_noise_min_scale), 0, 1
+        #                    )
+        #                    random_cr_max = np.clip(
+        #                        np.random.normal(loc=conv_base / visitors_base, scale=gaussian_noise_max_scale), 0, 1
+        #                    )
+                            # multiply by sigmoid multiplier if appliccable
+        #                    uplift_min = sigmoid_multiplier * ((1 + (random_cr_min * (1 - haircut)))**(n_experiments * winrate * (relative_mde_min * 50)) - 1)
+        #                    uplift_max = sigmoid_multiplier * ((1 + (random_cr_max * (1 - haircut)))**(n_experiments * winrate * (relative_mde_max * 50)) - 1)
+        #                else:
+        #                    random_cr_min = np.random.beta(conv_base, max(1, visitors_base - conv_base))
+        #                    random_cr_max = np.random.beta(conv_base, max(1, visitors_base - conv_base))
+        #                    uplift_min = (1 + (random_cr_min * (1 - haircut)))**(n_experiments * winrate * (relative_mde_min * small_dataset_mde_scale)) - 1
+        #                    uplift_max = (1 + (random_cr_max * (1 - haircut)))**(n_experiments * winrate * (relative_mde_max * small_dataset_mde_scale)) - 1
 
-            #            simulated_uplifts_min.append(uplift_min)
-            #            simulated_uplifts_max.append(uplift_max)
+        #                simulated_uplifts_min.append(uplift_min)
+        #                simulated_uplifts_max.append(uplift_max)
 
-                    # Summarize results for the current number of experiments
-            #        results.append({
-            #            "Experiments": n_experiments,
-            #            "Min_Mean_Uplift": round(np.mean(simulated_uplifts_min) * 100, 2),
-            #            "Max_Mean_Uplift": round(np.mean(simulated_uplifts_max) * 100, 2),
-            #            "Min_Lower_Bound": round(np.percentile(simulated_uplifts_min, 5) * 100, 2),
-            #            "Min_Upper_Bound": round(np.percentile(simulated_uplifts_min, 95) * 100, 2),
-            #            "Max_Lower_Bound": round(np.percentile(simulated_uplifts_max, 5) * 100, 2),
-            #            "Max_Upper_Bound": round(np.percentile(simulated_uplifts_max, 95) * 100, 2),
-            #        })
+        #            results.append({
+        #                "Experiments": n_experiments,
+        #                "Min_Mean_Uplift": round(np.mean(simulated_uplifts_min) * 100, 2),
+        #                "Max_Mean_Uplift": round(np.mean(simulated_uplifts_max) * 100, 2),
+        #                "Min_Lower_Bound": round(np.percentile(simulated_uplifts_min, 5) * 100, 2),
+        #                "Min_Upper_Bound": round(np.percentile(simulated_uplifts_min, 95) * 100, 2),
+        #                "Max_Lower_Bound": round(np.percentile(simulated_uplifts_max, 5) * 100, 2),
+        #                "Max_Upper_Bound": round(np.percentile(simulated_uplifts_max, 95) * 100, 2),
+        #            })
 
-            #    return pd.DataFrame(results)
+        #        return pd.DataFrame(results)
 
-            # Uplift calculation for range of experiments
             def monte_carlo_simulation(
                 visitors_base,
                 conv_base,
@@ -169,12 +179,12 @@ def run():
                 relative_mde_min,
                 relative_mde_max,
                 iterations=5000,
-                small_dataset_mde_scale=10,  # Amplified scaling factor for small datasets
-                large_dataset_threshold=500_000,  # Threshold for large datasets
-                gaussian_noise_min_scale=0.0005,  # Noise scale for min CR
-                gaussian_noise_max_scale=0.001,  # Noise scale for max CR
-                sigmoid_threshold=19,  # Start diminishing returns after 19 experiments
-                sigmoid_k=0.05  # Sigmoid slope
+                small_dataset_mde_scale=10,
+                large_dataset_threshold=500_000,
+                gaussian_noise_min_scale=0.0005,
+                gaussian_noise_max_scale=0.001,
+                sigmoid_threshold=19,
+                sigmoid_k=0.05
             ):
                 def sigmoid(x, x0, k):
                     return 1 - (1 / (1 + np.exp(-k * (x - x0))))
@@ -185,25 +195,33 @@ def run():
                     simulated_uplifts_min = []
                     simulated_uplifts_max = []
 
-                    # Calculate sigmoid multiplier for diminishing returns
-                    sigmoid_multiplier = sigmoid(n_experiments, x0=sigmoid_threshold, k=sigmoid_k)
+                    # Calculate diminishing returns using logarithmic scaling
+                    diminishing_returns = np.log1p(n_experiments) / np.log1p(sigmoid_threshold)
+
+                    # Dynamically adjust MDE scaling to prevent excessive compounding
+                    adjusted_mde_min = relative_mde_min / (1 + np.log1p(conv_base / visitors_base))
+                    adjusted_mde_max = relative_mde_max / (1 + np.log1p(conv_base / visitors_base))
 
                     for _ in range(iterations):
                         if visitors_base >= large_dataset_threshold:
                             random_cr_min = np.clip(
-                                np.random.normal(loc=conv_base / visitors_base, scale=gaussian_noise_min_scale), 0, 1
+                                np.random.lognormal(mean=np.log(conv_base / visitors_base), sigma=0.1), 0, 1
                             )
                             random_cr_max = np.clip(
-                                np.random.normal(loc=conv_base / visitors_base, scale=gaussian_noise_max_scale), 0, 1
+                                np.random.lognormal(mean=np.log(conv_base / visitors_base), sigma=0.1), 0, 1
                             )
-                            # multiply by sigmoid multiplier if appliccable
-                            uplift_min = sigmoid_multiplier * ((1 + (random_cr_min * (1 - haircut)))**(n_experiments * winrate * (relative_mde_min * 50)) - 1)
-                            uplift_max = sigmoid_multiplier * ((1 + (random_cr_max * (1 - haircut)))**(n_experiments * winrate * (relative_mde_max * 50)) - 1)
+                            uplift_min = diminishing_returns * ((1 + (random_cr_min * 0.99))**(n_experiments * winrate * (adjusted_mde_min * 50)) - 1)
+                            uplift_max = diminishing_returns * ((1 + (random_cr_max * 0.99))**(n_experiments * winrate * (adjusted_mde_max * 50)) - 1)
                         else:
                             random_cr_min = np.random.beta(conv_base, max(1, visitors_base - conv_base))
                             random_cr_max = np.random.beta(conv_base, max(1, visitors_base - conv_base))
-                            uplift_min = (1 + (random_cr_min * (1 - haircut)))**(n_experiments * winrate * (relative_mde_min * small_dataset_mde_scale)) - 1
-                            uplift_max = (1 + (random_cr_max * (1 - haircut)))**(n_experiments * winrate * (relative_mde_max * small_dataset_mde_scale)) - 1
+                            uplift_min = (1 + (random_cr_min * 0.99))**(n_experiments * winrate * (adjusted_mde_min * small_dataset_mde_scale)) - 1
+                            uplift_max = (1 + (random_cr_max * 0.99))**(n_experiments * winrate * (adjusted_mde_max * small_dataset_mde_scale)) - 1
+
+                        # Apply cap to avoid extreme growth
+                        cap_factor = min(1, 0.3 / (adjusted_mde_min * 50 * n_experiments * winrate))
+                        uplift_min *= cap_factor
+                        uplift_max *= cap_factor
 
                         simulated_uplifts_min.append(uplift_min)
                         simulated_uplifts_max.append(uplift_max)
@@ -220,6 +238,7 @@ def run():
 
                 return pd.DataFrame(results)
 
+
             # Run simulation with additional parameters
             simulation_df = monte_carlo_simulation(
                 visitors_base,
@@ -233,7 +252,10 @@ def run():
 
             filtered_df = simulation_df[['Experiments', 'Min_Mean_Uplift', 'Max_Mean_Uplift']]
             #clean_df = filtered_df.to_string(index=False)
-            st.dataframe(filtered_df)
+            st.dataframe(
+                filtered_df.style.format({"Min_Mean_Uplift": "{:.2f}%", "Max_Mean_Uplift": "{:.2f}%"}),
+                use_container_width=False
+            )
             #st.text(clean_df)
 
             # Download simulation results
@@ -256,8 +278,11 @@ def run():
 
             # Plotting the Graph
             plt.figure(figsize=(12, 6))
-            if len(yticks_range) > 0:
-                plt.ylim(min(yticks_range), max(yticks_range))
+            if len(yticks_range) > 0 and max(yticks_range) != min(yticks_range):
+                buffer = max((max(yticks_range) - min(yticks_range)) * 0.05, 1)  # 5% buffer
+                plt.ylim(min(yticks_range) - buffer, max(yticks_range) + buffer)
+            else:
+                plt.ylim(auto=True)
 
             # Plot Min Uplift and its Confidence Interval
             plt.plot(simulation_df['Experiments'], simulation_df['Min_Mean_Uplift'],
