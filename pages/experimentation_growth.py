@@ -179,12 +179,12 @@ def run():
                 relative_mde_min,
                 relative_mde_max,
                 iterations=5000,
-                small_dataset_mde_scale=10,
-                large_dataset_threshold=500_000,
-                gaussian_noise_min_scale=0.0005,
-                gaussian_noise_max_scale=0.001,
-                sigmoid_threshold=19,
-                sigmoid_k=0.05
+                small_dataset_mde_scale=10,  # Amplified scaling factor for small datasets
+                large_dataset_threshold=500_000,  # Threshold for large datasets
+                gaussian_noise_min_scale=0.0005,  # Noise scale for min CR
+                gaussian_noise_max_scale=0.001,  # Noise scale for max CR
+                sigmoid_threshold=19,  # Start diminishing returns after 19 experiments
+                sigmoid_k=0.05  # Sigmoid slope
             ):
                 def sigmoid(x, x0, k):
                     return 1 - (1 / (1 + np.exp(-k * (x - x0))))
@@ -195,33 +195,37 @@ def run():
                     simulated_uplifts_min = []
                     simulated_uplifts_max = []
 
-                    # Calculate diminishing returns using logarithmic scaling
-                    diminishing_returns = np.log1p(n_experiments) / np.log1p(sigmoid_threshold)
-
-                    # Dynamically adjust MDE scaling to prevent excessive compounding
-                    adjusted_mde_min = relative_mde_min / (1 + np.log1p(conv_base / visitors_base))
-                    adjusted_mde_max = relative_mde_max / (1 + np.log1p(conv_base / visitors_base))
+                    # Calculate sigmoid multiplier for diminishing returns
+                    sigmoid_multiplier = sigmoid(n_experiments, x0=sigmoid_threshold, k=sigmoid_k)
 
                     for _ in range(iterations):
                         if visitors_base >= large_dataset_threshold:
+                            # Apply Gaussian noise for large datasets
                             random_cr_min = np.clip(
-                                np.random.lognormal(mean=np.log(conv_base / visitors_base), sigma=0.1), 0, 1
+                                np.random.normal(loc=conv_base / visitors_base, scale=gaussian_noise_min_scale), 0, 1
                             )
                             random_cr_max = np.clip(
-                                np.random.lognormal(mean=np.log(conv_base / visitors_base), sigma=0.1), 0, 1
+                                np.random.normal(loc=conv_base / visitors_base, scale=gaussian_noise_max_scale), 0, 1
                             )
-                            uplift_min = diminishing_returns * ((1 + (random_cr_min * 0.99))**(n_experiments * winrate * (adjusted_mde_min * 50)) - 1)
-                            uplift_max = diminishing_returns * ((1 + (random_cr_max * 0.99))**(n_experiments * winrate * (adjusted_mde_max * 50)) - 1)
+
+                            uplift_min = sigmoid_multiplier * (
+                                (1 + (random_cr_min * (1 - haircut))) ** (n_experiments * winrate * (relative_mde_min * 50)) - 1
+                            )
+                            uplift_max = sigmoid_multiplier * (
+                                (1 + (random_cr_max * (1 - haircut))) ** (n_experiments * winrate * (relative_mde_max * 50)) - 1
+                            )
+
                         else:
+                            # Apply Beta-distributed noise for small datasets
                             random_cr_min = np.random.beta(conv_base, max(1, visitors_base - conv_base))
                             random_cr_max = np.random.beta(conv_base, max(1, visitors_base - conv_base))
-                            uplift_min = (1 + (random_cr_min * 0.99))**(n_experiments * winrate * (adjusted_mde_min * small_dataset_mde_scale)) - 1
-                            uplift_max = (1 + (random_cr_max * 0.99))**(n_experiments * winrate * (adjusted_mde_max * small_dataset_mde_scale)) - 1
 
-                        # Apply cap to avoid extreme growth
-                        cap_factor = min(1, 0.3 / (adjusted_mde_min * 50 * n_experiments * winrate))
-                        uplift_min *= cap_factor
-                        uplift_max *= cap_factor
+                            uplift_min = (1 + (random_cr_min * (1 - haircut))) ** (
+                                n_experiments * winrate * (relative_mde_min * small_dataset_mde_scale)
+                            ) - 1
+                            uplift_max = (1 + (random_cr_max * (1 - haircut))) ** (
+                                n_experiments * winrate * (relative_mde_max * small_dataset_mde_scale)
+                            ) - 1
 
                         simulated_uplifts_min.append(uplift_min)
                         simulated_uplifts_max.append(uplift_max)
@@ -278,9 +282,11 @@ def run():
 
             # Plotting the Graph
             plt.figure(figsize=(12, 6))
-            if len(yticks_range) > 0:
+            if len(yticks_range) > 0 and max(yticks_range) != min(yticks_range):
                 buffer = max((max(yticks_range) - min(yticks_range)) * 0.05, 1)  # 5% buffer
                 plt.ylim(min(yticks_range) - buffer, max(yticks_range) + buffer)
+            else:
+                plt.ylim(auto=True)  # Auto-scale if no variation
 
             # Plot Min Uplift and its Confidence Interval
             plt.plot(simulation_df['Experiments'], simulation_df['Min_Mean_Uplift'],
