@@ -192,13 +192,13 @@ def run():
         st.write(df.sample(10))
 
         kpi = st.selectbox("Select the KPI to analyze:", ['purchase_revenue', 'total_item_quantity'])
-        outlier_handling = st.selectbox("Select how to handle outliers:", ['Winsorizing + IQR', 'Log Transform', 'Removal'], help='Choose the method for handling outliers.')
+        outlier_handling = st.selectbox("Select how to handle outliers:", ['None', 'Winsorizing + IQR', 'Log Transform', 'Removal'], help='Choose the method for handling outliers.')
         
         method = None
         outlier_stdev = None
         percentile = None
         
-        if outlier_handling != 'Log Transform':
+        if outlier_handling not in ['None', 'Log Transform']:
             method = st.selectbox("Select outlier detection method:", ['Standard Deviation', 'Percentile'])
             if method == 'Standard Deviation':
                 outlier_stdev = st.selectbox("How many standard deviations define an outlier?", [2, 3, 4, 5])
@@ -208,6 +208,18 @@ def run():
         outliers_mask, model = detect_outliers(df, kpi, outlier_stdev if method == 'Standard Deviation' else 3)  # Default 3 STD for detection purposes
         st.write(f"Number of detected outliers: {outliers_mask.sum()}")
 
+        # Show raw data plots before any processing
+        st.write("### Raw Data Box Plot")
+        sns.boxplot(x='experience_variant_label', y=kpi, data=df)
+        st.pyplot(plt)
+        plt.clf()
+        
+        st.write("### Raw Data Histogram with KDE")
+        sns.histplot(df[kpi], kde=True, bins=30)
+        plt.title("Raw Data Histogram with KDE")
+        st.pyplot(plt)
+        plt.clf()
+
         if st.button("Calculate my test results"):
             if outlier_handling == 'Winsorizing + IQR':
                 df, lower_bound, upper_bound, percentile_lower, percentile_upper = winsorize_iqr_filter(df, kpi, outlier_stdev, percentile)
@@ -215,11 +227,11 @@ def run():
             elif outlier_handling == 'Log Transform':
                 df = log_transform_data(df, kpi)
                 st.write("Log transformation applied.")
-            else:
+            elif outlier_handling == 'Removal':
                 df = df[~outliers_mask]
                 st.write(f"Outliers removed: {outliers_mask.sum()} rows affected.")
 
-            st.write("### Box Plot")
+            st.write("### Processed Data Box Plot")
             sns.boxplot(x='experience_variant_label', y=kpi, data=df)
             st.pyplot(plt)
             plt.clf()
@@ -229,9 +241,9 @@ def run():
             st.pyplot(plt)
             plt.clf()
 
-            st.write("### Histogram with KDE")
+            st.write("### Processed Data Histogram with KDE")
             sns.histplot(model.resid, kde=True, bins=30)
-            plt.title("Histogram with KDE")
+            plt.title("Processed Data Histogram with KDE")
             st.pyplot(plt)
             plt.clf()
 
