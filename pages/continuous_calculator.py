@@ -63,17 +63,26 @@ def detect_outliers(df, kpi, outlier_stdev):
 
     return outliers_mask, model
 
-# Winsorize data
-def winsorize_data(df, kpi, outlier_stdev):
-    mean_value = df[kpi].mean()
-    std_dev = df[kpi].std()
-    lower_bound = mean_value - (outlier_stdev * std_dev)
-    upper_bound = mean_value + (outlier_stdev * std_dev)
-
+# Winsorize and IQR filter combined
+def winsorize_iqr_filter(df, kpi, outlier_stdev):
+    # Calculate IQR
+    Q1 = df[kpi].quantile(0.25)
+    Q3 = df[kpi].quantile(0.75)
+    IQR = Q3 - Q1
+    
+    # Define upper and lower bounds using both IQR and standard deviation
+    lower_bound = max(Q1 - 1.5 * IQR, df[kpi].mean() - (outlier_stdev * df[kpi].std()))
+    upper_bound = min(Q3 + 1.5 * IQR, df[kpi].mean() + (outlier_stdev * df[kpi].std()))
+    
     df[kpi] = np.where(df[kpi] < lower_bound, lower_bound, df[kpi])
     df[kpi] = np.where(df[kpi] > upper_bound, upper_bound, df[kpi])
-
+    
     return df, lower_bound, upper_bound
+
+# Log transform data
+def log_transform_data(df, kpi):
+    df[kpi] = np.log1p(df[kpi])  # log1p prevents log(0) issues
+    return df
 
 # Perform statistical tests and provide conclusions
 def perform_stat_tests_and_conclusions(df, kpi, model):
@@ -137,7 +146,7 @@ def run():
     This calculator lets you analyze revenue data or the amount of items of ecommerce transactions (or leads) for your online experiments. See the example CSV file for what you need to upload. 
     You're not limited to just A and B, but can add more labels when applicable (C, D, etc.).
 
-    The app will identify outliers, fit models, and perform statistical tests. Based on the test results and the output of the highest average and higest standard deviation, you can determine which variant won.
+    The app will identify outliers, fit models, and perform statistical tests. Based on the test results and the output of the highest average and highest standard deviation, you can determine which variant won.
 
     How to use:
     1. Upload the CSV (download the example to see the column names)
@@ -169,27 +178,23 @@ def run():
             return
 
         st.write("### A random sample of your data:")
-        st.write(df.sample(10))
+        st.write(df.sample(5))
 
         kpi = st.selectbox("Select the KPI to analyze:", ['purchase_revenue', 'total_item_quantity'])
-        outlier_handling = st.selectbox("Select how to handle outliers:", ['Winsorizing', 'Removal'], help='Winsorizing caps the outliers to not lose data.')
+        outlier_handling = st.selectbox("Select how to handle outliers:", ['Winsorizing + IQR', 'Log Transform', 'Removal'], help='Winsorizing caps the outliers to not lose data. If data is skewed, use log transformation to compress high values.')
         outlier_stdev = st.selectbox("How many standard deviations define an outlier?", [2, 3, 4, 5])
         outliers_mask, model = detect_outliers(df, kpi, outlier_stdev)
 
         if st.button("Calculate my test results"):
-            if outlier_handling == 'Winsorizing':
-                df, lower_bound, upper_bound = winsorize_data(df, kpi, outlier_stdev)
-                if outliers_mask.sum() is 1:
-                    st.write(f"{outliers_mask.sum()} Outlier detected.")
-                else:
-                    st.write(f"{outliers_mask.sum()} Outliers detected.")
-                st.write(f"Winsorizing applied: capped values between {lower_bound:.2f} and {upper_bound:.2f}.")
+            if outlier_handling == 'Winsorizing + IQR':
+                df, lower_bound, upper_bound = winsorize_iqr_filter(df, kpi, outlier_stdev)
+                st.write(f"Winsorizing + IQR applied on {outliers_mask.sum()} outliers: capped values between {lower_bound:.2f} and {upper_bound:.2f}.")
+            elif outlier_handling == 'Log Transform':
+                df = log_transform_data(df, kpi)
+                st.write(f"{outliers_mask.sum()} Outliers found. Log transformation applied.")
             else:
                 df = df[~outliers_mask]
-                if outliers_mask.sum() is 1:
-                    st.write(f"Outliers removed: {outliers_mask.sum()} row affected.")
-                else:
-                    st.write(f"Outliers removed: {outliers_mask.sum()} rows affected.")
+                st.write(f"Outliers removed: {outliers_mask.sum()} rows affected.")
 
             st.write("### Box Plot")
             sns.boxplot(x='experience_variant_label', y=kpi, data=df)
@@ -198,6 +203,12 @@ def run():
 
             st.write("### QQ Plot")
             qqplot(model.resid, marker='o')
+            st.pyplot(plt)
+            plt.clf()
+
+            st.write("### Histogram with KDE")
+            sns.histplot(model.resid, kde=True, bins=30)
+            plt.title("Histogram with KDE")
             st.pyplot(plt)
             plt.clf()
 
