@@ -103,13 +103,16 @@ def run():
             relative_mde_max = scaled_mde_max / cr_max if cr_max > 0 else 0
             relative_mde = mde / cr_base if cr_base > 0 else 0
 
+            adjusted_mde_min = relative_mde_min / (1 + np.log1p(conv_base / visitors_base))
+            adjusted_mde_max = relative_mde_max / (1 + np.log1p(conv_base / visitors_base))
+
             st.write("### Computed statistics")
             #st.write(f"The minimum conversion rate is {cr_min * 100:.2f}")
             #st.write(f"The maximum conversion rate is {cr_max * 100:.2f}")
             st.write(f"The relative MDE is {relative_mde * 100:.2f}%")
             st.write(f"The absolute MDE is {mde:.6f}.")
-            st.write(f"The minimum relative MDE is {relative_mde_min * 100:.2f}%.")
-            st.write(f"The maximum relative MDE is {relative_mde_max * 100:.2f}%.")
+            st.write(f"The minimum relative MDE is {adjusted_mde_min * 100:.2f}%.")
+            st.write(f"The maximum relative MDE is {adjusted_mde_max * 100:.2f}%.")
 
             # Uplift calculation for range of experiments
         #    def monte_carlo_simulation(
@@ -176,15 +179,15 @@ def run():
                 conv_base,
                 n_experiments_range,
                 winrate,
-                relative_mde_min,
-                relative_mde_max,
+                adjusted_mde_min,
+                adjusted_mde_max,
                 iterations=5000,
                 small_dataset_mde_scale=10,  # Amplified scaling factor for small datasets
                 large_dataset_threshold=500_000,  # Threshold for large datasets
                 gaussian_noise_min_scale=0.0005,  # Noise scale for min CR
                 gaussian_noise_max_scale=0.001,  # Noise scale for max CR
                 sigmoid_threshold=19,  # Start diminishing returns after 19 experiments
-                sigmoid_k=0.05  # Sigmoid slope
+                sigmoid_k=0.07  # Sigmoid slope
             ):
                 def sigmoid(x, x0, k):
                     return 1 - (1 / (1 + np.exp(-k * (x - x0))))
@@ -209,10 +212,10 @@ def run():
                             )
 
                             uplift_min = sigmoid_multiplier * (
-                                (1 + (random_cr_min * (1 - haircut))) ** (n_experiments * winrate * (relative_mde_min * 50)) - 1
+                                (1 + (random_cr_min * (1 - haircut))) ** (n_experiments * winrate * (adjusted_mde_min * 50)) - 1
                             )
                             uplift_max = sigmoid_multiplier * (
-                                (1 + (random_cr_max * (1 - haircut))) ** (n_experiments * winrate * (relative_mde_max * 50)) - 1
+                                (1 + (random_cr_max * (1 - haircut))) ** (n_experiments * winrate * (adjusted_mde_max * 50)) - 1
                             )
 
                         else:
@@ -221,10 +224,10 @@ def run():
                             random_cr_max = np.random.beta(conv_base, max(1, visitors_base - conv_base))
 
                             uplift_min = (1 + (random_cr_min * (1 - haircut))) ** (
-                                n_experiments * winrate * (relative_mde_min * small_dataset_mde_scale)
+                                n_experiments * winrate * (adjusted_mde_min * small_dataset_mde_scale)
                             ) - 1
                             uplift_max = (1 + (random_cr_max * (1 - haircut))) ** (
-                                n_experiments * winrate * (relative_mde_max * small_dataset_mde_scale)
+                                n_experiments * winrate * (adjusted_mde_max * small_dataset_mde_scale)
                             ) - 1
 
                         simulated_uplifts_min.append(uplift_min)
@@ -249,9 +252,9 @@ def run():
                 conv_base,
                 n_experiments_range,
                 winrate,
-                relative_mde_min,
-                relative_mde_max,
-                iterations=1000
+                adjusted_mde_min,
+                adjusted_mde_max,
+                iterations=10000
             )
 
             filtered_df = simulation_df[['Experiments', 'Min_Mean_Uplift', 'Max_Mean_Uplift']]
