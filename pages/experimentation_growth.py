@@ -83,7 +83,7 @@ def run():
             # MDE calculation
             cr_base = conv_base / visitors_base if visitors_base > 0 else 0
             cr_min = cr_base # no deviation from base
-            cr_max = cr_base * (1 + np.log1p(1.5)) # most positive scenario with log dampening the extreme growth
+            cr_max = cr_base * (1 + np.log1p(1.07)) # most positive scenario with log dampening the extreme growth
             mde = 4 * np.sqrt(max((cr_base * (1 - cr_base) / visitors_base), 1e-10))
 
             # Scaling factors
@@ -219,7 +219,7 @@ def run():
                             uplift_max = (1 + (random_cr_max * 0.99))**(n_experiments * winrate * (adjusted_mde_max * small_dataset_mde_scale)) - 1
 
                         # Apply cap to avoid extreme growth
-                        cap_factor = min(1, 0.3 / (adjusted_mde_min * 50 * n_experiments * winrate))
+                        cap_factor = min(1, 0.07 / (adjusted_mde_min * 50 * n_experiments * winrate))
                         uplift_min *= cap_factor
                         uplift_max *= cap_factor
 
