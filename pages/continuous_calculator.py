@@ -65,6 +65,10 @@ def detect_outliers(df, kpi, outlier_stdev):
 
 # Winsorize and IQR filter combined
 def winsorize_iqr_filter(df, kpi, outlier_stdev, percentile):
+    # Ensure outlier_stdev is not None before using it
+    if outlier_stdev is None:
+        outlier_stdev = 3  # Default value if not provided
+    
     # Calculate IQR
     Q1 = df[kpi].quantile(0.25)
     Q3 = df[kpi].quantile(0.75)
@@ -73,6 +77,10 @@ def winsorize_iqr_filter(df, kpi, outlier_stdev, percentile):
     # Define upper and lower bounds using both IQR and standard deviation
     lower_bound = max(Q1 - 1.5 * IQR, df[kpi].mean() - (outlier_stdev * df[kpi].std()))
     upper_bound = min(Q3 + 1.5 * IQR, df[kpi].mean() + (outlier_stdev * df[kpi].std()))
+    
+    # Ensure percentile is not None before using it
+    if percentile is None:
+        percentile = 95  # Default percentile if not provided
     
     # Alternative Winsorization using percentile-based capping
     lower_percentile = (100 - percentile) / 200
