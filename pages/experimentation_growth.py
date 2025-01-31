@@ -86,7 +86,7 @@ def run():
             if cr_base > 0.10:  
                 cr_max = cr_base * (1 + np.log1p(1.1))  # Lower log scaling for high CRs
             else:
-                cr_max = cr_base * (1 + np.log1p(1.5))
+                cr_max = cr_base * (1 + np.log1p(0.5))
             mde = 4 * np.sqrt((cr_base * (1 - cr_base) / visitors_base))
 
             # Scaling factors
@@ -202,7 +202,7 @@ def run():
 
                     # Calculate sigmoid multiplier for diminishing returns
                     if cr_base > 0.10:
-                        sigmoid_multiplier = sigmoid(n_experiments, x0=sigmoid_threshold - 2, k=sigmoid_k * 1.5)  # Earlier dampening
+                        sigmoid_multiplier = sigmoid(n_experiments, x0=sigmoid_threshold - 4, k=sigmoid_k * 1.5)  # Earlier dampening
                     else:
                         sigmoid_multiplier = sigmoid(n_experiments, x0=sigmoid_threshold, k=sigmoid_k)
 
