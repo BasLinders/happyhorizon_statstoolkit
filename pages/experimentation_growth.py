@@ -202,7 +202,7 @@ def run():
 
                     # Calculate sigmoid multiplier for diminishing returns
                     if cr_base > 0.10:
-                        sigmoid_multiplier = sigmoid(n_experiments, x0=sigmoid_threshold, k=sigmoid_k * 1.9)  # Earlier dampening
+                        sigmoid_multiplier = sigmoid(n_experiments, x0=sigmoid_threshold, k=sigmoid_k * 0.2)  # Earlier dampening
                     else:
                         sigmoid_multiplier = sigmoid(n_experiments, x0=sigmoid_threshold, k=sigmoid_k)
 
