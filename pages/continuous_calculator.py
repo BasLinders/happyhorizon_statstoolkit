@@ -64,7 +64,7 @@ def detect_outliers(df, kpi, outlier_stdev):
     return outliers_mask, model
 
 # Winsorize and IQR filter combined
-def winsorize_iqr_filter(df, kpi, outlier_stdev):
+def winsorize_iqr_filter(df, kpi, outlier_stdev, percentile):
     # Calculate IQR
     Q1 = df[kpi].quantile(0.25)
     Q3 = df[kpi].quantile(0.75)
@@ -74,10 +74,17 @@ def winsorize_iqr_filter(df, kpi, outlier_stdev):
     lower_bound = max(Q1 - 1.5 * IQR, df[kpi].mean() - (outlier_stdev * df[kpi].std()))
     upper_bound = min(Q3 + 1.5 * IQR, df[kpi].mean() + (outlier_stdev * df[kpi].std()))
     
-    df[kpi] = np.where(df[kpi] < lower_bound, lower_bound, df[kpi])
-    df[kpi] = np.where(df[kpi] > upper_bound, upper_bound, df[kpi])
+    # Alternative Winsorization using percentile-based capping
+    lower_percentile = (100 - percentile) / 200
+    upper_percentile = 1 - lower_percentile
+    percentile_lower = df[kpi].quantile(lower_percentile)
+    percentile_upper = df[kpi].quantile(upper_percentile)
     
-    return df, lower_bound, upper_bound
+    # Apply Winsorization
+    df[kpi] = np.where(df[kpi] < percentile_lower, percentile_lower, df[kpi])
+    df[kpi] = np.where(df[kpi] > percentile_upper, percentile_upper, df[kpi])
+    
+    return df, lower_bound, upper_bound, percentile_lower, percentile_upper
 
 # Log transform data
 def log_transform_data(df, kpi):
@@ -151,11 +158,15 @@ def run():
     How to use:
     1. Upload the CSV (download the example to see the column names)
     2. Select the KPI to analyze
-    3. Select how to handle outliers
-    4. Define how many standard deviations away from the mean indicate an outlier
+    3. Select how to handle outliers (Winsorization, log transform or removal)
+    4. Choose outlier handling method (percentile, standard deviation)
     5. Push the button!
 
-    Happy learning!
+    When choosing an outlier handling method:
+    - Choose Winsorization to cap outlier values at a chosen threshold and not lose data points.
+    - Choose log transform when the data is heavily right-skewed to compress high values.
+    - Choose removal when there are very few, very extreme values that affect conclusions.
+
     """
     st.download_button(
         label="Download CSV Template",
@@ -178,20 +189,30 @@ def run():
             return
 
         st.write("### A random sample of your data:")
-        st.write(df.sample(5))
+        st.write(df.sample(10))
 
         kpi = st.selectbox("Select the KPI to analyze:", ['purchase_revenue', 'total_item_quantity'])
-        outlier_handling = st.selectbox("Select how to handle outliers:", ['Winsorizing + IQR', 'Log Transform', 'Removal'], help='Winsorizing caps the outliers to not lose data. If data is skewed, use log transformation to compress high values.')
-        outlier_stdev = st.selectbox("How many standard deviations define an outlier?", [2, 3, 4, 5])
-        outliers_mask, model = detect_outliers(df, kpi, outlier_stdev)
+        outlier_handling = st.selectbox("Select how to handle outliers:", ['Winsorizing + IQR', 'Log Transform', 'Removal'], help='Choose the method for handling outliers.')
+        
+        if outlier_handling != 'Log Transform':
+            method = st.selectbox("Select outlier detection method:", ['Standard Deviation', 'Percentile'])
+            outlier_stdev = None
+            percentile = None
+            if method == 'Standard Deviation':
+                outlier_stdev = st.selectbox("How many standard deviations define an outlier?", [2, 3, 4, 5])
+            elif method == 'Percentile':
+                percentile = st.selectbox("Select percentile for Winsorization:", [90, 95, 99])
+        
+        outliers_mask, model = detect_outliers(df, kpi, outlier_stdev if method == 'Standard Deviation' else 3)  # Default 3 STD for detection purposes
+        st.write(f"Number of detected outliers: {outliers_mask.sum()}")
 
         if st.button("Calculate my test results"):
             if outlier_handling == 'Winsorizing + IQR':
-                df, lower_bound, upper_bound = winsorize_iqr_filter(df, kpi, outlier_stdev)
-                st.write(f"Winsorizing + IQR applied on {outliers_mask.sum()} outliers: capped values between {lower_bound:.2f} and {upper_bound:.2f}.")
+                df, lower_bound, upper_bound, percentile_lower, percentile_upper = winsorize_iqr_filter(df, kpi, outlier_stdev, percentile)
+                st.write(f"Winsorizing + IQR applied: Capped values between {percentile_lower:.2f} and {percentile_upper:.2f} ({percentile}th percentile-based).")
             elif outlier_handling == 'Log Transform':
                 df = log_transform_data(df, kpi)
-                st.write(f"{outliers_mask.sum()} Outliers found. Log transformation applied.")
+                st.write("Log transformation applied.")
             else:
                 df = df[~outliers_mask]
                 st.write(f"Outliers removed: {outliers_mask.sum()} rows affected.")
