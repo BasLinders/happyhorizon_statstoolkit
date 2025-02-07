@@ -186,7 +186,7 @@ def run():
                 gaussian_noise_min_scale=0.0005,  # Noise scale for min CR
                 gaussian_noise_max_scale=0.001,  # Noise scale for max CR
                 sigmoid_threshold=19,  # Start diminishing returns after 19 experiments
-                sigmoid_k=0.02  # Sigmoid slope
+                sigmoid_k=0.03  # Sigmoid slope
             ):
                 def sigmoid(x, x0, k):
                     return 1 - (1 / (1 + np.exp(-k * (x - x0))))
