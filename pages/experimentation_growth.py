@@ -275,8 +275,8 @@ def run():
 
                             if i >= diminishing_return_start:
                                 # Use power law or start from 1.
-                                diminishing_factor = (i - diminishing_return_start + 1)**(-diminishing_return_rate)
-                               # diminishing_factor = 1 / (1 + diminishing_return_rate * (i - diminishing_return_start))
+                                #diminishing_factor = (i - diminishing_return_start + 1)**(-diminishing_return_rate)
+                                diminishing_factor = 1 / (1 + diminishing_return_rate * (i - diminishing_return_start))
 
                             if visitors_base >= large_dataset_threshold:
                                 random_cr_min = np.clip(
