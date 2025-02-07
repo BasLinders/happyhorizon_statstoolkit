@@ -256,7 +256,7 @@ def run():
                 large_dataset_threshold=500_000,
                 gaussian_noise_min_scale=0.0005,
                 gaussian_noise_max_scale=0.001,
-                diminishing_return_rate=0.02, # speed of diminishing returns
+                diminishing_return_rate=0.05, # speed of diminishing returns
                 diminishing_return_start=19
             ):
 
