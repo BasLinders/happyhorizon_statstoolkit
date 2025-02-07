@@ -256,8 +256,8 @@ def run():
                 large_dataset_threshold=500_000,
                 gaussian_noise_min_scale=0.0005,
                 gaussian_noise_max_scale=0.001,
-                diminishing_return_rate=0.05, # speed of diminishing returns
-                diminishing_return_start=19
+                diminishing_return_rate=0.02, # speed of diminishing returns
+                diminishing_return_start=20
             ):
 
                 results = []
@@ -274,7 +274,9 @@ def run():
                             diminishing_factor = 1.0  # Default: No diminishing returns
 
                             if i >= diminishing_return_start:
-                                diminishing_factor = 1 / (1 + diminishing_return_rate * (i - diminishing_return_start)) # i - diminishing_return_start, so that it starts from 0
+                                # Use power law or start from 1.
+                                diminishing_factor = (i - diminishing_return_start + 1)**(-diminishing_return_rate)
+                               # diminishing_factor = 1 / (1 + diminishing_return_rate * (i - diminishing_return_start))
 
                             if visitors_base >= large_dataset_threshold:
                                 random_cr_min = np.clip(
