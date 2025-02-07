@@ -261,53 +261,59 @@ def run():
             ):
 
                 results = []
+                n_experiments_total = len(n_experiments_range)  # Total number of experiment sets
+                progress_bar = st.progress(0)  # Initialize progress bar
 
-                for n_experiments in n_experiments_range:
+                for n_experiments_index, n_experiments in enumerate(n_experiments_range):
                     simulated_uplifts_min = []
                     simulated_uplifts_max = []
 
                     for _ in range(iterations):
                         cumulative_uplift_min = 0
                         cumulative_uplift_max = 0
+                        for iteration in range(iterations):
+                            for i in range(n_experiments):
+                                diminishing_factor = 1.0  # Default: No diminishing returns
 
-                        for i in range(n_experiments):
-                            diminishing_factor = 1.0  # Default: No diminishing returns
+                                if i >= diminishing_return_start:
+                                    # Use power law or start from 1.
+                                    #diminishing_factor = (i - diminishing_return_start + 1)**(-diminishing_return_rate)
+                                    diminishing_factor = 1 / (1 + diminishing_return_rate * (i - diminishing_return_start))
 
-                            if i >= diminishing_return_start:
-                                # Use power law or start from 1.
-                                #diminishing_factor = (i - diminishing_return_start + 1)**(-diminishing_return_rate)
-                                diminishing_factor = 1 / (1 + diminishing_return_rate * (i - diminishing_return_start))
+                                if visitors_base >= large_dataset_threshold:
+                                    random_cr_min = np.clip(
+                                        np.random.normal(loc=conv_base / visitors_base, scale=gaussian_noise_min_scale), 0, 1
+                                    )
+                                    random_cr_max = np.clip(
+                                        np.random.normal(loc=conv_base / visitors_base, scale=gaussian_noise_max_scale), 0, 1
+                                    )
+                                    uplift_min = diminishing_factor * (
+                                        (1 + (random_cr_min * (1 - haircut))) ** (winrate * (adjusted_mde_min * 50)) - 1
+                                    )
+                                    uplift_max = diminishing_factor * (
+                                        (1 + (random_cr_max * (1 - haircut))) ** (winrate * (adjusted_mde_max * 50)) - 1
+                                    )
 
-                            if visitors_base >= large_dataset_threshold:
-                                random_cr_min = np.clip(
-                                    np.random.normal(loc=conv_base / visitors_base, scale=gaussian_noise_min_scale), 0, 1
-                                )
-                                random_cr_max = np.clip(
-                                    np.random.normal(loc=conv_base / visitors_base, scale=gaussian_noise_max_scale), 0, 1
-                                )
-                                uplift_min = diminishing_factor * (
-                                    (1 + (random_cr_min * (1 - haircut))) ** (winrate * (adjusted_mde_min * 50)) - 1
-                                )
-                                uplift_max = diminishing_factor * (
-                                    (1 + (random_cr_max * (1 - haircut))) ** (winrate * (adjusted_mde_max * 50)) - 1
-                                )
+                                else:
+                                    random_cr_min = np.random.beta(conv_base, max(1, visitors_base - conv_base))
+                                    random_cr_max = np.random.beta(conv_base, max(1, visitors_base - conv_base))
 
-                            else:
-                                random_cr_min = np.random.beta(conv_base, max(1, visitors_base - conv_base))
-                                random_cr_max = np.random.beta(conv_base, max(1, visitors_base - conv_base))
+                                    uplift_min = diminishing_factor * (
+                                        (1 + (random_cr_min * (1 - haircut))) ** (winrate * (adjusted_mde_min * small_dataset_mde_scale)) - 1
+                                    )
+                                    uplift_max = diminishing_factor * (
+                                        (1 + (random_cr_max * (1 - haircut))) ** (winrate * (adjusted_mde_max * small_dataset_mde_scale)) - 1
+                                    )
 
-                                uplift_min = diminishing_factor * (
-                                    (1 + (random_cr_min * (1 - haircut))) ** (winrate * (adjusted_mde_min * small_dataset_mde_scale)) - 1
-                                )
-                                uplift_max = diminishing_factor * (
-                                    (1 + (random_cr_max * (1 - haircut))) ** (winrate * (adjusted_mde_max * small_dataset_mde_scale)) - 1
-                                )
-
-                            cumulative_uplift_min += uplift_min
-                            cumulative_uplift_max += uplift_max
+                                cumulative_uplift_min += uplift_min
+                                cumulative_uplift_max += uplift_max
 
                         simulated_uplifts_min.append(cumulative_uplift_min)
                         simulated_uplifts_max.append(cumulative_uplift_max)
+
+                        # Update Progress Bar
+                        progress_percent = ((n_experiments_index * iterations + iteration + 1) / (n_experiments_total * iterations))
+                        progress_bar.progress(progress_percent)
 
                     results.append({
                         "Experiments": n_experiments,
