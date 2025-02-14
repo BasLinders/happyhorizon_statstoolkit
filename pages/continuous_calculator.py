@@ -17,30 +17,37 @@ st.set_page_config(
 
 # Preprocess data
 def preprocess_data(df):
+    errors = []
+    
+    # Normalize column names: strip spaces & convert to lowercase
+    df.columns = df.columns.str.strip().str.lower()
+
+    # Rename columns based on keywords
     for col in df.columns:
-        if 'purchase' in col:
-            df.rename(columns={col: 'purchase_revenue'}, inplace=True)
-        elif 'total' in col:
-            df.rename(columns={col: 'total_item_quantity'}, inplace=True)
-        elif 'variant' in col:
+        if 'variant' in col:
             df.rename(columns={col: 'experience_variant_label'}, inplace=True)
 
-    errors = []
+    # Validate that experience_variant_label exists
+    if 'experience_variant_label' not in df.columns:
+        errors.append("Column 'experience_variant_label' is missing after preprocessing. Please check your CSV file.")
+        return df, errors  # Prevent further processing
+
+    # Check for missing values
     if df['experience_variant_label'].isnull().any():
         errors.append("'experience_variant_label' contains null values.")
-    if df['total_item_quantity'].isnull().any():
+    if 'total_item_quantity' in df and df['total_item_quantity'].isnull().any():
         errors.append("'total_item_quantity' contains null values.")
-    if df['purchase_revenue'].isnull().any():
+    if 'purchase_revenue' in df and df['purchase_revenue'].isnull().any():
         errors.append("'purchase_revenue' contains null values.")
-    if (df['total_item_quantity'] < 0).any():
-        errors.append("'total_item_quantity' contains negative values.")
-    if (df['purchase_revenue'] < 0).any():
-        errors.append("'purchase_revenue' contains negative values.")
 
-    unique_labels = df['experience_variant_label'].unique()
-    df['experience_variant_label'] = pd.Categorical(df['experience_variant_label'], categories=unique_labels, ordered=True)
-    df['total_item_quantity'] = pd.to_numeric(df['total_item_quantity'], errors='coerce')
-    df['purchase_revenue'] = pd.to_numeric(df['purchase_revenue'], errors='coerce')
+    # Ensure categorical variable
+    df['experience_variant_label'] = pd.Categorical(df['experience_variant_label'])
+
+    # Convert to numeric
+    if 'total_item_quantity' in df:
+        df['total_item_quantity'] = pd.to_numeric(df['total_item_quantity'], errors='coerce')
+    if 'purchase_revenue' in df:
+        df['purchase_revenue'] = pd.to_numeric(df['purchase_revenue'], errors='coerce')
 
     return df, errors
 
