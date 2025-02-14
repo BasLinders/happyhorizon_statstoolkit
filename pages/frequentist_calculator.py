@@ -246,10 +246,10 @@ def run():
                 st.write("### Šidák Correction applied")
                 st.write("The Šidák correction to solve for the Multiple Comparison Problem was applied due to 3 or more variants in the test.")
 
-            st.write("### Results summary")
+            st.write("## Results summary")
+            st.write(f"### Test results for {alphabet[i]} vs {alphabet[0]}")
             def perform_superiority_test(i, alphabet, p_values, conversion_rates):
                 if significant_results[i - 1]:
-                    st.write(f"## Superiority test results for {alphabet[i]} vs {alphabet[0]}")
                     st.markdown(f" * **Statistically significant result** for {alphabet[i]} with p-value: {p_values[i-1]:.4f} and a power of {observed_powers[i-1] * 100:.2f}%!")
                     st.markdown(f" * **Conversion rate change** for {alphabet[i]}: {((conversion_rates[i] - conversion_rates[0]) / conversion_rates[0]) * 100:.2f}%")
                     if conversion_rates[i] > conversion_rates[0]:
@@ -269,7 +269,7 @@ def run():
                     st.markdown(f" * **Confidence interval for difference in conversion rates:** ({lower_bound:.4f}, {upper_bound:.4f})")
                     st.markdown(f" * **Observed power:** {observed_powers[i-1] * 100:.2f}%")
                     st.markdown(f" * **p-value:** {p_values[i-1]:.4f}")
-                    st.markdown(f" * **Conversion rate change:** {((conversion_rates[i] - conversion_rates[0]) / conversion_rates[0]) * 100:.2f}%")
+                    st.markdown(f" * **Conversion rate change for {alphabet[i]}:** {((conversion_rates[i] - conversion_rates[0]) / conversion_rates[0]) * 100:.2f}%")
                     if tail == 'greater':
                         st.markdown(f" * **P-value (non-inferiority test):** {p_value_noninf:.4f}")
                         if p_value_noninf <= alpha_noninf:
