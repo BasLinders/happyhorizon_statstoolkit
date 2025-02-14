@@ -249,9 +249,9 @@ def run():
             st.write("### Results summary")
             def perform_superiority_test(i, alphabet, p_values, conversion_rates):
                 if significant_results[i - 1]:
-                    st.write(f"Superiority test results for {alphabet[i]} vs {alphabet[0]}")
-                    st.markdown(f" * Statistically significant result for {alphabet[i]} with p-value: {p_values[i-1]:.4f} and a power of {observed_powers[i-1] * 100:.2f}%!")
-                    st.markdown(f" * Conversion rate change for {alphabet[i]}: {((conversion_rates[i] - conversion_rates[0]) / conversion_rates[0]) * 100:.2f}%")
+                    st.write(f"## Superiority test results for {alphabet[i]} vs {alphabet[0]}")
+                    st.markdown(f" * **Statistically significant result** for {alphabet[i]} with p-value: {p_values[i-1]:.4f} and a power of {observed_powers[i-1] * 100:.2f}%!")
+                    st.markdown(f" * **Conversion rate change** for {alphabet[i]}: {((conversion_rates[i] - conversion_rates[0]) / conversion_rates[0]) * 100:.2f}%")
                     if conversion_rates[i] > conversion_rates[0]:
                         st.write(f"Variant {alphabet[i]} is a <span style='color: #009900; font-weight: 600;'>winner</span>, congratulations!", unsafe_allow_html=True)
                     else:
@@ -266,18 +266,22 @@ def run():
                 lower_bound, upper_bound = confidence_interval
 
                 if p_values[i - 1] > sidak_alpha:
-                    st.write(f"Non-inferiority test results for {alphabet[i]} vs {alphabet[0]}:")
-                    st.markdown(f" * Confidence interval for difference in conversion rates: ({lower_bound:.4f}, {upper_bound:.4f})")
-                    st.markdown(f" * P-value (non-inferiority test): {p_value_noninf:.4f}")
-                    if p_value_noninf <= alpha_noninf:
-                        st.write(f"The test result for {alphabet[i]} vs {alphabet[0]} is not statistically significant in the Z-test with p-value {p_values[i-1]:.4f}, a power of {observed_powers[i-1] * 100:.2f}% \
-                                 and a conversion rate change of {((conversion_rates[i] - conversion_rates[0]) / conversion_rates[0]) * 100:.2f}%, \
-                                 but this variant likely generates at least the same number of conversions as the control variant. \
-                                 You may need to collect more data, or there is no real effect to be found.", unsafe_allow_html=True)
+                    st.markdown(f" * **Confidence interval for difference in conversion rates:** ({lower_bound:.4f}, {upper_bound:.4f})")
+                    st.markdown(f" * **Observed power:** {observed_powers[i-1] * 100:.2f}%")
+                    st.markdown(f" * **Conversion rate change:** {((conversion_rates[i] - conversion_rates[0]) / conversion_rates[0]) * 100:.2f}%")
+                    if tail == 'greater':
+                        st.markdown(f" * **P-value (non-inferiority test):** {p_value_noninf:.4f}")
+                        if p_value_noninf <= alpha_noninf:
+                            st.success(f"Although the Z-test is not statistically significant (p = {p_values[i-1]:.4f}), "
+                                    f"the non-inferiority test suggests that {alphabet[i]} is **not significantly worse** than {alphabet[0]} "
+                                    f"within the predefined margin. This suggests that the variant may perform similarly to the control.")
+                        else:
+                            st.warning(f"The Z-test is not statistically significant (p = {p_values[i-1]:.4f}), and the non-inferiority test "
+                                    f"does not provide sufficient evidence to conclude that {alphabet[i]} performs at least as well as {alphabet[0]}. "
+                                    f"More data may be needed.")
                     else:
-                        st.write(f"The test result for {alphabet[i]} vs {alphabet[0]} is not statistically significant in the Z-test with p-value {p_values[i-1]:.4f}, a power of {observed_powers[i-1] * 100:.2f}% \
-                                 and a conversion rate change of {((conversion_rates[i] - conversion_rates[0]) / conversion_rates[0]) * 100:.2f}%, \
-                                 but this variant likely won't generate at least the same number of conversions as the control variant.", unsafe_allow_html=True)
+                        st.info(f"The Z-test is not statistically significant (p = {p_values[i-1]:.4f}). There is no strong evidence of a difference, "
+                                f"but the effect size remains uncertain. You may need to collect more data.")
 
             # Main logic
             for i in range(1, num_variants):
