@@ -253,9 +253,9 @@ def run():
                     st.markdown(f" * **Statistically significant result** for {alphabet[i]} with p-value: {p_values[i-1]:.4f} and a power of {observed_powers[i-1] * 100:.2f}%!")
                     st.markdown(f" * **Conversion rate change** for {alphabet[i]}: {((conversion_rates[i] - conversion_rates[0]) / conversion_rates[0]) * 100:.2f}%")
                     if conversion_rates[i] > conversion_rates[0]:
-                        st.write(f"Variant {alphabet[i]} is a <span style='color: #009900; font-weight: 600;'>winner</span>, congratulations!", unsafe_allow_html=True)
+                        st.success(f"Variant **{alphabet[i]}** is a **winner**, congratulations!")
                     else:
-                        st.write(f"<span style='color: #FF6600; font-weight: 600;'>Loss prevented</span> with variant {alphabet[i]}! Congratulations with this valuable insight.", unsafe_allow_html=True)
+                        st.warning(f"**Loss prevented** with variant **{alphabet[i]}**! Congratulations with this valuable insight.")
 
             def perform_non_inferiority_test(i, alphabet, p_values, conversion_rates, visitor_counts, alpha_noninf, non_inferiority_margin):
                 pooled_se = np.sqrt((conversion_rates[0] * (1 - conversion_rates[0]) / visitor_counts[0]) + (conversion_rates[i] * (1 - conversion_rates[i]) / visitor_counts[i]))
@@ -268,6 +268,7 @@ def run():
                 if p_values[i - 1] > sidak_alpha:
                     st.markdown(f" * **Confidence interval for difference in conversion rates:** ({lower_bound:.4f}, {upper_bound:.4f})")
                     st.markdown(f" * **Observed power:** {observed_powers[i-1] * 100:.2f}%")
+                    st.markdown(f" * **p-value:** {p_values[i-1]:.4f}")
                     st.markdown(f" * **Conversion rate change:** {((conversion_rates[i] - conversion_rates[0]) / conversion_rates[0]) * 100:.2f}%")
                     if tail == 'greater':
                         st.markdown(f" * **P-value (non-inferiority test):** {p_value_noninf:.4f}")
