@@ -32,7 +32,7 @@ def run():
     with col1:
         st.write("### Visitors")
     with col2:
-        st.write("### Expected Proportion (%)")
+        st.write("### Expected Percentage")
 
     # Alphabet for variant labels (up to 26 variants)
     alphabet = string.ascii_uppercase
@@ -73,7 +73,7 @@ def run():
             if p_value < 0.01:
                 srm_result = (
                     f"possible sample ratio mismatch! The distribution of data between your variants significantly deviates from the "
-                    f"expected proportions of {expected_distribution}. Check the distribution"
+                    f"expected proportions of {expected_distribution}. Check the distribution."
                 )
             else:
                 srm_result = "valid distribution. The amount of visitors per variant does not significantly deviate from the expected split"
