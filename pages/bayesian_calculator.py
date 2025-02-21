@@ -155,8 +155,8 @@ def perform_risk_assessment(visitors_a, conversions_a, visitors_b, conversions_b
     credible_interval_b = np.percentile(daily_conversions_b_samples, [2.5, 97.5])
 
     # Use the lower bounds of the credible intervals for conservative scenario
-    lower_bound_a = credible_interval_a
-    lower_bound_b = credible_interval_b
+    lower_bound_a = credible_interval_a[0]
+    lower_bound_b = credible_interval_b[0]
 
     # Conservative daily uplift
     if lower_bound_b > lower_bound_a:
