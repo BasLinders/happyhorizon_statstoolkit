@@ -292,7 +292,7 @@ def run():
     if st.button("Calculate my test results"):
 
         if valid_inputs:
-            conversion_rates, se_list, p_values, significant_results, observed_powers, srm_p_value = calculate_statistics(num_variants, visitor_counts, variant_conversions, risk, tail)
+            conversion_rates, se_list, p_values, significant_results, observed_powers, srm_p_value, sidak_alpha = calculate_statistics(num_variants, visitor_counts, variant_conversions, risk, tail)
             visualize_results(conversion_rates, se_list, num_variants)
             summarize_results(conversion_rates, p_values, significant_results, observed_powers, num_variants, visitor_counts, srm_p_value)
         else:
