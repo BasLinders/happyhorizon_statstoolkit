@@ -277,7 +277,7 @@ def summarize_results(conversion_rates, p_values, significant_results, observed_
 
         alpha_noninf = 0.05
         non_inferiority_margin = 0.01
-        perform_non_inferiority_test(i, alphabet, p_values, conversion_rates, visitor_counts, alpha_noninf, non_inferiority_margin)
+        perform_non_inferiority_test(i, alphabet, p_values, conversion_rates, visitor_counts, alpha_noninf, non_inferiority_margin, tail)
 
 def run():
     initialize_session_state()
