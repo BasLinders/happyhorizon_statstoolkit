@@ -76,7 +76,7 @@ def plot_histogram(diffs_percentage, observed_uplift):
         if cumsum[i] < num_a:
             patches[i].set_facecolor('lightcoral')  # Color for uplift related to Variant A
         else:
-            patches[i].set_facecolor('lightgreen')  # Color for uplift related to Variant B
+            patches[i]. set_facecolor('lightgreen')  # Color for uplift related to Variant B
 
     # Setting dynamic x-ticks based on the bin range
     xticks = np.arange(range_min, range_max, bin_width)
@@ -302,16 +302,15 @@ def run():
     aov_a = st.session_state.aov_a
     aov_b = st.session_state.aov_b
     runtime_days = st.session_state.runtime_days
-    # projection_period = st.number_input("Over how many days should we project the contribution in revenue?", min_value=0, step=1)
+
     projection_period = 183
     conv_rate_a = conversions_a / visitors_a if visitors_a != 0 else 0
     conv_rate_b = conversions_b / visitors_b if visitors_b != 0 else 0
     uplift = (conv_rate_b - conv_rate_a) / conv_rate_a if conv_rate_a != 0 else 0
 
+    # Check if visitor and conversion inputs are valid
     valid_inputs = all(v > 0 for v in all_variant_visitors) and all(
         0 <= c <= v for c, v in zip(all_variant_conversions, all_variant_visitors))
-
-    # Computations below use session stored values
 
     st.write("")
     if st.button("Calculate my test results"):
@@ -323,7 +322,6 @@ def run():
             st.write(f"Measured change in conversion rate: {uplift * 100:.2f}%")
             st.write(f"Minimum chance to win: {probability_winner}%")
             st.write(f"Test runtime: {runtime_days} days")
-            # st.write(f"Test runtime: {runtime_days} days, Projection period: {projection_period} days")
 
             probability_threshold = probability_winner / 100
 
@@ -385,7 +383,7 @@ def run():
         else:
             st.write("")
             st.write(
-                "<span style='color: #ff6600;'>*Please enter valid inputs for all fields (business case is optional)</span>",
+                "<span style='color: #ff6600;'>*Please enter valid inputs for visitors and conversions (business case data is optional).</span>",
                 unsafe_allow_html=True)
 
 if __name__ == "__main__":
