@@ -151,8 +151,8 @@ def perform_risk_assessment(visitors_a, conversions_a, visitors_b, conversions_b
     expected_daily_conversions_b = np.mean(daily_conversions_b_samples)
 
     # Calculate credible intervals
-    credible_interval_a = np.percentile(daily_conversions_a_samples,)
-    credible_interval_b = np.percentile(daily_conversions_b_samples,)
+    credible_interval_a = np.percentile(daily_conversions_a_samples, [2.5, 97.5])
+    credible_interval_b = np.percentile(daily_conversions_b_samples, [2.5, 97.5])
 
     # Use the lower bounds of the credible intervals for conservative scenario
     lower_bound_a = credible_interval_a
@@ -296,7 +296,7 @@ def run():
 
     # Get projection period with validation
     st.write("")
-    st.write("###Business case data")
+    st.write("### Business case data")
     st.session_state.aov_a = st.number_input("What is the average order value of A? ", min_value=0.0, step=0.01,
                                            value=st.session_state.aov_a)
     st.session_state.aov_b = st.number_input("What is the average order value of B? ", min_value=0.0, step=0.01,
