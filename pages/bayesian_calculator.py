@@ -329,9 +329,6 @@ def run():
                 validate_inputs(visitors_a, conversions_a)
                 validate_inputs(visitors_b, conversions_b)
 
-                if visitors_a == 0 or visitors_b == 0:
-                    raise ValueError("Number of visitors cannot be zero")
-
                 conv_rate_a = conversions_a / visitors_a if visitors_a != 0 else 0
                 conv_rate_b = conversions_b / visitors_b if visitors_b != 0 else 0
                 uplift = (conv_rate_b - conv_rate_a) / conv_rate_a if conv_rate_a != 0 else 0
