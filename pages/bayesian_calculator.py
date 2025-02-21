@@ -238,7 +238,7 @@ def display_results(probability_b_better, observed_uplift, probability_winner, a
             st.dataframe(df)
     else:
         st.write("")
-        st.warn("Business case data is missing or incomplete. Skipping monetary calculations.")
+        st.warning("Business case data is missing or incomplete. Skipping monetary calculations.")
 
 def run():
     # Initialize session state for inputs
