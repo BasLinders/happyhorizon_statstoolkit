@@ -180,7 +180,7 @@ def run():
                 winrate,
                 adjusted_mde_min,
                 adjusted_mde_max,
-                iterations=5000,
+                iterations = max(5000, min(10000, 50000 // n_experiments_max)),
                 small_dataset_mde_scale=10,  # Amplified scaling factor for small datasets
                 large_dataset_threshold=500_000,  # Threshold for large datasets
                 gaussian_noise_min_scale=0.0005,  # Noise scale for min CR
