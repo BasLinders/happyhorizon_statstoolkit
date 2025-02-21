@@ -282,7 +282,7 @@ def summarize_results(conversion_rates, p_values, significant_results, observed_
 def run():
     initialize_session_state()
     display_intro()
-    num_variants, visitor_counts, variant_conversions = get_user_inputs()
+    num_variants, visitor_counts, variant_conversions, risk, tail = get_user_inputs()
     risk = st.session_state.risk
     tail = st.session_state.tail
 
