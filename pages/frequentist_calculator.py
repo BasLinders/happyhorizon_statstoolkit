@@ -190,7 +190,7 @@ def calculate_statistics(num_variants, visitor_counts, variant_conversions, risk
 
     return conversion_rates, se_list, p_values, significant_results, observed_powers, srm_p_value, sidak_alpha
 
-def visualize_results(conversion_rates, se_list, num_variants):
+def visualize_results(conversion_rates, se_list, num_variants, significant_results, sidak_alpha):
     st.write("")
     st.write("### Probability Density Graph:")
 
@@ -212,6 +212,15 @@ def visualize_results(conversion_rates, se_list, num_variants):
         plt.plot(x_range * 100, pdf, label=f'Variant {string.ascii_uppercase[i]}', color=colors[i])
         plt.axvline(conversion_rates[i] * 100, color=colors[i], linestyle='--')
         plt.text(conversion_rates[i] * 100, plt.ylim()[1] * 0.50, f'Mean {string.ascii_uppercase[i]}', color=colors[i], ha='right', rotation=90, va='bottom')
+        
+        # Add shading for significant results
+        if i > 0 and significant_results[i - 1]:
+            if conversion_rates[i] > conversion_rates[0]:
+                upper_critical_value = norm.ppf(1 - sidak_alpha, loc=conversion_rates[i], scale=se_list[i])
+                plt.fill_between(x_range * 100, pdf, where=(x_range * 100 >= upper_critical_value * 100), color='lightgreen', alpha=0.3)
+            elif conversion_rates[i] < conversion_rates[0]:
+                lower_critical_value = norm.ppf(sidak_alpha, loc=conversion_rates[i], scale=se_list[i])
+                plt.fill_between(x_range * 100, pdf, where=(x_range * 100 <= lower_critical_value * 100), color='lightcoral', alpha=0.3)
 
     plt.xlabel('Conversion rate (%)')
     plt.ylabel('Probability density')
@@ -293,7 +302,7 @@ def run():
 
         if valid_inputs:
             conversion_rates, se_list, p_values, significant_results, observed_powers, srm_p_value, sidak_alpha = calculate_statistics(num_variants, visitor_counts, variant_conversions, risk, tail)
-            visualize_results(conversion_rates, se_list, num_variants)
+            visualize_results(conversion_rates, se_list, num_variants, significant_results, sidak_alpha)
             summarize_results(conversion_rates, p_values, significant_results, observed_powers, num_variants, visitor_counts, srm_p_value, sidak_alpha, tail)
         else:
             st.write("")
