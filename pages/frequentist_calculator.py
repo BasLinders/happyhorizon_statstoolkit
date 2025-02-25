@@ -77,9 +77,13 @@ def get_user_inputs():
     return num_variants, visitor_counts, variant_conversions, st.session_state.risk, st.session_state.tail
 
 def validate_inputs(visitor_counts, variant_conversions, num_variants):
-    return all(v > 0 for v in visitor_counts[:num_variants]) and all(
-        0 <= c <= v for c, v in zip(variant_conversions[:num_variants], visitor_counts[:num_variants])
-    )
+    if any(v <= 0 for v in visitor_counts[:num_variants]):
+        st.warning("Each variant must have at least one visitor.")
+        return False
+    if any(c > v for c, v in zip(variant_conversions[:num_variants], visitor_counts[:num_variants])):
+        st.warning("Conversions cannot exceed visitors.")
+        return False
+    return True
 
 def calculate_statistics(num_variants, visitor_counts, variant_conversions, risk, tail):
     alpha = 1 - (risk / 100)
