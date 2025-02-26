@@ -299,10 +299,9 @@ def run():
     risk = st.session_state.risk
     tail = st.session_state.tail
 
-    valid_inputs = validate_inputs(visitor_counts, variant_conversions, num_variants)
-
     st.write("")
     if st.button("Calculate my test results"):
+        valid_inputs = validate_inputs(visitor_counts, variant_conversions, num_variants)
 
         if valid_inputs:
             conversion_rates, se_list, p_values, significant_results, observed_powers, srm_p_value, sidak_alpha = calculate_statistics(num_variants, visitor_counts, variant_conversions, risk, tail)
