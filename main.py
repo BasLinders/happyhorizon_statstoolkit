@@ -5,9 +5,33 @@ import os
 st.set_page_config(
     page_title="Happy Horizon Experimentation Toolkit",
     page_icon="📈",
+    initial_sidebar_state="collapsed"
 )
 
-# Function to load a page dynamically
+# Define pages
+pages = {
+    "Main": None,  # Main page (default)
+    "bayesian_calculator": "Bayesian Calculator",
+    "continuous_calculator": "Continuous Calculator",
+    "experimentation_growth": "Experimentation Growth",
+    "frequentist_calculator": "Frequentist Calculator",
+    "interaction_calculator": "Interaction Calculator",
+    "sample_size_calculator": "Sample Size Calculator",
+    "srm_calculator": "SRM Calculator",
+}
+
+# Create Sidebar Navigation
+selected_page = None
+for page_key, page_name in pages.items():
+    if page_name:  # Skip "Main"
+        if st.sidebar.button(page_name):
+            st.query_params.update(page=page_key)
+            selected_page = page_key
+
+# Get the current query parameter
+query_params = st.query_params
+page = query_params.get("page", [None])[0]  # Extract the first value safely
+
 def load_page(page_name):
     page_path = f"hidden_pages/{page_name}.py"
     if os.path.exists(page_path):
@@ -16,13 +40,14 @@ def load_page(page_name):
         spec.loader.exec_module(module)
     else:
         st.error("Page not found.")
+        
+# If page is selected, load it
+if page and page in pages:
+    selected_page = page
 
-# Sidebar Navigation
-st.sidebar.title("Navigation")
-
-# Get query parameters
-query_params = st.query_params
-page = query_params.get("page", [None])[0]  # Extract the first value if exists
+# Display the selected page
+if selected_page:
+    st.write(f"### {pages[selected_page]} Page Loaded")
 
 if page:
     load_page(page)  # Load hidden page dynamically
