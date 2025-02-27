@@ -43,7 +43,6 @@ else:
 if st.session_state.current_page:
     st.title(hidden_pages[st.session_state.current_page])  # Show page title
     load_hidden_page(st.session_state.current_page)
-    st.stop()
 else:
     # Main Page UI
     logo_url = "https://cdn.homerun.co/49305/hh-woordmerk-rgb-blue-met-discriptor1666785216logo.png"
