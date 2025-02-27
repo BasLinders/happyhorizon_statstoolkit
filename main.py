@@ -5,28 +5,8 @@ import os
 st.set_page_config(
     page_title="Happy Horizon Experimentation Toolkit",
     page_icon="📈",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="expanded"
 )
-
-# Define pages
-pages = {
-    "Main": None,  # Main page (default)
-    "bayesian_calculator": "Bayesian Calculator",
-    "continuous_calculator": "Continuous Calculator",
-    "experimentation_growth": "Experimentation Growth",
-    "frequentist_calculator": "Frequentist Calculator",
-    "interaction_calculator": "Interaction Calculator",
-    "sample_size_calculator": "Sample Size Calculator",
-    "srm_calculator": "SRM Calculator",
-}
-
-# Create Sidebar Navigation
-selected_page = None
-for page_key, page_name in pages.items():
-    if page_name:  # Skip "Main"
-        if st.sidebar.button(page_name):
-            st.query_params.update(page=page_key)
-            selected_page = page_key
 
 # Get the current query parameter
 query_params = st.query_params
@@ -40,7 +20,7 @@ def load_page(page_name):
         spec.loader.exec_module(module)
     else:
         st.error("Page not found.")
-        
+
 # If page is selected, load it
 if page and page in pages:
     selected_page = page
