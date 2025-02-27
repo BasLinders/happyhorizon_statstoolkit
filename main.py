@@ -26,20 +26,22 @@ def load_hidden_page(page_name):
     """Dynamically loads a hidden page if it exists in hidden_pages/."""
     page_path = f"hidden_pages/{page_name}.py"
     if os.path.exists(page_path):
-        spec = importlib.util.spec_from_file_location("hidden_page", page_path)
+        spec = importlib.util.spec_from_file_location(page_name, page_path)
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
     else:
         st.error("Page not found.")
 
-# Ensure the selected page persists
-if page in hidden_pages and st.session_state.current_page != page:
+# If a valid page is found in the query parameters, update session state
+if page in hidden_pages:
     st.session_state.current_page = page
-    st.rerun()  # Ensure Streamlit updates the UI with the new page
+else:
+    # If no valid page is in the URL, reset to main page
+    st.session_state.current_page = None
 
-# Load the requested hidden page
-if st.session_state.current_page in hidden_pages:
-    st.title(hidden_pages[st.session_state.current_page])
+# Load the selected hidden page
+if st.session_state.current_page:
+    st.title(hidden_pages[st.session_state.current_page])  # Show page title
     load_hidden_page(st.session_state.current_page)
     st.stop()
 else:
