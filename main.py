@@ -15,32 +15,36 @@ hidden_pages = {
 
 # Ensure session state exists
 if "current_page" not in st.session_state:
-    st.session_state.current_page = None  # Default to None (main page)
+    st.session_state.current_page = None
+if "page_loaded" not in st.session_state:
+    st.session_state.page_loaded = False
 
 # Get the query parameter from the URL
 query_params = st.query_params
-page = query_params.get("page", [None])[0]  # Extract the first value safely
+page = query_params.get("page", [None])[0]
 
-# Function to dynamically load hidden pages
-def load_hidden_page(page_name):
-    """Dynamically loads a hidden page if it exists in hidden_pages/."""
+# Function to execute hidden page code
+def execute_hidden_page(page_name):
     page_path = f"hidden_pages/{page_name}.py"
     if os.path.exists(page_path):
-        spec = importlib.util.spec_from_file_location(page_name, page_path)
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
+        with open(page_path, "r") as f:
+            code = f.read()
+            exec(code)
     else:
         st.error("Page not found.")
 
-# Update session state only if it's not already set
-if st.session_state.current_page is None:
-    if page in hidden_pages:
-        st.session_state.current_page = page
+# Update session state and query parameters
+if page in hidden_pages and not st.session_state.page_loaded:
+    st.session_state.current_page = page
+    st.experimental_set_query_params(page=page)
+    st.session_state.page_loaded = True
+elif st.session_state.current_page is None:
+    st.experimental_set_query_params() #clear query parameters if main page.
 
 # Conditional Rendering
 if st.session_state.current_page:
-    st.title(hidden_pages[st.session_state.current_page])  # Show page title
-    load_hidden_page(st.session_state.current_page)
+    st.title(hidden_pages[st.session_state.current_page])
+    execute_hidden_page(st.session_state.current_page)
 else:
     # Main Page UI
     logo_url = "https://cdn.homerun.co/49305/hh-woordmerk-rgb-blue-met-discriptor1666785216logo.png"
