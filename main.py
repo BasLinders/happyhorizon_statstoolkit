@@ -18,7 +18,7 @@ def load_page(page_name):
         st.error("Page not found.")
 
 # Get query parameters
-query_params = st.query_params()
+query_params = st.query_params
 page = query_params.get("page", [None])[0]  # Extract the first value if exists
 
 # Sidebar Navigation
