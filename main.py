@@ -17,12 +17,12 @@ def load_page(page_name):
     else:
         st.error("Page not found.")
 
+# Sidebar Navigation
+st.sidebar.title("Navigation")
+
 # Get query parameters
 query_params = st.query_params
 page = query_params.get("page", [None])[0]  # Extract the first value if exists
-
-# Sidebar Navigation
-st.sidebar.title("Navigation")
 
 if page:
     load_page(page)  # Load hidden page dynamically
