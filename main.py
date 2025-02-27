@@ -10,8 +10,7 @@ st.set_page_config(
 
 # Define hidden pages manually (but do not include them in Streamlit's auto-sidebar)
 hidden_pages = {
-    "secret_analysis": "Secret Analysis",
-    "internal_testing": "Internal Testing"
+    "mab_test": "Multi-Arm Bandit Bayesian analysis"
 }
 
 # Get the current query parameter
