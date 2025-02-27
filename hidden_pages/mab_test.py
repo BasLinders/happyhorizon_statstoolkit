@@ -257,8 +257,11 @@ def run():
                     conv_rate_b = variant_conversions[1] / variant_visitors[1]
                     observed_uplift = ((conv_rate_b - conv_rate_a) / conv_rate_a) * 100
                     plot_histogram(diffs_percentage, observed_uplift)
+
+                # Check list comprehension for errors in plotting n bars + 1 when num_variants == 2
                 variants = [f"Variant {chr(i + ord('A'))}" for i in range(num_variants)]
                 plot_bar_chart(variants, probability_better_than_all)
+
                 alpha_prior_business = []
                 beta_prior_business = []
                 alpha_prior_control = variant_conversions[0]
