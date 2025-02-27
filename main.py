@@ -16,10 +16,8 @@ hidden_pages = {
 # Ensure session state exists
 if "current_page" not in st.session_state:
     st.session_state.current_page = None
-if "page_loaded" not in st.session_state:
-    st.session_state.page_loaded = False
 
-# Get the query parameter from the URL
+# Get the query parameter from the URL (but don't use it for loading yet)
 query_params = st.query_params
 page = query_params.get("page", [None])[0]
 
@@ -33,18 +31,17 @@ def execute_hidden_page(page_name):
     else:
         st.error("Page not found.")
 
-# Update session state and query parameters
-if page in hidden_pages and not st.session_state.page_loaded:
+# Check if the page needs to be loaded
+if page in hidden_pages and st.session_state.current_page is None:
     st.session_state.current_page = page
-    st.query_params.set_all(page=page)  # Correct way to set query parameters
-    st.session_state.page_loaded = True
-elif st.session_state.current_page is None:
-    st.query_params.clear()  # Correct way to clear query parameters
 
-# Conditional Rendering
+# Conditional Rendering based on session state
 if st.session_state.current_page:
     st.title(hidden_pages[st.session_state.current_page])
     execute_hidden_page(st.session_state.current_page)
+
+    # Set query parameters *after* loading the page
+    st.query_params.set_all(page=st.session_state.current_page) 
 else:
     # Main Page UI
     logo_url = "https://cdn.homerun.co/49305/hh-woordmerk-rgb-blue-met-discriptor1666785216logo.png"
