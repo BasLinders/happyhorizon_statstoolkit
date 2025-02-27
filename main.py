@@ -17,7 +17,7 @@ hidden_pages = {
 if "current_page" not in st.session_state:
     st.session_state.current_page = None  # Default to None (main page)
 
-# Get the query parameter if it exists
+# Get the query parameter from the URL
 query_params = st.query_params
 page = query_params.get("page", [None])[0]  # Extract the first value safely
 
@@ -32,14 +32,16 @@ def load_hidden_page(page_name):
     else:
         st.error("Page not found.")
 
-# If a hidden page is accessed via URL, update session state
-if page in hidden_pages:
+# Ensure the selected page persists
+if page in hidden_pages and st.session_state.current_page != page:
     st.session_state.current_page = page
+    st.rerun()  # Ensure Streamlit updates the UI with the new page
 
 # Load the requested hidden page
 if st.session_state.current_page in hidden_pages:
     st.title(hidden_pages[st.session_state.current_page])
     load_hidden_page(st.session_state.current_page)
+    st.stop()
 else:
     # Main Page UI
     logo_url = "https://cdn.homerun.co/49305/hh-woordmerk-rgb-blue-met-discriptor1666785216logo.png"
