@@ -8,11 +8,18 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# Define hidden pages manually (but do not include them in Streamlit's auto-sidebar)
+hidden_pages = {
+    "secret_analysis": "Secret Analysis",
+    "internal_testing": "Internal Testing"
+}
+
 # Get the current query parameter
 query_params = st.query_params
 page = query_params.get("page", [None])[0]  # Extract the first value safely
 
-def load_page(page_name):
+def load_hidden_page(page_name):
+    """Dynamically loads a hidden page if it exists."""
     page_path = f"hidden_pages/{page_name}.py"
     if os.path.exists(page_path):
         spec = importlib.util.spec_from_file_location("hidden_page", page_path)
@@ -21,16 +28,10 @@ def load_page(page_name):
     else:
         st.error("Page not found.")
 
-# If page is selected, load it
-if page and page in pages:
-    selected_page = page
-
-# Display the selected page
-if selected_page:
-    st.write(f"### {pages[selected_page]} Page Loaded")
-
-if page:
-    load_page(page)  # Load hidden page dynamically
+# Load the hidden page only if accessed via URL
+if page and page in hidden_pages:
+    st.write(f"### {hidden_pages[page]} Page Loaded")
+    load_hidden_page(page)
 else:
     # Main Page UI
     logo_url = "https://cdn.homerun.co/49305/hh-woordmerk-rgb-blue-met-discriptor1666785216logo.png"
