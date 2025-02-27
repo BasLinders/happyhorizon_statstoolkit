@@ -32,14 +32,12 @@ def load_hidden_page(page_name):
     else:
         st.error("Page not found.")
 
-# If a valid page is found in the query parameters, update session state
-if page in hidden_pages:
-    st.session_state.current_page = page
-else:
-    # If no valid page is in the URL, reset to main page
-    st.session_state.current_page = None
+# Update session state only if it's not already set
+if st.session_state.current_page is None:
+    if page in hidden_pages:
+        st.session_state.current_page = page
 
-# Load the selected hidden page
+# Conditional Rendering
 if st.session_state.current_page:
     st.title(hidden_pages[st.session_state.current_page])  # Show page title
     load_hidden_page(st.session_state.current_page)
