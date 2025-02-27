@@ -36,10 +36,10 @@ def execute_hidden_page(page_name):
 # Update session state and query parameters
 if page in hidden_pages and not st.session_state.page_loaded:
     st.session_state.current_page = page
-    st.experimental_set_query_params(page=page)
+    st.query_params.update(page=page)
     st.session_state.page_loaded = True
 elif st.session_state.current_page is None:
-    st.experimental_set_query_params() #clear query parameters if main page.
+    st.query_params #clear query parameters if main page.
 
 # Conditional Rendering
 if st.session_state.current_page:
