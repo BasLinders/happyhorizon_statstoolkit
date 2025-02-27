@@ -8,17 +8,16 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Define hidden pages manually (but do not include them in Streamlit's auto-sidebar)
+# Define hidden pages (not included in sidebar)
 hidden_pages = {
-    "mab_test": "Multi-Arm Bandit Bayesian analysis"
+    "mab_test": "MAB Test"
 }
 
-# Get the current query parameter
+# Get the query parameters
 query_params = st.query_params
 page = query_params.get("page", [None])[0]  # Extract the first value safely
 
 def load_hidden_page(page_name):
-    """Dynamically loads a hidden page if it exists."""
     page_path = f"hidden_pages/{page_name}.py"
     if os.path.exists(page_path):
         spec = importlib.util.spec_from_file_location("hidden_page", page_path)
@@ -27,9 +26,9 @@ def load_hidden_page(page_name):
     else:
         st.error("Page not found.")
 
-# Load the hidden page only if accessed via URL
+# If a hidden page is requested via URL, load it
 if page and page in hidden_pages:
-    st.write(f"### {hidden_pages[page]} Page Loaded")
+    st.title(hidden_pages[page])
     load_hidden_page(page)
 else:
     # Main Page UI
