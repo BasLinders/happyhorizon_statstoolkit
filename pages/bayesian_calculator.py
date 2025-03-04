@@ -10,6 +10,33 @@ st.set_page_config(
     page_icon="🔢",
 )
 
+def get_user_inputs():
+    col1, col2 = st.columns(2)
+    with col1:
+        st.session_state.visitors_a = st.number_input("How many visitors does variant A have?", min_value=0, step=1, value=st.session_state.get("visitors_a", 0))
+        st.session_state.visitors_b = st.number_input("How many visitors does variant B have?", min_value=0, step=1, value=st.session_state.get("visitors_b", 0))
+    with col2:
+        st.session_state.conversions_a = st.number_input("How many conversions does variant A have?", min_value=0, step=1, value=st.session_state.get("conversions_a", 0))
+        st.session_state.conversions_b = st.number_input("How many conversions does variant B have?", min_value=0, step=1, value=st.session_state.get("conversions_b", 0))
+    
+    st.session_state.probability_winner = st.number_input("Minimum probability for a winner?", min_value=0.0, max_value=100.0, step=0.01, value=st.session_state.get("probability_winner", 80.0), help="Enter the success percentage that determines if your test is a winner.")
+
+    use_priors = st.checkbox("Use prior knowledge?", help="Take previous test data into account when evaluating this experiment.")
+    if use_priors:
+        expected_conversion = st.number_input("Expected Conversion Rate (%)", min_value=0, max_value=100, value=5)
+        belief_strength = st.selectbox("Belief Strength", ["weak", "moderate", "strong"], index=1)
+        alpha_prior, beta_prior = get_beta_priors(expected_conversion, belief_strength)
+    else:
+        alpha_prior, beta_prior = 1, 1  # Default uninformed priors
+    
+    st.write("")
+    st.write("### Business case data")
+    st.session_state.aov_a = st.number_input("What is the average order value of A? ", min_value=0.0, step=0.01, value=st.session_state.get("aov_a", 0.0))
+    st.session_state.aov_b = st.number_input("What is the average order value of B? ", min_value=0.0, step=0.01, value=st.session_state.get("aov_b", 0.0))
+    st.session_state.runtime_days = st.number_input("For how many days did your test run?", min_value=0, step=1, value=st.session_state.get("runtime_days", 0))
+    
+    return st.session_state.visitors_a, st.session_state.conversions_a, st.session_state.visitors_b, st.session_state.conversions_b, alpha_prior, beta_prior, st.session_state.probability_winner, st.session_state.aov_a, st.session_state.aov_b, st.session_state.runtime_days
+
 def validate_inputs(visitors, conversions):
     if visitors is None or conversions is None:
         raise ValueError("Visitors and conversions cannot be zero")
@@ -32,10 +59,29 @@ def calculate_probability_b_better_and_samples(visitors_a, conversions_a, visito
     probability_b_better = (samples_b > samples_a).mean()
     return probability_b_better, samples_a, samples_b
 
-def simulate_differences(visitors_a, conversions_a, visitors_b, conversions_b, num_samples=10000):
-    alpha_prior = 1
-    beta_prior = 1
+def get_beta_priors(expected_conversion_rate: int, belief_strength: str):
+    if belief_strength not in ['weak', 'moderate', 'strong']:
+        raise ValueError("belief_strength must be 'weak', 'moderate', or 'strong'")
+    
+    # Convert percentage to proportion
+    conversion_rate = expected_conversion_rate / 100.0
+    
+    # Define prior weight based on belief strength
+    prior_strengths = {
+        'weak': 10,        # Light influence of prior data
+        'moderate': 100,   # Medium influence
+        'strong': 1000     # Heavy influence
+    }
+    
+    k = prior_strengths[belief_strength]
+    
+    # Compute alpha and beta priors
+    alpha_prior = conversion_rate * k
+    beta_prior = (1 - conversion_rate) * k
+    
+    return int(alpha_prior), int(beta_prior)
 
+def simulate_differences(visitors_a, conversions_a, visitors_b, conversions_b, alpha_prior=1, beta_prior=1, num_samples=10000):
     alpha_post_a = alpha_prior + conversions_a
     beta_post_a = beta_prior + (visitors_a - conversions_a)
     alpha_post_b = alpha_prior + conversions_b
@@ -127,14 +173,14 @@ def plot_probability_bar_chart(probability_b_better):
     plt.clf()
 
 def perform_risk_assessment(visitors_a, conversions_a, visitors_b, conversions_b, aov_a, aov_b, runtime_days,
-                           alpha_prior_business, beta_prior_business, probability_a_better, probability_b_better, projection_period=183):
+                           alpha_prior, beta_prior, probability_a_better, probability_b_better, projection_period=183):
     # Calculate expected conversion rates for A and B
-    alpha_post_a = alpha_prior_business + conversions_a
-    beta_post_a = beta_prior_business + (visitors_a - conversions_a)
+    alpha_post_a = alpha_prior + conversions_a
+    beta_post_a = beta_prior + (visitors_a - conversions_a)
     expected_conv_rate_a = alpha_post_a / (alpha_post_a + beta_post_a)
 
-    alpha_post_b = alpha_prior_business + conversions_b
-    beta_post_b = beta_prior_business + (visitors_b - conversions_b)
+    alpha_post_b = alpha_prior + conversions_b
+    beta_post_b = beta_prior + (visitors_b - conversions_b)
     expected_conv_rate_b = alpha_post_b / (alpha_post_b + beta_post_b)
 
     # Simulate from posterior predictive distribution
@@ -179,7 +225,7 @@ def perform_risk_assessment(visitors_a, conversions_a, visitors_b, conversions_b
         expected_monetary_risk = 0
 
     # Calculate improvement factor based on uplift in conversion rates
-    improvement_factor = (expected_conv_rate_b - expected_conv_rate_a) / expected_conv_rate_a
+    improvement_factor = (expected_conv_rate_b - expected_conv_rate_a) / expected_conv_rate_a if expected_conv_rate_a > 0 else np.nan # handle edge cases
 
     # Calculate optimistic daily difference over 180 days
     daily_uplift = expected_daily_conversions_b - expected_daily_conversions_a
@@ -241,73 +287,27 @@ def display_results(probability_b_better, observed_uplift, probability_winner, a
         st.warning("Business case data is missing or incomplete. Skipping monetary calculations.")
 
 def run():
-    # Initialize session state for inputs
-    st.session_state.setdefault("visitors_a", 0)
-    st.session_state.setdefault("visitors_b", 0)
-    st.session_state.setdefault("conversions_a", 0)
-    st.session_state.setdefault("conversions_b", 0)
-    st.session_state.setdefault("probability_winner", 0.0)
-    st.session_state.setdefault("aov_a", 0.0)
-    st.session_state.setdefault("aov_b", 0.0)
-    st.session_state.setdefault("runtime_days", 0)
-
     st.title("Bayesian Calculator")
     """
-    This calculator outputs the probability of a variant to generate more conversions than the other. 
+    This calculator outputs the probability of a variant to generate more conversions than the other.
     Remember, you set the boundaries of success for the experiment; this calculator only helps you to translate it to numbers.
 
-    It also shows the distribution of conversion rates by running a simulation and estimates the potential effect on revenue 
+    It also shows the distribution of conversion rates by running a simulation and estimates the potential effect on revenue
     over a chosen period after implementation with bayesian probability. Obviously, we make several statistical assumptions.
+
+    You can choose to incorporate expectations from previous experiments to take into account for the current experiment analysis.
 
     Enter your experiment values below. Happy learning!
     """
-    col1, col2 = st.columns(2)
 
-    # Get visitor and conversion inputs with validation
-    with col1:
-        st.write("### Visitors")
-        st.session_state.visitors_a = st.number_input("How many visitors does variant A have?", min_value=0, step=1,
-                                                     value=st.session_state.visitors_a)
-        st.session_state.visitors_b = st.number_input("How many visitors does variant B have?", min_value=0, step=1,
-                                                     value=st.session_state.visitors_b)
-        visitors_a = st.session_state.visitors_a
-        visitors_b = st.session_state.visitors_b
-    with col2:
-        st.write("### Conversions")
-        st.session_state.conversions_a = st.number_input("How many conversions does variant A have?", min_value=0, step=1,
-                                                        value=st.session_state.conversions_a)
-        st.session_state.conversions_b = st.number_input("How many conversions does variant B have?", min_value=0, step=1,
-                                                        value=st.session_state.conversions_b)
-        conversions_a = st.session_state.conversions_a
-        conversions_b = st.session_state.conversions_b
+    # Get all user inputs using the dedicated function
+    (visitors_a, conversions_a, visitors_b, conversions_b,
+     alpha_prior, beta_prior, probability_winner,
+     aov_a, aov_b, runtime_days) = get_user_inputs()
 
+    # Input Validation (using the existing function) - Keep this outside the button press
     all_variant_conversions = [conversions_a, conversions_b]
     all_variant_visitors = [visitors_a, visitors_b]
-
-    st.session_state.probability_winner = st.number_input("What is your minimum probability for a winner?", min_value=0.0,
-                                                         max_value=100.0, step=0.01,
-                                                         value=st.session_state.probability_winner)
-    probability_winner = st.session_state.probability_winner
-
-    # Get projection period with validation
-    st.write("")
-    st.write("### Business case data")
-    st.session_state.aov_a = st.number_input("What is the average order value of A? ", min_value=0.0, step=0.01,
-                                           value=st.session_state.aov_a)
-    st.session_state.aov_b = st.number_input("What is the average order value of B? ", min_value=0.0, step=0.01,
-                                           value=st.session_state.aov_b)
-    st.session_state.runtime_days = st.number_input("For how many days did your test run?", min_value=0, step=1,
-                                                   value=st.session_state.runtime_days)
-    aov_a = st.session_state.aov_a
-    aov_b = st.session_state.aov_b
-    runtime_days = st.session_state.runtime_days
-
-    projection_period = 183
-    conv_rate_a = conversions_a / visitors_a if visitors_a != 0 else 0
-    conv_rate_b = conversions_b / visitors_b if visitors_b != 0 else 0
-    uplift = (conv_rate_b - conv_rate_a) / conv_rate_a if conv_rate_a != 0 else 0
-
-    # Check if visitor and conversion inputs are valid
     valid_inputs = all(v > 0 for v in all_variant_visitors) and all(
         0 <= c <= v for c, v in zip(all_variant_conversions, all_variant_visitors))
 
@@ -318,6 +318,11 @@ def run():
             st.write("Please verify your input:")
             st.write(f"Variant A: {visitors_a} visitors, {conversions_a} conversions, AOV: {aov_a}")
             st.write(f"Variant B: {visitors_b} visitors, {conversions_b} conversions, AOV: {aov_b}")
+
+            # Calculate conversion rates and uplift (handle potential division by zero)
+            conv_rate_a = conversions_a / visitors_a if visitors_a > 0 else 0
+            conv_rate_b = conversions_b / visitors_b if visitors_b > 0 else 0
+            uplift = (conv_rate_b - conv_rate_a) / conv_rate_a if conv_rate_a > 0 else np.nan  # Use NaN for undefined uplift
             st.write(f"Measured change in conversion rate: {uplift * 100:.2f}%")
             st.write(f"Minimum chance to win: {probability_winner}%")
             st.write(f"Test runtime: {runtime_days} days")
@@ -328,54 +333,38 @@ def run():
                 validate_inputs(visitors_a, conversions_a)
                 validate_inputs(visitors_b, conversions_b)
 
-                conv_rate_a = conversions_a / visitors_a if visitors_a != 0 else 0
-                conv_rate_b = conversions_b / visitors_b if visitors_b != 0 else 0
-                uplift = (conv_rate_b - conv_rate_a) / conv_rate_a if conv_rate_a != 0 else 0
-
-            except ValueError as e:
-                st.write(f"Input Error: {e}")
-            else:
-                alpha_prior, beta_prior = 1, 1
-
-                alpha_prior_business = conversions_a / visitors_a if visitors_a != 0 else 1
-                beta_prior_business = (
-                    alpha_prior_business * ((conv_rate_b - conv_rate_a) / conv_rate_a) * (1 / alpha_prior_business)
-                    if alpha_prior_business != 0 and conv_rate_a != 0 else 1
-                ) + alpha_prior_business
-
-                st.write("")
-
+                # --- Bayesian Calculations ---
                 probability_b_better, samples_a, samples_b = calculate_probability_b_better_and_samples(
-                    visitors_a, conversions_a, visitors_b, conversions_b)
+                    visitors_a, conversions_a, visitors_b, conversions_b, alpha_prior, beta_prior
+                )
 
-                if probability_b_better >= probability_threshold:
-                    st.write(
-                        f"\nVariant B has a higher chance of performing better than Variant A with a probability of {probability_b_better:.2%}.")
-                elif probability_b_better < (1 - probability_threshold):
-                    st.write(
-                        f"\nVariant A has a higher chance of performing better than Variant B with a probability of {1 - probability_b_better:.2%}.")
-                else:
-                    st.write(
-                        f"\nNeither variant has a meaningful impact for more conversions with a probability of Variant B being better at {probability_b_better:.2%}.")
-
+                # --- Output and Visualizations ---
+                
                 # Simulating the differences as percentage uplift
-                diffs_percentage = simulate_differences(visitors_a, conversions_a, visitors_b, conversions_b) * 100
-                conv_rate_a = conversions_a / visitors_a
-                conv_rate_b = conversions_b / visitors_b
-                observed_uplift = ((conv_rate_b - conv_rate_a) / conv_rate_a) * 100
+                diffs_percentage = simulate_differences(visitors_a, conversions_a, visitors_b, conversions_b, alpha_prior, beta_prior) * 100
+                observed_uplift = uplift * 100
 
                 plot_histogram(diffs_percentage, observed_uplift)
                 plot_probability_bar_chart(probability_b_better)
 
-                # Only perform risk assessment if business case data is valid
+                # --- Business Case (Risk Assessment) ---
                 if aov_a > 0 and aov_b > 0 and runtime_days > 0:
-                    df = perform_risk_assessment(visitors_a, conversions_a, visitors_b, conversions_b, aov_a, aov_b,
-                                               runtime_days, alpha_prior_business, beta_prior_business,
-                                               1 - probability_b_better, probability_b_better)
+                     # Use a consistent projection period (get from session state)
+                    #st.session_state.projection_period = st.slider("Projection Period (days)", min_value=1, max_value=730, value=183, step=1)
+                    #projection_period = st.session_state.projection_period
+                    projection_period = 183
+
+                    df = perform_risk_assessment(visitors_a, conversions_a, visitors_b, conversions_b,
+                                                aov_a, aov_b, runtime_days, alpha_prior, beta_prior,
+                                                1 - probability_b_better, probability_b_better, projection_period)
                 else:
                     df = None
 
                 display_results(probability_b_better, observed_uplift, probability_winner, aov_a, aov_b, runtime_days, df)
+
+            except ValueError as e:
+                st.write(f"Input Error: {e}")  # Handle validation errors
+
         else:
             st.write("")
             st.write(
