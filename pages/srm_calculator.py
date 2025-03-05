@@ -9,7 +9,6 @@ st.set_page_config(
 )
 
 def run():
-
     st.title("Sample Ratio Mismatch (SRM) Checker")
     """
     This calculator lets you see if your online experiment correctly divided visitors among the variants, or if something went wrong and there was a mismatch with 
@@ -17,7 +16,7 @@ def run():
 
     Happy Learning!
     """
-    
+
     num_variants = st.number_input("How many variants did your experiment have (including control)?", min_value=2, max_value=26, step=1)
     st.session_state.setdefault('visitor_counts', [0] * num_variants)
     st.session_state.setdefault('expected_proportions', [0.0] * num_variants)
@@ -25,7 +24,7 @@ def run():
     # Resize lists if `num_variants` has changed, while preserving existing values
     if num_variants != len(st.session_state.visitor_counts):
         st.session_state.visitor_counts = (st.session_state.visitor_counts[:num_variants] + [0] * num_variants)[:num_variants]
-        st.session_state.expected_proportions = (st.session_state.expected_proportions[:num_variants] + [0] * num_variants)[:num_variants]
+        st.session_state.expected_proportions = (st.session_state.expected_proportions[:num_variants] + [0.0] * num_variants)[:num_variants]
 
     # Display headers
     col1, col2 = st.columns(2)
@@ -47,7 +46,7 @@ def run():
         with col2:
             st.session_state.expected_proportions[i] = st.number_input(
                 f"What percentage of users should be in variant {alphabet[i]}?",
-                min_value=0.0, max_value=100.0, step=0.01, value=st.session_state.expected_proportions[i]
+                min_value=0.0, max_value=100.0, step=0.01, value=float(st.session_state.expected_proportions[i])
             )
 
     # Assign session state values to 'normal' variables for further processing
@@ -81,8 +80,14 @@ def run():
             # Display results
             st.write("")
             st.write("### Conclusion")
-            st.write(f"P-value: {p_value:.4f}. The expected amount of visitors per variant is {round(statistics.mean(expected))}.") 
+            st.write(f"P-value: {p_value:.4f}. The expected amount of visitors per variant on average is {round(statistics.mean(expected))}.") 
             st.write(f"This suggests a {srm_result}.")
+            st.write("### Expected vs. Observed Values")
+            st.write("The specific distribution for your entered data:")
+            data = {"Variant" : [alphabet[i] for i in range(num_variants)],
+                    "Observed" : observed,
+                    "Expected" : [round(x) for x in expected]}
+            st.dataframe(data)
 
 if __name__ == "__main__":
     run()
