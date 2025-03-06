@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 from scipy.stats import beta
+import math
 
 st.set_page_config(
     page_title="Bayesian calculator",
@@ -23,9 +24,13 @@ def get_user_inputs():
 
     use_priors = st.checkbox("Use prior knowledge?", help="Take previous test data into account when evaluating this experiment.")
     if use_priors:
-        expected_conversion = st.number_input("Expected Conversion Rate (%)", min_value=0, max_value=100, value=5)
+        col1, col2 = st.columns(2)
+        with col1:
+            expected_sample_size = st.number_input("What is the total expected sample size of the experiment?", min_value=1000, step=1)
+        with col2:
+            expected_conversion = st.number_input("Expected Conversion Rate (proportion)", min_value=0.001, max_value=1.0, step=0.001)
         belief_strength = st.selectbox("Belief Strength", ["weak", "moderate", "strong"], index=1)
-        alpha_prior, beta_prior = get_beta_priors(expected_conversion, belief_strength)
+        alpha_prior, beta_prior = get_beta_priors(expected_conversion, belief_strength, expected_sample_size)
     else:
         alpha_prior, beta_prior = 1, 1  # Default uninformed priors
     
@@ -47,7 +52,8 @@ def validate_inputs(visitors, conversions):
     if conversions > visitors:
         raise ValueError("Conversions cannot exceed the number of visitors")
 
-def calculate_probability_b_better_and_samples(visitors_a, conversions_a, visitors_b, conversions_b, alpha_prior=1, beta_prior=1, num_samples=10000):
+def calculate_probability_b_better_and_samples(visitors_a, conversions_a, visitors_b, conversions_b, alpha_prior=1, beta_prior=1, num_samples=10000, seed=42):
+    np.random.seed(seed)
     alpha_post_a = alpha_prior + conversions_a
     beta_post_a = beta_prior + (visitors_a - conversions_a)
     alpha_post_b = alpha_prior + conversions_b
@@ -59,29 +65,37 @@ def calculate_probability_b_better_and_samples(visitors_a, conversions_a, visito
     probability_b_better = (samples_b > samples_a).mean()
     return probability_b_better, samples_a, samples_b
 
-def get_beta_priors(expected_conversion_rate: int, belief_strength: str):
+def get_beta_priors(expected_conversion_rate: float, belief_strength: str, expected_sample_size: int):
     if belief_strength not in ['weak', 'moderate', 'strong']:
         raise ValueError("belief_strength must be 'weak', 'moderate', or 'strong'")
-    
-    # Convert percentage to proportion
-    conversion_rate = expected_conversion_rate / 100.0
-    
-    # Define prior weight based on belief strength
-    prior_strengths = {
-        'weak': 10,        # Light influence of prior data
-        'moderate': 100,   # Medium influence
-        'strong': 1000     # Heavy influence
-    }
-    
-    k = prior_strengths[belief_strength]
-    
-    # Compute alpha and beta priors
-    alpha_prior = conversion_rate * k
-    beta_prior = (1 - conversion_rate) * k
-    
-    return int(alpha_prior), int(beta_prior)
 
-def simulate_differences(visitors_a, conversions_a, visitors_b, conversions_b, alpha_prior=1, beta_prior=1, num_samples=10000):
+    if not (0 <= expected_conversion_rate <= 1):
+        raise ValueError("expected_conversion_rate must be between 0 and 1.")
+
+    if expected_sample_size <= 0:
+        raise ValueError("expected_sample_size must be a positive integer.")
+
+    # Base prior strength adjustment based on sample size.
+    # The larger the sample size, the weaker the prior should be.
+    #sample_size_factor = max(1, 100 / math.sqrt(expected_sample_size)) # Uses 100 as magic number. not ideal.
+    #sample_size_factor = 1 / (1 + math.log10(expected_sample_size)) if expected_sample_size > 1 else 1.0
+    sample_size_factor = 1 / (1 + math.log(expected_sample_size)) if expected_sample_size > 1 else 1.0
+
+    prior_strengths = {
+        'weak': 10 * sample_size_factor,
+        'moderate': 100 * sample_size_factor,
+        'strong': 1000 * sample_size_factor,
+    }
+
+    k = prior_strengths[belief_strength]
+
+    alpha_prior = expected_conversion_rate * k
+    beta_prior = (1 - expected_conversion_rate) * k
+
+    return alpha_prior, beta_prior
+
+def simulate_differences(visitors_a, conversions_a, visitors_b, conversions_b, alpha_prior=1, beta_prior=1, num_samples=10000, seed=42):
+    np.random.seed(seed)
     alpha_post_a = alpha_prior + conversions_a
     beta_post_a = beta_prior + (visitors_a - conversions_a)
     alpha_post_b = alpha_prior + conversions_b
@@ -173,7 +187,8 @@ def plot_probability_bar_chart(probability_b_better):
     plt.clf()
 
 def perform_risk_assessment(visitors_a, conversions_a, visitors_b, conversions_b, aov_a, aov_b, runtime_days,
-                           alpha_prior, beta_prior, probability_a_better, probability_b_better, projection_period=183):
+                           alpha_prior, beta_prior, probability_a_better, probability_b_better, projection_period=183, seed=42):
+    np.random.seed(seed)
     # Calculate expected conversion rates for A and B
     alpha_post_a = alpha_prior + conversions_a
     beta_post_a = beta_prior + (visitors_a - conversions_a)
