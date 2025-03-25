@@ -107,42 +107,77 @@ def simulate_differences(visitors_a, conversions_a, visitors_b, conversions_b, a
     return (samples_b - samples_a) / samples_a
 
 def plot_histogram(diffs_percentage, observed_uplift):
-    # Define a tighter range for the histogram
+    """
+    Plots a histogram of conversion rate differences with dynamic binning and x-tick scaling.
+
+    Args:
+        diffs_percentage: A NumPy array of conversion rate differences.
+        observed_uplift: The observed uplift (or drop) in conversion rate.
+    """
     mean_diff = np.mean(diffs_percentage)
     std_diff = np.std(diffs_percentage)
     range_min = mean_diff - 3 * std_diff
     range_max = mean_diff + 3 * std_diff
 
-    # Plotting
+    def calculate_optimal_bins(data):
+        n = len(data)
+        iqr = np.percentile(data, 75) - np.percentile(data, 25)
+        bin_width_fd = 2 * iqr * (n ** (-1 / 3))
+        if bin_width_fd == 0:
+            num_bins_sturges = int(np.ceil(1 + np.log2(n)))
+            return num_bins_sturges
+        num_bins_fd = int(np.ceil((np.max(data) - np.min(data)) / bin_width_fd))
+        return num_bins_fd
+
+    num_bins = calculate_optimal_bins(diffs_percentage)
+    bin_width = (range_max - range_min) / num_bins
+    bins = np.arange(range_min, range_max + bin_width, bin_width)
+
     plt.figure(figsize=(14, 7))
 
-    # Defining bins with a width of 2% for the histogram within the tighter range
-    bin_width = 2  # 2% increments
-    bins = np.arange(range_min, range_max, bin_width)
-
-    # Plotting the histogram
     n, bins, patches = plt.hist(diffs_percentage, bins=bins, edgecolor='black', alpha=0.6)
 
-    # Calculate the cumulative sum of the histogram frequencies
     cumsum = np.cumsum(n)
     total_samples = cumsum[-1]
 
-    # Determine the number of samples favoring Variant A and Variant B
     num_a = np.sum(diffs_percentage < 0)
     num_b = total_samples - num_a
 
-    # Determine the proportion of each bin to color
     for i in range(len(patches)):
         if cumsum[i] < num_a:
-            patches[i].set_facecolor('lightcoral')  # Color for uplift related to Variant A
+            patches[i].set_facecolor('lightcoral')
         else:
-            patches[i]. set_facecolor('lightgreen')  # Color for uplift related to Variant B
+            patches[i].set_facecolor('lightgreen')
 
-    # Setting dynamic x-ticks based on the bin range
-    xticks = np.arange(range_min, range_max, bin_width)
-    plt.xticks(xticks, [f'{tick:.0f}%' for tick in xticks], rotation=30)
+    # Dynamic x-tick placement
+    plot_width_inches = plt.gcf().get_size_inches()[0]
+    range_width = range_max - range_min
 
-    # Vertical line to visually provide uplift of variant
+    # Dynamic minimum spacing in data units
+    min_tick_spacing_data_units = 0.2 * std_diff
+
+    # Dynamic minimum spacing in inches
+    sample_tick_label = f'{range_min:.2f}%'  # Sample x-tick label
+    sample_text = plt.text(0, 0, sample_tick_label, rotation=45, ha='right')  # Create sample text object
+    plt.gcf().canvas.draw()  # Draw the canvas to get accurate text dimensions
+    text_bbox = sample_text.get_window_extent(renderer=plt.gcf().canvas.get_renderer())
+    text_height_pixels = text_bbox.height  # Get text height in pixels
+    dpi = plt.gcf().dpi
+    text_height_inches = text_height_pixels / dpi
+    sample_text.remove()  # Remove the sample text object
+
+    min_tick_spacing_inches = text_height_inches * 1.5 # Add 50% buffer
+
+    num_ticks_data_units = int(range_width / min_tick_spacing_data_units)
+    num_ticks_inches = int(plot_width_inches / min_tick_spacing_inches)
+    num_ticks = max(min(num_ticks_data_units, num_ticks_inches), 2)
+
+    tick_spacing = range_width / (num_ticks - 1)
+    xticks = np.arange(range_min, range_max + tick_spacing, tick_spacing)
+
+    # Format x-tick labels
+    plt.xticks(xticks, [f'{tick:.2f}%' for tick in xticks], rotation=45, ha='right')
+
     if observed_uplift > 0:
         line_observed_uplift = plt.axvline(x=observed_uplift, color='red', linestyle='--',
                                            linewidth=2, label=f'Observed Uplift B to A: {observed_uplift:.2f}%')
@@ -150,7 +185,6 @@ def plot_histogram(diffs_percentage, observed_uplift):
         line_observed_uplift = plt.axvline(x=observed_uplift, color='red', linestyle='--',
                                            linewidth=2, label=f'Observed Drop B to A: {observed_uplift:.2f}%')
 
-    # Creating dummy patches for the legend
     patch_a = mpatches.Patch(color='lightcoral', label='Variant A')
     patch_b = mpatches.Patch(color='lightgreen', label='Variant B')
 
