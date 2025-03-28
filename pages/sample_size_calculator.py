@@ -8,47 +8,31 @@ st.set_page_config(
     page_icon="🔢",
 )
 
-# Input for MDE calculations
-def get_mde_user_input(num_variants): 
-    #st.session_state.num_variants = num_variants
+# User input for both MDE and sample size calculation
+def get_user_input():
+    st.write("### Baseline Data")
+    st.write("Enter weekly visitors, weekly conversions and test parameters.")
 
-    st.write("### Baseline Data for MDE calculations")
-    st.write("Enter weekly visitors and weekly conversions.")
-    st.session_state.baseline_visitors = st.number_input("Visitors in baseline variant:", min_value=0, step=1, value=st.session_state.baseline_visitors, key="mde_baseline_visitors") # Add key
-    st.session_state.baseline_conversions = st.number_input("Conversions in baseline variant:", min_value=0, step=1, value=st.session_state.baseline_conversions, key="mde_baseline_conversions") # Add key
+    col1, col2 = st.columns(2)
+    # Baseline data
+    with col1:
+        st.number_input("Number of variants (including control):", min_value=2, step=1, value=st.session_state.get("num_variants", 2), key="num_variants")
+        st.number_input("Visitors in baseline variant:", min_value=0, step=1, value=st.session_state.get("baseline_visitors", 0), key="baseline_visitors")
+        st.number_input("Conversions in baseline variant:", min_value=0, step=1, value=st.session_state.get("baseline_conversions", 0), key="baseline_conversions")
 
-    # Additional inputs for confidence level, power, and tails
-    st.session_state.risk = st.number_input("Desired confidence level (e.g., 90%):", min_value=0, max_value=100, step=1, value=st.session_state.risk, key="mde_risk") # Add key
-    st.session_state.trust = st.number_input("Minimum trustworthiness (Power) (e.g., 80%):", min_value=0, max_value=100, step=1, value=st.session_state.trust, key="mde_trust") # Add key
-    st.session_state.tails = st.selectbox(
+    # Test parameter input
+    with col2:
+        st.number_input("Desired confidence level (e.g., 90%):", min_value=0, max_value=100, step=1, value=st.session_state.get("risk", 90), key="risk")
+        st.number_input("Minimum trustworthiness (Power) (e.g., 80%):", min_value=0, max_value=100, step=1, value=st.session_state.get("trust", 80), key="trust")
+        if st.session_state.get("calculation_mode") == "Calculate Sample Size based on MDE":
+            st.number_input("What MDE are you aiming for?", min_value=1, max_value=100, step=1, value=st.session_state.get("mde", 5), key="mde")
+    st.selectbox(
         "Hypothesis type ('Greater' or 'Two-sided'): ",
-        options=['Greater', 'Two-sided'], index=['Greater', 'Two-sided'].index(st.session_state.tails), key="mde_tails" # Add key
+        options=['Greater', 'Two-sided'], index=['Greater', 'Two-sided'].index(st.session_state.get("tails", 'Greater')), key="tails"
     )
-
-    return st.session_state.num_variants, st.session_state.baseline_visitors, st.session_state.baseline_conversions, st.session_state.risk, st.session_state.trust, st.session_state.tails
-
-# Input for sample size calculations
-def get_sample_user_input(num_variants):
-    #st.session_state.num_variants = num_variants
-
-    st.write("### Baseline Data for Sample Size calculations")
-    st.write("Enter weekly visitors and weekly conversions.")
-    st.session_state.baseline_visitors = st.number_input("Visitors in baseline variant:", min_value=0, step=1, value=st.session_state.baseline_visitors, key="sample_baseline_visitors") # Add key
-    st.session_state.baseline_conversions = st.number_input("Conversions in baseline variant:", min_value=0, step=1, value=st.session_state.baseline_conversions, key="sample_baseline_conversions") # Add key
-
-    # Additional inputs for confidence level, power, and tails
-    st.session_state.risk = st.number_input("Desired confidence level (e.g., 90%):", min_value=0, max_value=100, step=1, value=st.session_state.risk, key="sample_risk") # Add key
-    st.session_state.trust = st.number_input("Minimum trustworthiness (Power) (e.g., 80%):", min_value=0, max_value=100, step=1, value=st.session_state.trust, key="sample_trust") # Add key
-    st.session_state.tails = st.selectbox(
-        "Hypothesis type ('Greater' or 'Two-sided'): ",
-        options=['Greater', 'Two-sided'], index=['Greater', 'Two-sided'].index(st.session_state.tails), key="sample_tails" # Add key
-    )
-    st.session_state.mde = st.number_input("What MDE are you aiming for?", min_value=1, max_value=100, step=1, value=st.session_state.mde, key="sample_mde") # Add key
-
-    return num_variants, st.session_state.baseline_visitors, st.session_state.baseline_conversions, st.session_state.risk, st.session_state.trust, st.session_state.tails, st.session_state.mde
 
 # Holm-Bonferroni correction for MDE calculation
-def holm_bonferroni_adjusted_z(num_variants, alpha, tails):
+def holm_bonferroni(num_variants, alpha, tails):
     adjusted_alpha = alpha / np.arange(num_variants, 0, -1)
     if tails == 'Two-sided':
         z_alpha = norm.ppf(1 - adjusted_alpha / 2)
@@ -56,8 +40,7 @@ def holm_bonferroni_adjusted_z(num_variants, alpha, tails):
         z_alpha = norm.ppf(1 - adjusted_alpha)
     return np.max(z_alpha)
 
-def perform_mde_calculation(num_variants):
-    num_variants, baseline_visitors, baseline_conversions, risk, trust, tails = get_mde_user_input()
+def perform_mde_calculation(num_variants, baseline_visitors, baseline_conversions, risk, trust, tails):
 
     alpha = 1 - (risk / 100)
     power = trust / 100
@@ -67,7 +50,7 @@ def perform_mde_calculation(num_variants):
 
     # Adjust alpha for multiple comparisons
     if num_variants > 2:
-        adjusted_z_alpha = holm_bonferroni_adjusted_z(num_variants - 1, alpha, tails)
+        adjusted_z_alpha = holm_bonferroni(num_variants - 1, alpha, tails)
     else:
         adjusted_z_alpha = norm.ppf(1 - alpha) if tails == 'Greater' else norm.ppf(1 - alpha / 2)
 
@@ -93,10 +76,9 @@ def perform_mde_calculation(num_variants):
 
     return results
 
-def display_mde_table(num_variants):
-    num_variants, _, _, _, _, _ = get_mde_user_input(num_variants)
-    results = perform_mde_calculation(num_variants)
-
+def display_mde_table(num_variants, baseline_visitors, baseline_conversions, risk, trust, tails):
+    results = perform_mde_calculation(num_variants, baseline_visitors, baseline_conversions, risk, trust, tails)
+    
     # Display results in a DataFrame
     df = pd.DataFrame(results, columns=['Week', 'Visitors / Variant', 'Relative MDE (%)'])
     df['Relative MDE (%)'] = df['Relative MDE (%)'].map(lambda x: f"{x:.2f}%" if pd.notnull(x) else "N/A")
@@ -109,7 +91,7 @@ def display_mde_table(num_variants):
     """)
     if num_variants > 2:
         st.write("")
-        st.write("Note: Because you entered more than 2 variants, the Holm-Bonferroni correction was applied.")
+        st.write(f"*Note: The {holm_bonferroni.__name__ if 'holm_bonferroni' in globals() else 'configured multiple comparison correction'} correction was applied ({num_variants - 1} comparisons) affecting the required significance level.*")
     st.write(df.to_html(index=False), unsafe_allow_html=True)
 
 def calculate_sample_size(num_variants, baseline_visitors, baseline_conversions, mde, risk, trust, tails):
@@ -169,9 +151,9 @@ def calculate_sample_size(num_variants, baseline_visitors, baseline_conversions,
     try:
         # Adjust alpha for multiple comparisons if necessary
         if num_variants > 2:
-            # Assumes holm_bonferroni_adjusted_z returns the MAX Z-score needed
+            # Assumes holm_bonferroni returns the MAX Z-score needed
             num_comparisons = num_variants - 1
-            z_alpha_adjusted = holm_bonferroni_adjusted_z(num_comparisons, alpha, tails)
+            z_alpha_adjusted = holm_bonferroni(num_comparisons, alpha, tails)
             correction_applied = True
         else: # num_variants == 2
             if tails == 'Greater':
@@ -204,9 +186,9 @@ def calculate_sample_size(num_variants, baseline_visitors, baseline_conversions,
         var1 = max(var1, 0)
         var2 = max(var2, 0)
 
-        # Use approximation p*(1-p) for the first term's variance (common)
+        # Use approximation p*(1-p) for the first term's variance
         # Or use pooled variance: p_pooled = (p1+p2)/2; var_pooled = p_pooled*(1-p_pooled)
-        term1 = z_alpha_adjusted * np.sqrt(2 * p * (1 - p)) # Using baseline variance approximation
+        term1 = z_alpha_adjusted * np.sqrt(2 * p * (1 - p))
         term2 = z_power * np.sqrt(var1 + var2)
 
         # Required sample size per group
@@ -254,25 +236,14 @@ def calculate_sample_size(num_variants, baseline_visitors, baseline_conversions,
     st.write(f"With an average of **{int(baseline_visitors):,}** total visitors per week, your test is estimated to run for approximately **{estimated_days}** days to reach the required sample size per group.")
 
     if correction_applied:
-        st.write(f"*Note: The {type(holm_bonferroni_adjusted_z).__name__ if 'holm_bonferroni_adjusted_z' in globals() else 'configured multiple comparison correction'} was applied ({num_comparisons} comparisons) affecting the required significance level.*")
-    elif num_variants == 2:
-         st.write("*Note: Standard Z-scores used (no multiple comparison correction needed for 2 variants).*")
+        st.write(f"*Note: The {holm_bonferroni.__name__ if 'holm_bonferroni' in globals() else 'configured multiple comparison correction'} correction was applied ({num_comparisons} comparisons) affecting the required significance level.*")
     
 def run():
-    # Initialize session state for inputs
-    st.session_state.setdefault("num_variants", 2)
-    st.session_state.setdefault("baseline_visitors", 0)
-    st.session_state.setdefault("baseline_conversions", 0)
-    st.session_state.setdefault("risk", 90)
-    st.session_state.setdefault("tails", 'Greater')
-    st.session_state.setdefault("trust", 80)
-    st.session_state.setdefault("mde", 5)
-
     st.title("Sample Size Calculator")
     """
     This calculator provides a representative sample size and Minimum Detectable Effect (MDE) for your online experiment.
     The calculation will use baseline data and the number of variants to adjust the relative MDE, estimated over a 6-week period.
-    
+
     Enter the values below to start.
     """
 
@@ -281,37 +252,51 @@ def run():
     # Selectbox for choosing the calculation mode
     calculation_mode = st.selectbox(
         "Select Calculation Mode:",
-        ("Calculate MDE based on Runtime", "Calculate Sample Size based on MDE")
+        ("Calculate MDE based on Runtime", "Calculate Sample Size based on MDE"),
+        key="calculation_mode"
     )
 
-    num_variants = st.number_input("Number of variants (including control):", min_value=2, step=1, value=st.session_state.num_variants, key="num_variants")
+    get_user_input()  # Get inputs
 
     if calculation_mode == "Calculate MDE based on Runtime":
-        get_mde_user_input(num_variants)  # Get inputs
-
         if st.button("Calculate MDE"):
-            # Validate input
-            if st.session_state.baseline_visitors <= 0 or st.session_state.baseline_conversions <= 0 or not (0 < st.session_state.risk <= 100) or not (0 < st.session_state.trust <= 100) or st.session_state.tails not in ['Greater', 'Two-sided']:
-                st.write("<span style='color: #ff6600;'>*Please enter valid inputs for all fields</span>", unsafe_allow_html=True)
+            # Validate input using st.session_state
+            if (st.session_state.get("baseline_visitors", 0) <= 0 or
+                st.session_state.get("baseline_conversions", 0) < 0 or
+                st.session_state.get("baseline_conversions", 0) > st.session_state.get("baseline_visitors", 0) or # Added check
+                not (0 < st.session_state.get("risk", 0) <= 100) or
+                not (0 < st.session_state.get("trust", 0) <= 100) or
+                st.session_state.get("tails") not in ['Greater', 'Two-sided']):
+                st.write("<span style='color: #ff6600;'>*Please enter valid inputs for all fields (Visitors > 0, Conversions >= 0 and <= Visitors, Risk/Trust between 0-100).</span>", unsafe_allow_html=True)
             else:
-                display_mde_table(num_variants)
+                display_mde_table(st.session_state.get("num_variants", 2),
+                                  st.session_state.get("baseline_visitors", 0),
+                                  st.session_state.get("baseline_conversions", 0),
+                                  st.session_state.get("risk", 90),
+                                  st.session_state.get("trust", 80),
+                                  st.session_state.get("tails", 'Greater'))
 
     elif calculation_mode == "Calculate Sample Size based on MDE":
-        get_sample_user_input(num_variants)  # Get inputs
-
         if st.button("Calculate Sample Size"):
-            # Add Validation Block
-            if (st.session_state.baseline_visitors <= 0 or
-                    st.session_state.baseline_conversions < 0 or
-                    st.session_state.baseline_conversions > st.session_state.baseline_visitors or
-                    not (0 < st.session_state.risk <= 100) or
-                    not (0 < st.session_state.trust <= 100) or
-                    st.session_state.mde <= 0 or
-                    st.session_state.tails not in ['Greater', 'Two-sided']):
-                st.write("<span style='color: #ff6600;'>*Please enter valid inputs for all fields</span>", unsafe_allow_html=True)
+            # Add Validation Block using st.session_state
+            if (st.session_state.get("baseline_visitors", 0) <= 0 or
+                    st.session_state.get("baseline_conversions", 0) < 0 or
+                    st.session_state.get("baseline_conversions", 0) > st.session_state.get("baseline_visitors", 0) or
+                    not (0 < st.session_state.get("risk", 90) <= 100) or
+                    not (0 < st.session_state.get("trust", 80) <= 100) or
+                    st.session_state.get("mde", 5) <= 0 or
+                    st.session_state.get("tails", 'Greater') not in ['Greater', 'Two-sided']):
+                # If input is INVALID, show an error message
+                st.write("<span style='color: #ff6600;'>*Please enter valid inputs for all fields (Visitors > 0, Conversions >= 0 and <= Visitors, Risk/Trust between 0-100, MDE > 0).</span>", unsafe_allow_html=True)
             else:
-                calculate_sample_size(num_variants)
-
+                # If input IS VALID, call the calculation function
+                calculate_sample_size(st.session_state.get("num_variants", 2),
+                                      st.session_state.get("baseline_visitors", 0),
+                                      st.session_state.get("baseline_conversions", 0),
+                                      st.session_state.get("mde", 5),
+                                      st.session_state.get("risk", 90),
+                                      st.session_state.get("trust", 80),
+                                      st.session_state.get("tails", 'Greater'))
 
 if __name__ == "__main__":
     run()
