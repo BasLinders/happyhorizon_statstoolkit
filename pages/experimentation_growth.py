@@ -45,10 +45,6 @@ def monte_carlo_simulation(cr_base, n_experiments_range, winrate, mde_min, mde_m
             k_value = SIGMOID_K_FACTORS[sigmoid_k]
             factor = sigmoid(n_experiments, sigmoid_x0, k_value)
 
-            # Calculate mean relative uplifts
-            #mean_relative_uplift_min = winrate * (mde_min / cr_base) if cr_base > 0 else 0 // not used
-            #mean_relative_uplift_max = winrate * (mde_max / cr_base) if cr_base > 0 else 0 // not used
-
             # Calculate standard deviations
             sd_uplift_min = mde_min * winrate * uplift_scaling_factor
             sd_uplift_max = mde_max * winrate * uplift_scaling_factor
@@ -113,7 +109,7 @@ def plot_simulation_results(simulation_df, n_experiments_max, intersection_exper
             ax.annotate(f"+{max_uplift:.2f}%", (0, max_uplift), textcoords="offset points", xytext=(5,5), ha='left', color='black')
 
             # --- x-axis label ---
-            ax.text(intersection_experiments, -1.5, f"{intersection_experiments}", ha='center', va='top', color='red', bbox=dict(facecolor='white', edgecolor='red'))
+            ax.text(intersection_experiments, -.5, f"{intersection_experiments}", ha='center', va='top', color='red', bbox=dict(facecolor='white', edgecolor='red'))
 
 
     ax.set_xlabel("Number of Experiments")
@@ -121,7 +117,8 @@ def plot_simulation_results(simulation_df, n_experiments_max, intersection_exper
     ax.set_title(f"Experiment and Uplift Forecast for {n_experiments_max} Experiments")
     ax.legend()
     ax.grid(True)
-    ax.set_ylim(bottom=-1) # Set y-axis to start just below 0 for visual clarity
+    ax.set_xlim(left=0, right=n_experiments_max)
+    ax.set_ylim(bottom=0)
     st.pyplot(fig)
 
 # --- Streamlit App ---
@@ -164,9 +161,9 @@ def run():
 
     with col1:
         st.write("### Baseline Data")
-        used_months = st.number_input("Months of data collection?", min_value=1, max_value=12, step=1, value=st.session_state.get("used_months",1))
-        visitors_base = st.number_input("Visitors?", min_value=0, step=1, value=st.session_state.get("visitors_base",0))
-        conv_base = st.number_input("Conversions?", min_value=0, step=1, value=st.session_state.get("conv_base",0))
+        used_months = st.number_input("Months of data collection", min_value=1, max_value=12, step=1, value=st.session_state.get("used_months",1))
+        visitors_base = st.number_input("Amount of visitors", min_value=0, step=1, value=st.session_state.get("visitors_base",0))
+        conv_base = st.number_input("Amount of conversions", min_value=0, step=1, value=st.session_state.get("conv_base",0))
 
     with col2:
         st.write("### Experimentation Program")
@@ -182,7 +179,8 @@ def run():
             "Max Experiments",
             min_value=1,
             step=1,
-            value=max(1, int(st.session_state.get("n_experiments_max", 1)))
+            value=max(1, int(st.session_state.get("n_experiments_max", 1))),
+            help="Enter the maximum number of experiments per year you want to take into account for the calculation."
         )
         variability_level = st.selectbox(
             "Uplift Variability Level",
@@ -222,7 +220,7 @@ def run():
         max_value=100,
         value=st.session_state.get("sigmoid_x0", DEFAULT_SIGMOID_X0),
         step=1,
-        help="Number of experiments at which diminishing returns are strongest."
+        help="The number of experiments at which diminishing returns start being noticable."
     )
     intersection_experiments = st.number_input(
         "Experiments for Intersection Lines",

@@ -110,7 +110,8 @@ def log_transform_data(df, kpi):
 
 # Perform statistical tests and provide conclusions
 def perform_stat_tests_and_conclusions(df, kpi, model):
-    st.write("### Test Results")
+    st.write("## Test Results")
+    st.write("Below are the results of your experiment data, dictated by the chosen tests.")
     # Shapiro-Wilk test on RESIDUALS, not the raw data
     shapiro_stat, shapiro_p_val = shapiro(model.resid)
     groups = [group[kpi].dropna() for _, group in df.groupby('experience_variant_label', observed=True)]
@@ -124,6 +125,7 @@ def perform_stat_tests_and_conclusions(df, kpi, model):
 
     significant = "no significant"
     if shapiro_p_val >= 0.05 and levene_p_val >= 0.05:
+        st.write("### Standard ANOVA")
         st.write("\nPerforming standard ANOVA (data is normal and variances are homogeneous).")
         anova_results = sm.stats.anova_lm(model, typ=2)
         st.write(anova_results)
@@ -134,6 +136,7 @@ def perform_stat_tests_and_conclusions(df, kpi, model):
             st.write("Tukey's Honestly Significant Difference test results:")
             st.write(tukey_results)
     elif levene_p_val >= 0.05:  # Check homogeneity of variance for Welch's ANOVA
+        st.write("### Welch's ANOVA")
         st.write("\nPerforming Welch's ANOVA (data is not normal, but variances are homogeneous).")
         # Welch's ANOVA using pingouin
         aov = welch_anova(data=df, dv=kpi, between='experience_variant_label')
@@ -144,7 +147,8 @@ def perform_stat_tests_and_conclusions(df, kpi, model):
 
     else:  # Variances are heterogeneous
         if len(df['experience_variant_label'].unique()) > 2:
-            st.write("\nPerforming Kruskal-Wallis test (non-parametric, variances heterogeneous).")
+            st.write("### Kruskal-Wallis Test")
+            st.write("\nPerforming Kruskal-Wallis test (non-parametric, variances heterogeneous, three or more groups).")
             statistic, p_value = kruskal(*groups)
             st.write(f"Kruskal-Wallis Test: Statistic = {statistic:.4f}, p-value = {p_value:.4g}")
             if p_value < 0.05:
@@ -153,6 +157,7 @@ def perform_stat_tests_and_conclusions(df, kpi, model):
             st.write("\nPerforming Mann-Whitney U test (non-parametric, variances heterogeneous, two groups).")
             group1, group2 = groups
             statistic, p_value = mannwhitneyu(group1, group2)
+            st.write("### Mann-Whitney U Test")
             st.write(f"Mann-Whitney U Test: Statistic = {statistic:.4f}, p-value = {p_value:.4g}")
             if p_value < 0.05:
                 significant = "significant"
@@ -163,12 +168,13 @@ def perform_stat_tests_and_conclusions(df, kpi, model):
     st.write("### Summary Statistics")
     st.dataframe(summary_stats)
 
-    st.write(f"The variant with the highest mean is '{highest_mean_variant}' with {summary_stats['mean'].loc[highest_mean_variant]:.2f}.")
-    st.write(f"The variant with the highest standard deviation is '{highest_std_variant}' with {summary_stats['std'].loc[highest_std_variant]:.2f}.")
+    st.write(f"- The variant with the highest mean is '{highest_mean_variant}' with {summary_stats['mean'].loc[highest_mean_variant]:.2f}.")
+    st.write(f"- The variant with the highest standard deviation is '{highest_std_variant}' with {summary_stats['std'].loc[highest_std_variant]:.2f}.")
 
-    if significant == "significant" and highest_mean_variant == "B" and highest_std_variant == "B":  # Added checks for both mean and std
+    st.write("### Conclusion")
+    if significant == "significant" and highest_mean_variant == "B" and highest_std_variant == "B":
         st.write(f"Congratulations! Variant B is the <span style='color: green;'>winner</span>!", unsafe_allow_html=True)
-    elif significant == "significant" and highest_mean_variant == "A" and highest_std_variant == "A": # Added A check
+    elif significant == "significant" and highest_mean_variant == "A" and highest_std_variant == "A":
         st.write(f"<span style='color: orange;'>Loss prevented</span>! Variant B performed significantly worse.", unsafe_allow_html=True)
     else:
         st.write("No significant differences detected. More data may be needed.")
@@ -219,7 +225,7 @@ def run():
         st.write(df.sample(10))
 
         kpi = st.selectbox("Select the KPI to analyze:", ['purchase_revenue', 'total_item_quantity'])
-        outlier_handling = st.selectbox("Select how to handle outliers:", ['None', 'Winsorizing + IQR', 'Log Transform', 'Removal'], help='Choose the method for handling outliers.')
+        outlier_handling = st.selectbox("Select how to handle outliers:", ['None', 'Winsorizing + IQR', 'Log Transform', 'Removal'], help='Choose the method for handling outliers. "None" uses a default > 5 standard deviation definition for detection purposes.')
 
         method = None
         outlier_stdev = None
@@ -232,7 +238,7 @@ def run():
             elif method == 'Percentile':
                 percentile = st.selectbox("Select percentile for Winsorization:", [90, 95, 99])
 
-        outliers_mask, initial_model = detect_outliers(df, kpi, outlier_stdev if method == 'Standard Deviation' else 3)  # Default 3 STD for detection purposes
+        outliers_mask, initial_model = detect_outliers(df, kpi, outlier_stdev if method == 'Standard Deviation' else 5)  # Default 5 STD for detection purposes
         st.write(f"Number of detected outliers: {outliers_mask.sum()}")
 
         # Show raw data plots before any processing
@@ -250,11 +256,14 @@ def run():
 
         if st.button("Calculate my test results"):
             # --- Outlier Handling ---
-            processed_df = df.copy()  # Work on a copy
+            processed_df = df.copy()
 
             if outlier_handling == 'Winsorizing + IQR':
                 processed_df, lower_bound, upper_bound, percentile_lower, percentile_upper = winsorize_iqr_filter(processed_df, kpi, outlier_stdev, percentile)
-                st.write(f"Winsorizing + IQR applied: Capped values between {percentile_lower:.2f} and {percentile_upper:.2f} ({percentile}th percentile-based).")
+                if method == 'Percentile':
+                    st.write(f"Winsorizing + IQR applied: Capped values between {percentile_lower:.2f} and {percentile_upper:.2f} ({percentile}th percentile-based).")
+                elif method == 'Standard Deviation':
+                    st.write(f"Winsorizing + IQR applied: Capped values between {percentile_lower:.2f} and {percentile_upper:.2f} (with {outlier_stdev} standard deviations.")
             elif outlier_handling == 'Log Transform':
                 processed_df = log_transform_data(processed_df, kpi)
                 st.write("Log transformation applied.")
@@ -266,24 +275,22 @@ def run():
             model_after = smf.ols(f'{kpi} ~ C(experience_variant_label)', data=processed_df).fit()
 
             # --- Processed Data Plots (using the processed data) ---
-            st.write("### Processed Data Box Plot")
+            st.write("### Refitted Data Box Plot")
             sns.boxplot(x='experience_variant_label', y=kpi, data=processed_df)
             st.pyplot(plt)
             plt.clf()
 
-            st.write("### QQ Plot (using residuals from the refitted model)")
+            st.write("### Refitted QQ Plot")
             qqplot(model_after.resid,  marker='o')  # Use residuals from the new model
             plt.title("QQ Plot of Residuals (After Outlier Handling)") # Clear title
             st.pyplot(plt)
             plt.clf()
 
-
-            st.write("### Processed Data Histogram with KDE (using residuals from refitted model)")
+            st.write("### Refitted Data Histogram with KDE")
             sns.histplot(model_after.resid, kde=True, bins=30) # Use residuals from the new model
             plt.title("Histogram of Residuals (After Outlier Handling) with KDE") # Clear title
             st.pyplot(plt)
             plt.clf()
-
 
             perform_stat_tests_and_conclusions(processed_df, kpi, model_after)  # Pass the refitted model
 

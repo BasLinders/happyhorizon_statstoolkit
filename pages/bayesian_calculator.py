@@ -28,17 +28,20 @@ def get_user_inputs():
         with col1:
             expected_sample_size = st.number_input("What is the total expected sample size of the experiment?", min_value=1000, step=1)
         with col2:
-            expected_conversion = st.number_input("Expected Conversion Rate (proportion)", min_value=0.001, max_value=1.0, step=0.001)
-        belief_strength = st.selectbox("Belief Strength", ["weak", "moderate", "strong"], index=1)
+            expected_conversion = st.number_input("Expected Conversion Rate", min_value=0.01, max_value=100.00, step=0.01)
+        belief_strength = st.selectbox("Belief Strength", ["weak", "moderate", "strong"], index=1, help="Ïndicate how strong your belief is in the expected conversion rate.")
         alpha_prior, beta_prior = get_beta_priors(expected_conversion, belief_strength, expected_sample_size)
     else:
         alpha_prior, beta_prior = 1, 1  # Default uninformed priors
     
     st.write("")
     st.write("### Business case data")
-    st.session_state.aov_a = st.number_input("What is the average order value of A? ", min_value=0.0, step=0.01, value=st.session_state.get("aov_a", 0.0))
-    st.session_state.aov_b = st.number_input("What is the average order value of B? ", min_value=0.0, step=0.01, value=st.session_state.get("aov_b", 0.0))
-    st.session_state.runtime_days = st.number_input("For how many days did your test run?", min_value=0, step=1, value=st.session_state.get("runtime_days", 0))
+    col3, col4 = st.columns(2)
+    with col3: 
+        st.session_state.aov_a = st.number_input("What is the average order value of A? ", min_value=0.0, step=0.01, value=st.session_state.get("aov_a", 0.0))
+        st.session_state.aov_b = st.number_input("What is the average order value of B? ", min_value=0.0, step=0.01, value=st.session_state.get("aov_b", 0.0))
+    with col4:
+        st.session_state.runtime_days = st.number_input("For how many days did your test run?", min_value=0, step=1, value=st.session_state.get("runtime_days", 0))
     
     return st.session_state.visitors_a, st.session_state.conversions_a, st.session_state.visitors_b, st.session_state.conversions_b, alpha_prior, beta_prior, st.session_state.probability_winner, st.session_state.aov_a, st.session_state.aov_b, st.session_state.runtime_days
 
@@ -66,6 +69,7 @@ def calculate_probability_b_better_and_samples(visitors_a, conversions_a, visito
     return probability_b_better, samples_a, samples_b
 
 def get_beta_priors(expected_conversion_rate: float, belief_strength: str, expected_sample_size: int):
+    expected_conversion_rate = expected_conversion_rate / 100
     if belief_strength not in ['weak', 'moderate', 'strong']:
         raise ValueError("belief_strength must be 'weak', 'moderate', or 'strong'")
 

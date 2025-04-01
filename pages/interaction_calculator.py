@@ -37,24 +37,24 @@ def run():
     col1, col2 = st.columns(2)
     with col1:
         st.write("### Visitors")
-        st.session_state.AA_u = st.number_input("AA Visitors", value=st.session_state.AA_u)
+        st.session_state.AA_u = st.number_input("AA Visitors", value=st.session_state.AA_u, help="Visitors that saw the control of both experiment 1 and 2.")
         AA_u = st.session_state.AA_u
-        st.session_state.AB_u = st.number_input("AB Visitors", value=st.session_state.AB_u)
+        st.session_state.AB_u = st.number_input("AB Visitors", value=st.session_state.AB_u, help="Visitors that saw the control of experiment 1 and the treatment variant of experiment 2.")
         AB_u = st.session_state.AB_u
-        st.session_state.BA_u = st.number_input("BA Visitors", value=st.session_state.BA_u)
+        st.session_state.BA_u = st.number_input("BA Visitors", value=st.session_state.BA_u, help="Visitors that saw the treatment variant of experiment 1 and the control of experiment 2.")
         BA_u = st.session_state.BA_u
-        st.session_state.BB_u = st.number_input("BB Visitors", value=st.session_state.BB_u)
+        st.session_state.BB_u = st.number_input("BB Visitors", value=st.session_state.BB_u, help="Visitors that saw the treatment variant of both experiment 1 and 2.")
         BB_u = st.session_state.BB_u
 
     with col2:
         st.write("### Conversions")
-        st.session_state.AA_c = st.number_input("AA Conversions", value=st.session_state.AA_c)
+        st.session_state.AA_c = st.number_input("AA Conversions", value=st.session_state.AA_c, help="Conversions from visitors that saw the control of both experiment 1 and 2.")
         AA_c = st.session_state.AA_c
-        st.session_state.AB_c = st.number_input("AB Conversions", value=st.session_state.AB_c)
+        st.session_state.AB_c = st.number_input("AB Conversions", value=st.session_state.AB_c, help="Conversions from visitors that saw the control of experiment 1 and the treatment variant of experiment 2")
         AB_c = st.session_state.AB_c
-        st.session_state.BA_c = st.number_input("BA Conversions", value=st.session_state.BA_c)
+        st.session_state.BA_c = st.number_input("BA Conversions", value=st.session_state.BA_c, help="Conversions from visitors that saw the treatment variant of experiment 1 and the control of experiment 2.")
         BA_c = st.session_state.BA_c
-        st.session_state.BB_c = st.number_input("BB Conversions", value=st.session_state.BB_c)
+        st.session_state.BB_c = st.number_input("BB Conversions", value=st.session_state.BB_c, help="Conversions from visitors that saw the treatment variant of both experiment 1 and 2.")
         BB_c = st.session_state.BB_c
 
     st.write("")

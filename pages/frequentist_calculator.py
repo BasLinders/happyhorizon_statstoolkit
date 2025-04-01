@@ -64,14 +64,16 @@ def get_user_inputs():
             )
 
     st.session_state.risk = st.number_input(
-        "In %, how confident do you want to be in the results (enter 90, 95, etc)?",
-        min_value=0, step=1, value=st.session_state.risk
+        "In %, how confident do you want to be in the results?",
+        min_value=0, step=1, value=st.session_state.risk,
+        help="Set the confidence level for which you want to test (enter 90, 95, etc)."
     )
 
     st.session_state.tail = st.selectbox(
-        "Do you only want to know if B is better than A ('greater'), or if B is worse than A ('two-sided')?",
+        "Choose the test type:",
         options=['greater', 'two-sided'],
-        index=['greater', 'two-sided'].index(st.session_state.tail)
+        index=['greater', 'two-sided'].index(st.session_state.tail),
+        help="A one-sided test ('greater') focuses only on improvement of B over A. For a change in either direction (better or worse), choose 'two-sided'."
     )
 
     return num_variants, visitor_counts, variant_conversions, st.session_state.risk, st.session_state.tail

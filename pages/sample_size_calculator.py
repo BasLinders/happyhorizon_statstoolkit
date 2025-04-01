@@ -28,7 +28,10 @@ def get_user_input():
             st.number_input("What MDE are you aiming for?", min_value=1, max_value=100, step=1, value=st.session_state.get("mde", 5), key="mde")
     st.selectbox(
         "Hypothesis type ('Greater' or 'Two-sided'): ",
-        options=['Greater', 'Two-sided'], index=['Greater', 'Two-sided'].index(st.session_state.get("tails", 'Greater')), key="tails"
+        options=['Greater', 'Two-sided'], 
+        index=['Greater', 'Two-sided'].index(st.session_state.get("tails", 'Greater')),
+        key="tails",
+        help="Choose 'Greater' (one-sided) when testing only for improvement (B > A); this requires fewer samples and results in a possible lower MDE. Choose 'Two-sided' when testing for any difference (better or worse); this is safer but requires more samples and possibly raises the MDE."
     )
 
 # Holm-Bonferroni correction for MDE calculation
@@ -243,10 +246,10 @@ def run():
     """
     This calculator provides two ways to plan for the runtime of your experiment.
     
-    1. Calculate the relative MDE neede per week over the course of 6 weeks
-        - This outputs a table with a constant sample size increment and a calculated MDE
-    2. Calculate a fixed sample size, based on a desired relative MDE
-        - This outputs a calculated sample size and an estimate of the runtime in days
+    1. MDE Projection (Weeks 1-6):
+        - Calculates the relative MDE for each week, assuming accumulating weekly samples. Outputs a table of weekly MDE vs. Sample Size.
+    2. Sample Size Calculation:
+        - Calculates the total sample size needed for your target relative MDE. Outputs the required sample size and test duration in days.
 
     Enter the values below to start.
     """

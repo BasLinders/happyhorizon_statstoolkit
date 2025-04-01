@@ -70,24 +70,29 @@ def run():
 
             # Define SRM result based on p-value threshold
             if p_value < 0.01:
+                conclusion = "<span style='color: #FF6600; font-weight: 600;'>possible sample ratio mismatch</span>"
                 srm_result = (
-                    f"possible sample ratio mismatch! The distribution of data between your variants significantly deviates from the "
+                    f"{conclusion}! The distribution of data between your variants significantly deviates from the "
                     f"expected proportions of {expected_distribution}. Check the distribution."
                 )
             else:
-                srm_result = "valid distribution. The amount of visitors per variant does not significantly deviate from the expected split"
+                conclusion = "<span style='color: #009900; font-weight: 600;'>valid distribution</span>"
+                srm_result = (
+                    f"{conclusion}. The amount of visitors per variant does not significantly deviate from the expected split"
+                    )
 
             # Display results
             st.write("")
             st.write("### Conclusion")
             st.write(f"P-value: {p_value:.4f}. The expected amount of visitors per variant on average is {round(statistics.mean(expected))}.") 
-            st.write(f"This suggests a {srm_result}.")
-            st.write("### Expected vs. Observed Values")
-            st.write("The specific distribution for your entered data:")
-            data = {"Variant" : [alphabet[i] for i in range(num_variants)],
-                    "Observed" : observed,
-                    "Expected" : [round(x) for x in expected]}
-            st.dataframe(data)
+            st.write(f"This suggests a {srm_result}.", unsafe_allow_html=True)
+            if num_variants > 2:
+                st.write("### Expected vs. Observed Values")
+                st.write("The specific distribution for your entered data:")
+                data = {"Variant" : [alphabet[i] for i in range(num_variants)],
+                        "Observed" : observed,
+                        "Expected" : [round(x) for x in expected]}
+                st.dataframe(data)
 
 if __name__ == "__main__":
     run()
