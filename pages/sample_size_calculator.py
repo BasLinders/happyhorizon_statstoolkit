@@ -117,8 +117,8 @@ def calculate_sample_size(num_variants, baseline_visitors, baseline_conversions,
 
     try:
         mde_relative = mde / 100
-        alpha = 1 - (risk / 100)  # Significance level (e.g., 0.05 for 95% confidence)
-        power = trust / 100       # Statistical power (e.g., 0.8 for 80% power)
+        alpha = 1 - (risk / 100)  # Significance level
+        power = trust / 100       # Statistical power
         beta = 1 - power          # Type II error rate
 
         # Baseline conversion rate
@@ -126,19 +126,16 @@ def calculate_sample_size(num_variants, baseline_visitors, baseline_conversions,
 
         # Minimum Detectable Effect (absolute)
         mde_absolute = p * mde_relative
-        effect_size = mde_absolute # Use a consistent name
+        effect_size = mde_absolute
 
         # Expected conversion rates
-        p1 = p  # Control group rate
+        p1 = p
         p2 = p + mde_absolute  # Treatment group rate
 
         if p2 > 1.0:
             st.warning(f"The calculated treatment conversion rate ({p2:.2%}) exceeds 100% based on the baseline rate ({p:.2%}) and MDE ({mde}%). Please check your inputs.")
-            # Allow calculation to proceed but warn user
         if p2 < 0.0:
              st.warning(f"The calculated treatment conversion rate ({p2:.2%}) is negative based on the baseline rate ({p:.2%}) and MDE ({mde}%). Please check your inputs.")
-             # Allow calculation to proceed but warn user
-
 
     except ZeroDivisionError:
         st.error("Error during parameter calculation (potentially division by zero). Please ensure baseline visitors > 0.")
@@ -154,7 +151,6 @@ def calculate_sample_size(num_variants, baseline_visitors, baseline_conversions,
     try:
         # Adjust alpha for multiple comparisons if necessary
         if num_variants > 2:
-            # Assumes holm_bonferroni returns the MAX Z-score needed
             num_comparisons = num_variants - 1
             z_alpha_adjusted = holm_bonferroni(num_comparisons, alpha, tails)
             correction_applied = True
@@ -177,7 +173,6 @@ def calculate_sample_size(num_variants, baseline_visitors, baseline_conversions,
     except Exception as e:
         st.error(f"An error occurred during Z-score calculation: {e}")
         return
-
 
     # --- Sample Size Formula ---
     try:
@@ -270,7 +265,7 @@ def run():
             # Validate input using st.session_state
             if (st.session_state.get("baseline_visitors", 0) <= 0 or
                 st.session_state.get("baseline_conversions", 0) < 0 or
-                st.session_state.get("baseline_conversions", 0) > st.session_state.get("baseline_visitors", 0) or # Added check
+                st.session_state.get("baseline_conversions", 0) > st.session_state.get("baseline_visitors", 0) or
                 not (0 < st.session_state.get("risk", 0) <= 100) or
                 not (0 < st.session_state.get("trust", 0) <= 100) or
                 st.session_state.get("tails") not in ['Greater', 'Two-sided']):
