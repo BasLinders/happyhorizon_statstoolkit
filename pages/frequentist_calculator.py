@@ -149,7 +149,8 @@ def calculate_statistics(num_variants, visitor_counts, variant_conversions, risk
 
         def analytical_power(cr_control, cr_variant, n_control, n_variant, alpha, tail):
             pooled_p = (cr_control * n_control + cr_variant * n_variant) / (n_control + n_variant)
-            effect_size = abs(cr_control - cr_variant) / np.sqrt(pooled_p * (1 - pooled_p) * (1 / n_control + 1 / n_variant))
+            # effect_size = abs(cr_control - cr_variant) / np.sqrt(pooled_p * (1 - pooled_p) * (1 / n_control + 1 / n_variant)) # effect size pooled proportions
+            effect_size = abs(cr_control - cr_variant) / np.sqrt((cr_control * (1 - cr_control) / n_control) + (cr_variant * (1 - cr_variant) / n_variant))
             if tail in ['greater', 'less']:
                 z_alpha = stats.norm.ppf(1 - alpha)
                 power = stats.norm.cdf(effect_size - z_alpha) if tail == 'greater' else stats.norm.cdf(effect_size + z_alpha)
