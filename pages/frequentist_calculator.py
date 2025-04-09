@@ -197,7 +197,7 @@ def calculate_statistics(num_variants, visitor_counts, variant_conversions, risk
 
     return conversion_rates, se_list, p_values, significant_results, observed_powers, srm_p_value, sidak_alpha
 
-def visualize_results(conversion_rates, se_list, num_variants, significant_results, sidak_alpha, risk):
+def visualize_results(conversion_rates, se_list, num_variants, significant_results, sidak_alpha):
     st.write("")
     st.write("### Probability Density Graph:")
 
@@ -208,46 +208,67 @@ def visualize_results(conversion_rates, se_list, num_variants, significant_resul
     all_means = np.array(conversion_rates)
     all_ses = np.array(se_list)
     # Calculate bounds based on +/- 4 standard errors from min/max means
-    plot_min = np.min(all_means - 4 * all_ses)
-    plot_max = np.max(all_means + 4 * all_ses)
+    # Add small epsilon to SE for range calculation if SE is zero
+    plot_min = np.min(all_means - 4 * np.maximum(all_ses, 1e-9))
+    plot_max = np.max(all_means + 4 * np.maximum(all_ses, 1e-9))
 
     x_min = max(0, plot_min)
     x_max = min(1, plot_max)
+    # Ensure x_min is strictly less than x_max
+    if x_max <= x_min:
+        x_max = x_min + 1e-6 # Add tiny offset if min/max are too close or equal
     x_range = np.linspace(x_min, x_max, 1000)
 
-    # Define colors
-    colors = ['#A9A9A9', '#3498DB', '#9B59B6', '#E74C3C', '#1ABC9C', '#F39C12', '#2980B9', '#D35400', '#C0392B', '#7D3C98']
 
-    colors[0] = '#AAAAAA' # Grey for control
+    # Define colors
+    # Using a slightly larger, more distinct color palette
+    colors = ['#808080', '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728',
+              '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
+
+    # Ensure control is grey
+    colors[0] = '#808080' # Grey for control (index 0)
+
     shade_colors = {
         'better': '#90EE90', # lightgreen
         'worse': '#F08080'  # lightcoral
     }
     base_alpha = 0.9 # Alpha for lines
-    shade_alpha = 0.4 # Alpha for fills
+    shade_alpha = 0.3 # Alpha for fills (slightly reduced for better visibility)
 
     # Store plotted PDFs to avoid recalculation
     pdfs = []
     for i in range(num_variants):
-        # Handle potential zero standard error if data is weird
-        se = max(se_list[i], 1e-9) # Avoid SE=0
+        # Handle potential zero standard error
+        se = max(se_list[i], 1e-9) # Avoid SE=0 for norm.pdf
         pdf = norm.pdf(x_range, conversion_rates[i], se)
         pdfs.append(pdf)
 
-        plt.plot(x_range * 100, pdf, label=f'Variant {string.ascii_uppercase[i]}', color=colors[i % len(colors)], alpha=base_alpha, linewidth=1.5)
-        plt.axvline(conversion_rates[i] * 100, color=colors[i % len(colors)], linestyle='--', alpha=base_alpha*0.8)
+        variant_label = f'Variant {string.ascii_uppercase[i]}' if i > 0 else 'Control (A)'
+        line_color = colors[i % len(colors)]
 
-        # Add mean text label (lowered to avoid probability text)
-        plt.text(conversion_rates[i] * 100, plt.ylim()[1] * 0.05,
-                 f'  {string.ascii_uppercase[i]}: {conversion_rates[i]*100:.2f}%', # Label format
-                 color=colors[i % len(colors)], ha='left', rotation=90, va='bottom', fontsize=9) # Adjusted alignment
+        plt.plot(x_range * 100, pdf, label=variant_label, color=line_color, alpha=base_alpha, linewidth=1.5)
+        plt.axvline(conversion_rates[i] * 100, color=line_color, linestyle='--', alpha=base_alpha*0.8)
+
+        # Add mean text label (adjust vertical position slightly)
+        text_left_margin = 0.005
+        plt.text(conversion_rates[i] * 100 + text_left_margin, 
+                 plt.ylim()[1] * 0.03, # Lowered position
+                 f' {string.ascii_uppercase[i]}: {conversion_rates[i]*100:.2f}%', # Label format
+                 color=line_color, 
+                 ha='left', 
+                 rotation=90, 
+                 va='bottom', 
+                 fontsize=9
+                 )
 
     # --- Shading & Probability Calculation ---
     control_cr = conversion_rates[0]
     control_se = max(se_list[0], 1e-9) # Avoid SE=0
 
-    for i in range(1, num_variants): # Compare variants i > 0 against control (0)
+    # Only loop through actual variants (index > 0) for comparison
+    for i in range(1, num_variants):
         # Check the significance flag passed to the function for this variant vs control
+        # The significance array index is i-1 because it doesn't include the control
         if significant_results[i - 1]:
             variant_cr = conversion_rates[i]
             variant_se = max(se_list[i], 1e-9) # Avoid SE=0
@@ -255,60 +276,78 @@ def visualize_results(conversion_rates, se_list, num_variants, significant_resul
 
             is_better = variant_cr > control_cr
             shade_color = shade_colors['better'] if is_better else shade_colors['worse']
+            variant_label_char = string.ascii_uppercase[i]
+            control_label_char = string.ascii_uppercase[0]
+
+            # --- Calculate probability P(Variant > Control) ---
+            mean_diff = variant_cr - control_cr
+            se_diff = math.sqrt(variant_se**2 + control_se**2)
+
+            prob_variant_better = 0.5 # Default if se_diff is effectively zero
+            if se_diff > 1e-9: # Check for non-zero se_diff before division
+                z_score = mean_diff / se_diff
+                prob_variant_better = norm.cdf(z_score) # Probability Variant i > Variant 0
+
+            prob_control_better = 1 - prob_variant_better
 
             # --- Calculate bounds to exclude the relevant alpha tail ---
             if is_better:
+                # Shade area where Variant > significance threshold
                 lower_bound = norm.ppf(sidak_alpha, loc=variant_cr, scale=variant_se)
                 fill_condition = (x_range >= lower_bound)
-                # label_detail = f"(Lower {sidak_alpha*100:.1f}% tail excluded)" # Optional detail
+                bound_line_value = lower_bound * 100
             else:
+                # Shade area where Variant < significance threshold
                 upper_bound = norm.ppf(1 - sidak_alpha, loc=variant_cr, scale=variant_se)
                 fill_condition = (x_range <= upper_bound)
-                # label_detail = f"(Upper {sidak_alpha*100:.1f}% tail excluded)" # Optional detail
+                bound_line_value = upper_bound * 100
 
             # --- Shade the area EXCLUDING the alpha tail ---
-            label_text = f'{string.ascii_uppercase[i]} (Significant)'
+            if prob_variant_better > prob_control_better:
+                label_text = f'{variant_label_char} vs {control_label_char} (Significant)'
+            elif prob_control_better > prob_variant_better:
+                label_text = f'{control_label_char} vs {variant_label_char} (Significant)'
+            else:
+                label_text = ''
+                
             plt.fill_between(x_range * 100, pdf_variant, 0,
                              where=fill_condition,
                              color=shade_color, alpha=shade_alpha,
                              label=label_text)
+            # Format the probability text to display
+            prob_text_display = f"P({variant_label_char}>{control_label_char}): {prob_variant_better*100:.1f}%"
 
-            # --- Calculate and display probability P(Variant > Control) ---
-            mean_diff = variant_cr - control_cr
-            se_diff = math.sqrt(variant_se**2 + control_se**2)
+            # --- Add boundary line ---
+            plt.axvline(bound_line_value, color='grey', linestyle=':', linewidth=1, alpha=0.7)
 
-            prob_variant_better = 0.5 # Default if se_diff is zero
-            if se_diff > 1e-9: # Check for non-zero se_diff before division
-                 # P(diff > 0) corresponds to the CDF of the standard normal distribution
-                 # evaluated at (mean_diff / se_diff)
-                 z_score = mean_diff / se_diff
-                 prob_variant_better = norm.cdf(z_score) # Probability Variant i > Variant 0
-
-            # Determine which probability to display (P(B>A) if B is better, P(A>B) if A is better)
-            #prob_to_display = prob_variant_better if is_better else (1.0 - prob_variant_better)
-            #prob_text = f"{prob_to_display*100:.0f}%"
-            prob_text = f"{risk}%"
-
-            # --- Add probability line and text ---
+            # --- *** FIX: Calculate mid_point_cr here *** ---
             mid_point_cr = (control_cr + variant_cr) / 2.0
-            plt.axvline(mid_point_cr * 100, color='grey', linestyle=':', linewidth=1, alpha=0.7)
 
-            # Place text near the top, centered horizontally near the midpoint line
+            # --- Add probability text ---
+            # Place text near the top, centered horizontally near the midpoint
             current_ylim = plt.ylim()
-            y_pos_text = current_ylim[1] * 0.15
-            plt.text(mid_point_cr * 100, y_pos_text, prob_text,
-                     color='black', ha='center', va='center', fontsize=10,
-                     bbox=dict(boxstyle='round,pad=0.3', fc='white', alpha=0.7, ec='none')) # Add background box for readability
+            y_pos_text = current_ylim[1] * 0.85 # Position near top
+            plt.text(mid_point_cr * 100, 
+                     y_pos_text, 
+                     prob_text_display,
+                     color='black', 
+                     ha='center', 
+                     va='center', 
+                     fontsize=10,
+                     #rotation = 90,
+                     bbox=dict(boxstyle='round,pad=0.3', fc='white', alpha=0.7, ec='none')
+                     )
 
-            # Restore ylim in case text pushed it up
+            # Restore ylim in case text pushed it up slightly (though less likely with y_pos near top)
             plt.ylim(current_ylim)
 
     plt.xlabel('Conversion rate (%)')
     plt.ylabel('Probability density')
     plt.title('Comparison of Estimated Conversion Rate Distributions')
-    plt.legend()
+    plt.legend(loc='upper left', bbox_to_anchor=(1, 1)) # Move legend outside plot
     plt.ylim(bottom=0) # Ensure y-axis starts at 0
-    #plt.grid(True, which='major', linestyle='--', linewidth=0.5, alpha=0.5) # Add subtle grid
+    plt.grid(True, which='major', linestyle='--', linewidth=0.5, alpha=0.3) # Add subtle grid
+    #plt.tight_layout(rect=[0, 0, 0.85, 1]) # Adjust layout to make space for legend
 
     st.pyplot(plt)
     plt.clf()
@@ -386,7 +425,7 @@ def run():
 
         if valid_inputs:
             conversion_rates, se_list, p_values, significant_results, observed_powers, srm_p_value, sidak_alpha = calculate_statistics(num_variants, visitor_counts, variant_conversions, risk, tail)
-            visualize_results(conversion_rates, se_list, num_variants, significant_results, sidak_alpha, risk)
+            visualize_results(conversion_rates, se_list, num_variants, significant_results, sidak_alpha)
             summarize_results(conversion_rates, p_values, significant_results, observed_powers, num_variants, visitor_counts, srm_p_value, sidak_alpha, tail)
         else:
             st.write("")
