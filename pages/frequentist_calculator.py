@@ -251,7 +251,7 @@ def summarize_results(conversion_rates, p_values, significant_results, observed_
         if significant_results[i - 1]:
             st.write(f"### Test results for {alphabet[i]} vs {alphabet[0]}")
             st.markdown(f" * **Statistically significant result** for {alphabet[i]} with p-value: {p_values[i-1]:.4f}!")
-            st.markdown(f" * **Observed power** for {alphabet[i]}: {observed_powers[i-1] * 100:.2f}%")
+            st.markdown(f" * **Observed power**: {observed_powers[i-1] * 100:.2f}%")
             st.markdown(f" * **Conversion rate change** for {alphabet[i]}: {((conversion_rates[i] - conversion_rates[0]) / conversion_rates[0]) * 100:.2f}%")
             if conversion_rates[i] > conversion_rates[0]:
                 st.success(f"Variant **{alphabet[i]}** is a **winner**, congratulations!")
