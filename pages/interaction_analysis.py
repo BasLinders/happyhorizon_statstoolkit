@@ -6,7 +6,7 @@ from matplotlib.ticker import FuncFormatter
 import streamlit as st
 
 st.set_page_config(
-    page_title="Interaction Effect calculator",
+    page_title="Interaction Analysis",
     page_icon="🔢",
 )
 
@@ -22,7 +22,7 @@ def run():
     st.session_state.setdefault("BA_c", 0)
     st.session_state.setdefault("BB_c", 0)
 
-    st.title("Interaction Effect Calculator")
+    st.title("Interaction Analysis")
     """
     This calculator lets you see if your variants from two experiments that ran concurrently influenced eachother on the KPI that
     you're measuring. The most important thing is that you fetch data that is accumulated in the combinations AA, AB, BA, BB correctly.

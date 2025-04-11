@@ -12,7 +12,7 @@ import scikit_posthocs as sp
 import streamlit as st
 
 st.set_page_config(
-    page_title="Continuous Data Calculator",
+    page_title="Continuous metric analysis",
     page_icon="🔢",
 )
 
@@ -479,7 +479,7 @@ def perform_stat_tests_and_conclusions(df, kpi, model_after):
 
 # Main Streamlit app
 def run():
-    st.title("Continuous Data Calculator")
+    st.title("Continuous Metric Analysis")
     """
     This calculator lets you analyze revenue data or the amount of items of ecommerce transactions (or leads) for your online experiments. See the example CSV file for what you need to upload. 
     You're not limited to just A and B, but can add more labels when applicable (C, D, etc.).

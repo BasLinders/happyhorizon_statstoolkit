@@ -7,7 +7,7 @@ from scipy.stats import beta
 import math
 
 st.set_page_config(
-    page_title="Bayesian calculator",
+    page_title="Bayesian Analysis",
     page_icon="🔢",
 )
 
@@ -340,7 +340,7 @@ def display_results(probability_b_better, observed_uplift, probability_winner, a
         st.warning("Business case data is missing or incomplete. Skipping monetary calculations.")
 
 def run():
-    st.title("Bayesian Calculator")
+    st.title("Bayesian Analysis")
     """
     This calculator outputs the probability of a variant to generate more conversions than the other.
     Remember, you set the boundaries of success for the experiment; this calculator only helps you to translate it to numbers.

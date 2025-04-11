@@ -124,7 +124,7 @@ def plot_simulation_results(simulation_df, n_experiments_max, intersection_exper
 # --- Streamlit App ---
 
 def run():
-    st.set_page_config(page_title="Annual Compound Growth Calculator", page_icon="🔢")
+    st.set_page_config(page_title="Annual Compound Growth Estimation", page_icon="🔢")
 
     # Initialize session state
     st.session_state.setdefault("visitors_base", 0)
@@ -139,7 +139,7 @@ def run():
     st.session_state.setdefault("variability_level", DEFAULT_VARIABILITY)
     st.session_state.setdefault("intersection_experiments", 1)
 
-    st.title("Annual Compound Growth Calculator")
+    st.title("Annual Compound Growth Estimation")
     st.write("""
     This calculator will estimate annual compound growth for experimentation in worst- and best-case scenarios.
     Each table row corresponds to the cumulative impact of conducting more experiments.

@@ -9,7 +9,7 @@ import concurrent.futures
 import math
 
 st.set_page_config(
-    page_title="Frequentist Calculator",
+    page_title="Frequentist Analysis",
     page_icon="",
 )
 
@@ -21,7 +21,7 @@ def initialize_session_state():
     st.session_state.setdefault("tail", 'greater')
 
 def display_intro():
-    st.write("# Frequentist Calculator")
+    st.write("# Frequentist Analysis")
     st.markdown("""
                 This calculator tests your data for statistical significance against the null-hypothesis (= there's no difference between 'A' and 'B'). 
                 Input your experiment data and read the results at the bottom of the page.
