@@ -1,6 +1,7 @@
 altair
 streamlit
 scikit-learn
+scikit-posthocs
 seaborn
 scipy
 pandas
