@@ -72,9 +72,9 @@ def get_user_inputs():
 
     st.session_state.tail = st.selectbox(
         "Choose the test type:",
-        options=['greater', 'two-sided'],
-        index=['greater', 'two-sided'].index(st.session_state.tail),
-        help="A one-sided test ('greater') focuses only on improvement of B over A. For a change in either direction (better or worse), choose 'two-sided'."
+        options=['greater', 'two-sided', 'less'],
+        index=['greater', 'two-sided', 'less'].index(st.session_state.tail),
+        help="A one-sided test focuses on a change in one specific direction. Choose 'greater' if you only care whether the variant is significantly better than the control. Choose 'less' if you only care whether the variant is significantly worse than the control. For detecting a significant change in either direction (better or worse), choose 'two-sided'. Power may increase with a one-sided test."
     )
 
     return num_variants, visitor_counts, variant_conversions, st.session_state.risk, st.session_state.tail
@@ -97,39 +97,32 @@ def calculate_statistics(num_variants, visitor_counts, variant_conversions, risk
     else:
         sidak_alpha = alpha  # No correction needed if less than 3 variants
 
-    # Verify the data
     st.write("### Please verify your input:")
     st.markdown(f"Chosen threshold for significance: {risk}%")
-    st.markdown(f"Chosen test type: {'B is better than A' if tail == 'greater' else 'B is worse than A'}.")
+    st.markdown(f"Chosen test type: {'B is better than A' if tail == 'greater' else ('B is worse than A' if tail == 'less' else 'Two-sided')}.") # Added 'less', assumed other means two-sided
 
     for i in range(num_variants):
         st.markdown(f"Variant {string.ascii_uppercase[i]}: {visitor_counts[i]} visitors, {variant_conversions[i]} conversions")
 
-    # Conversion rates
     conversion_rates = [c / v for c, v in zip(variant_conversions, visitor_counts)]
     for i in range(num_variants):
         st.markdown(f" * Conversion Rate {string.ascii_uppercase[i]}: {conversion_rates[i] * 100:.2f}%")
 
-    # SRM check
     observed = np.array(visitor_counts)
     expected = np.array([sum(observed) / len(observed)] * len(observed))
-
-    # Perform the chi-squared test for independence
     chi2, srm_p_value = stats.chisquare(f_obs=observed, f_exp=expected)
 
-    # Calculate pooled proportion and standard errors
     pooled_proportion = sum(variant_conversions) / sum(visitor_counts)
     se_list = [np.sqrt(pooled_proportion * (1 - pooled_proportion) / v) for v in visitor_counts]
 
-    # Calculate the z-statistic for each variant against the control
     z_stats = [(conversion_rates[i] - conversion_rates[0]) / np.sqrt(se_list[i]**2 + se_list[0]**2) for i in range(1, num_variants)]
 
-    # Calculate the p-values for each variant
     p_values = [2 * (1 - stats.norm.cdf(abs(z))) for z in z_stats]
 
-    # Adjust for one-sided test if needed
     if tail == 'greater':
         p_values = [p / 2 if z >= 0 else 1 - p / 2 for z, p in zip(z_stats, p_values)]
+    elif tail == 'less':
+        p_values = [p / 2 if z < 0 else 1 - p / 2 for z, p in zip(z_stats, p_values)]
     elif tail == 'two-sided':
         p_values = [p for p in p_values]
 
@@ -139,23 +132,20 @@ def calculate_statistics(num_variants, visitor_counts, variant_conversions, risk
         st.markdown(f" * Z-statistic for {string.ascii_uppercase[i]} vs {string.ascii_uppercase[0]}: {z_stats[i-1]:.4f}")
         st.markdown(f" * P-value for {string.ascii_uppercase[i]} vs {string.ascii_uppercase[0]}: {p_values[i-1]:.4f}")
 
-    # Apply Sidak's correction to the p-values
     significant_results = [p <= sidak_alpha for p in p_values]
 
-    # Power calculations
     if all(v > 1000 for v in visitor_counts):
         st.write("")
         st.write("\nUsing analytical approach to calculate observed power...\n")
 
         def analytical_power(cr_control, cr_variant, n_control, n_variant, alpha, tail):
-            # pooled_p = (cr_control * n_control + cr_variant * n_variant) / (n_control + n_variant)
-            # effect_size = abs(cr_control - cr_variant) / np.sqrt(pooled_p * (1 - pooled_p) * (1 / n_control + 1 / n_variant)) # effect size pooled proportions
+            # Note: Using 'alpha' passed here (original overall alpha), not necessarily sidak_alpha
             se_unpooled = np.sqrt((cr_control * (1 - cr_control) / n_control) + (cr_variant * (1 - cr_variant) / n_variant))
             if se_unpooled == 0:
                 return 1.0
-
             z_delta = abs(cr_control - cr_variant) / se_unpooled
             power = None
+            
             if tail in ['greater', 'less']:
                 z_alpha = stats.norm.ppf(1 - alpha)
                 power = stats.norm.cdf(z_delta - z_alpha)
@@ -171,23 +161,35 @@ def calculate_statistics(num_variants, visitor_counts, variant_conversions, risk
     else:
         st.write("")
         st.write("\nUsing bootstrapping to calculate power for more accuracy. Just a moment (running simulations)...\n")
-        n_bootstraps = 10000
+        n_bootstraps = 10000 # Original value
 
         def bootstrap_sample(data_control, data_variant, alpha, tail):
+            # Using 'alpha' passed here (original overall alpha), not necessarily sidak_alpha
             sample_control = np.random.choice(data_control, size=len(data_control), replace=True)
             sample_variant = np.random.choice(data_variant, size=len(data_variant), replace=True)
             pooled_p = (np.sum(sample_control) + np.sum(sample_variant)) / (len(sample_control) + len(sample_variant))
             se = np.sqrt(pooled_p * (1 - pooled_p) * (1 / len(sample_control) + 1 / len(sample_variant)))
-            z_stat = (np.mean(sample_variant) - np.mean(sample_control)) / se
+            if se == 0:
+                z_stat = 0
+            else:
+                z_stat = (np.mean(sample_variant) - np.mean(sample_control)) / se
             p_value = 2 * (1 - stats.norm.cdf(abs(z_stat)))
+
+            # Adjust p-value based on tail
             if tail == 'greater':
                 p_value /= 2
                 p_value = 1 - p_value if z_stat < 0 else p_value
+            elif tail == 'less':
+                p_value_two_sided = p_value
+                p_value = p_value_two_sided / 2 if z_stat < 0 else 1 - p_value_two_sided / 2
             elif tail == 'two-sided':
                 p_value = p_value
+
             return p_value < alpha
 
+        # bootstrap_power definition
         def bootstrap_power(data_control, data_variant, alpha, tail, n_bootstraps=10000):
+            # Note: Uses overall alpha based on original call
             significant_results = 0
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 futures = [executor.submit(bootstrap_sample, data_control, data_variant, alpha, tail) for _ in range(n_bootstraps)]
@@ -196,11 +198,13 @@ def calculate_statistics(num_variants, visitor_counts, variant_conversions, risk
                         significant_results += 1
             return significant_results / n_bootstraps
 
+        # prep and power call (uses overall alpha)
         data_controls = [np.concatenate([np.ones(c), np.zeros(v - c)]) for c, v in zip(variant_conversions, visitor_counts)]
         observed_powers = [bootstrap_power(data_controls[0], data_controls[i], alpha, tail, n_bootstraps=n_bootstraps) for i in range(1, num_variants)]
         for i in range(1, num_variants):
-            st.markdown(f"  *Observed power for {string.ascii_uppercase[i]} vs {string.ascii_uppercase[0]}: {observed_powers[i-1] * 100:.2f}%")
+            st.markdown(f"   *Observed power for {string.ascii_uppercase[i]} vs {string.ascii_uppercase[0]}: {observed_powers[i-1] * 100:.2f}%")
 
+    # return statement
     return conversion_rates, se_list, p_values, significant_results, observed_powers, srm_p_value, sidak_alpha
 
 def visualize_results(conversion_rates, se_list, num_variants, significant_results, sidak_alpha):
