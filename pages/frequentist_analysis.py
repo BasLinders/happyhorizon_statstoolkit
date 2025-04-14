@@ -148,15 +148,20 @@ def calculate_statistics(num_variants, visitor_counts, variant_conversions, risk
         st.write("\nUsing analytical approach to calculate observed power...\n")
 
         def analytical_power(cr_control, cr_variant, n_control, n_variant, alpha, tail):
-            pooled_p = (cr_control * n_control + cr_variant * n_variant) / (n_control + n_variant)
+            # pooled_p = (cr_control * n_control + cr_variant * n_variant) / (n_control + n_variant)
             # effect_size = abs(cr_control - cr_variant) / np.sqrt(pooled_p * (1 - pooled_p) * (1 / n_control + 1 / n_variant)) # effect size pooled proportions
-            effect_size = abs(cr_control - cr_variant) / np.sqrt((cr_control * (1 - cr_control) / n_control) + (cr_variant * (1 - cr_variant) / n_variant))
+            se_unpooled = np.sqrt((cr_control * (1 - cr_control) / n_control) + (cr_variant * (1 - cr_variant) / n_variant))
+            if se_unpooled == 0:
+                return 1.0
+
+            z_delta = abs(cr_control - cr_variant) / se_unpooled
+            power = None
             if tail in ['greater', 'less']:
                 z_alpha = stats.norm.ppf(1 - alpha)
-                power = stats.norm.cdf(effect_size - z_alpha) if tail == 'greater' else stats.norm.cdf(effect_size + z_alpha)
+                power = stats.norm.cdf(z_delta - z_alpha)
             else:
                 z_alpha = stats.norm.ppf(1 - alpha / 2)
-                power = stats.norm.cdf(effect_size - z_alpha) + stats.norm.cdf(-effect_size - z_alpha)
+                power = stats.norm.cdf(z_delta - z_alpha) + stats.norm.cdf(-z_delta - z_alpha)
             return power
 
         observed_powers = [analytical_power(conversion_rates[0], conversion_rates[i], visitor_counts[0], visitor_counts[i], alpha, tail) for i in range(1, num_variants)]
