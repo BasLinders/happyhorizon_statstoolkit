@@ -75,7 +75,7 @@ def preprocess_data(df):
 def detect_outliers(df, kpi, outlier_stdev, large_file_threshold=10000):
     try:
         if len(df) > large_file_threshold:
-            st.info(f"Dataset has {len(df):,} rows, using IQR for outlier detection.")
+            st.info(f"Dataset has {len(df):,} rows.")
             outliers_mask = pd.Series([False] * len(df))
             for variant in df['experience_variant_label'].unique():
                 variant_data = df[df['experience_variant_label'] == variant][kpi].dropna()
@@ -89,7 +89,7 @@ def detect_outliers(df, kpi, outlier_stdev, large_file_threshold=10000):
                     outliers_mask[variant_data.index] = variant_outliers
             return outliers_mask, None, large_file_threshold
         else:
-            st.info(f"Dataset has {len(df):,} rows, using OLS for outlier detection.")
+            st.info(f"Dataset has {len(df):,} rows.")
             model = smf.ols(f'{kpi} ~ C(experience_variant_label)', data=df).fit()
             influence = model.get_influence()
             standardized_residuals = influence.resid_studentized_internal
@@ -104,7 +104,7 @@ def detect_outliers(df, kpi, outlier_stdev, large_file_threshold=10000):
             leverage_outliers = leverage > leverage_threshold
             dffits_outliers = np.abs(dffits) > dffits_threshold
             outliers_mask = residuals_outliers | leverage_outliers | dffits_outliers
-            return outliers_mask, model
+            return outliers_mask, model, large_file_threshold
 
     except Exception as e:
         st.error(f"Error during outlier detection: {e}")
@@ -559,11 +559,11 @@ def run():
                 percentile = st.selectbox("Select percentile for Winsorization:", [90, 95, 99])
 
         outliers_mask, initial_model, large_file_threshold = detect_outliers(df, kpi, outlier_stdev if method == 'Standard Deviation' else 5)  # Default 5 STD for detection purposes
-        st.write(f"Number of detected outliers: {outliers_mask.sum()}")
+        #st.write(f"Number of detected outliers: {outliers_mask.sum()}")
         if (len(df) >= large_file_threshold) and (outliers_mask.sum() > 0):
-            st.warning(f"{outliers_mask.sum()} outliers detected in a large dataset. The IQR method was used for outlier detection.")
+            st.warning(f"{outliers_mask.sum()} Outliers detected in a large dataset. The IQR method was used for outlier detection for efficient computation. You can adjust the outlier handling method in the options above.")
         elif (len(df) < large_file_threshold) and (outliers_mask.sum() > 0):
-            st.warning(f"{outliers_mask.sum()} outliers detected in a relatively small dataset. The OLS method was used for outlier detection.")
+            st.warning(f"{outliers_mask.sum()} Outliers detected in a relatively small dataset. The OLS method was used for outlier detection. You can adjust the outlier handling method in the options above.")
 
         # Show raw data plots before any processing
         st.write("### Raw Data Box Plot")
