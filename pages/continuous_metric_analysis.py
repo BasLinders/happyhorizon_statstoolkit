@@ -53,23 +53,62 @@ def preprocess_data(df):
     return df, errors
 
 # Detect outliers
-def detect_outliers(df, kpi, outlier_stdev):
-    model = smf.ols(f'{kpi} ~ C(experience_variant_label)', data=df).fit()
-    influence = model.get_influence()
-    standardized_residuals = influence.resid_studentized_internal
-    leverage = influence.hat_matrix_diag
-    dffits = influence.dffits[0]
 
-    residual_threshold = outlier_stdev
-    leverage_threshold = outlier_stdev * (model.df_model + 1) / len(df)
-    dffits_threshold = outlier_stdev * np.sqrt((model.df_model + 1) / len(df))
+#def detect_outliers(df, kpi, outlier_stdev):
+#    model = smf.ols(f'{kpi} ~ C(experience_variant_label)', data=df).fit()
+#    influence = model.get_influence()
+#    standardized_residuals = influence.resid_studentized_internal
+#    leverage = influence.hat_matrix_diag
+#    dffits = influence.dffits[0]
 
-    residuals_outliers = np.abs(standardized_residuals) > residual_threshold
-    leverage_outliers = leverage > leverage_threshold
-    dffits_outliers = np.abs(dffits) > dffits_threshold
-    outliers_mask = residuals_outliers | leverage_outliers | dffits_outliers
+#    residual_threshold = outlier_stdev
+#    leverage_threshold = outlier_stdev * (model.df_model + 1) / len(df)
+#    dffits_threshold = outlier_stdev * np.sqrt((model.df_model + 1) / len(df))
 
-    return outliers_mask, model  # Return the initial model
+#    residuals_outliers = np.abs(standardized_residuals) > residual_threshold
+#    leverage_outliers = leverage > leverage_threshold
+#    dffits_outliers = np.abs(dffits) > dffits_threshold
+#    outliers_mask = residuals_outliers | leverage_outliers | dffits_outliers
+
+#    return outliers_mask, model  # Return the initial model
+
+def detect_outliers(df, kpi, outlier_stdev, large_file_threshold=10000):
+    try:
+        if len(df) > large_file_threshold:
+            st.info(f"Dataset has {len(df):,} rows.")
+            outliers_mask = pd.Series([False] * len(df))
+            for variant in df['experience_variant_label'].unique():
+                variant_data = df[df['experience_variant_label'] == variant][kpi].dropna()
+                if not variant_data.empty:
+                    Q1 = variant_data.quantile(0.25)
+                    Q3 = variant_data.quantile(0.75)
+                    IQR = Q3 - Q1
+                    lower_bound = Q1 - outlier_stdev * IQR # or - 1.5 as standard convention
+                    upper_bound = Q3 + outlier_stdev * IQR # or + 1.5 as standard convention
+                    variant_outliers = (variant_data < lower_bound) | (variant_data > upper_bound)
+                    outliers_mask[variant_data.index] = variant_outliers
+            return outliers_mask, None, large_file_threshold
+        else:
+            st.info(f"Dataset has {len(df):,} rows.")
+            model = smf.ols(f'{kpi} ~ C(experience_variant_label)', data=df).fit()
+            influence = model.get_influence()
+            standardized_residuals = influence.resid_studentized_internal
+            leverage = influence.hat_matrix_diag
+            dffits = influence.dffits[0]
+
+            residual_threshold = outlier_stdev
+            leverage_threshold = outlier_stdev * (model.df_model + 1) / len(df)
+            dffits_threshold = outlier_stdev * np.sqrt((model.df_model + 1) / len(df))
+
+            residuals_outliers = np.abs(standardized_residuals) > residual_threshold
+            leverage_outliers = leverage > leverage_threshold
+            dffits_outliers = np.abs(dffits) > dffits_threshold
+            outliers_mask = residuals_outliers | leverage_outliers | dffits_outliers
+            return outliers_mask, model, large_file_threshold
+
+    except Exception as e:
+        st.error(f"Error during outlier detection: {e}")
+        return pd.Series([False] * len(df)), None
 
 # Winsorize and IQR filter combined
 
@@ -105,23 +144,6 @@ def detect_outliers(df, kpi, outlier_stdev):
 #    return df_copy, lower_bound, upper_bound, percentile_lower, percentile_upper
 
 def winsorize_data(df, kpi, method, outlier_stdev=None, percentile=None):
-    """
-    Applies Winsorization to the specified KPI column based on the chosen method.
-
-    Args:
-        df (pd.DataFrame): Input DataFrame.
-        kpi (str): Name of the Key Performance Indicator column.
-        method (str): The method chosen for Winsorization ('Standard Deviation' or 'Percentile').
-        outlier_stdev (int, optional): Number of std deviations to use if method is 'Standard Deviation'. Defaults to 3.
-        percentile (int, optional): Percentile to use if method is 'Percentile'. Defaults to 95.
-
-    Returns:
-        tuple: (pd.DataFrame, float, float, str)
-            - DataFrame with the KPI column Winsorized.
-            - Lower cap value used.
-            - Upper cap value used.
-            - Description of the capping method applied.
-    """
     df_copy = df.copy() # Create a copy to avoid modifying the original DataFrame
     lower_cap = None
     upper_cap = None
@@ -523,7 +545,7 @@ def run():
         st.write(df.sample(10))
 
         kpi = st.selectbox("Select the KPI to analyze:", ['purchase_revenue', 'total_item_quantity'])
-        outlier_handling = st.selectbox("Select how to handle outliers:", ['None', 'Winsorizing + IQR', 'Log Transform', 'Removal'], help='Choose the method for handling outliers. "None" uses a default > 5 standard deviation definition for detection purposes.')
+        outlier_handling = st.selectbox("Select how to handle outliers:", ['None', 'Winsorizing (STD/Percentile)', 'Log Transform', 'Removal'], help='Choose the method for handling outliers. "None" uses a default > 5 standard deviation definition for detection purposes.')
 
         method = None
         outlier_stdev = None
@@ -536,8 +558,12 @@ def run():
             elif method == 'Percentile':
                 percentile = st.selectbox("Select percentile for Winsorization:", [90, 95, 99])
 
-        outliers_mask, initial_model = detect_outliers(df, kpi, outlier_stdev if method == 'Standard Deviation' else 5)  # Default 5 STD for detection purposes
-        st.write(f"Number of detected outliers: {outliers_mask.sum()}")
+        outliers_mask, initial_model, large_file_threshold = detect_outliers(df, kpi, outlier_stdev if method == 'Standard Deviation' else 5)  # Default 5 STD for detection purposes
+        #st.write(f"Number of detected outliers: {outliers_mask.sum()}")
+        if (len(df) >= large_file_threshold) and (outliers_mask.sum() > 0):
+            st.warning(f"{outliers_mask.sum()} Outliers detected in a large dataset. The IQR method was used for outlier detection for efficient computation. You can adjust the outlier handling method in the options above.")
+        elif (len(df) < large_file_threshold) and (outliers_mask.sum() > 0):
+            st.warning(f"{outliers_mask.sum()} Outliers detected in a relatively small dataset. The OLS method was used for outlier detection. You can adjust the outlier handling method in the options above.")
 
         # Show raw data plots before any processing
         st.write("### Raw Data Box Plot")
@@ -556,7 +582,7 @@ def run():
             # --- Outlier Handling ---
             processed_df = df.copy()
 
-            if outlier_handling == 'Winsorizing + IQR':
+            if outlier_handling == 'Winsorizing (STD/Percentile)':
                 processed_df, lower_cap, upper_cap, cap_desc = winsorize_data(processed_df, kpi, method, outlier_stdev, percentile)
 
                 # Display a message based on the description returned by the function
