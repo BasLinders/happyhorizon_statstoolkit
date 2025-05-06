@@ -26,7 +26,7 @@ def display_intro():
                 This calculator tests your data for statistical significance against the null-hypothesis (= there's no difference between 'A' and 'B'). 
                 Input your experiment data and read the results at the bottom of the page.
 
-                IMPORTANT: this calculator returns observed power values for the test. This statistic can be used for contextualizing the results of your test, albeit with a significant amount of caution.
+                IMPORTANT: this calculator returns observed power values for the test. This statistic can be used for contextualizing the limitations in your test, albeit with a significant amount of caution.
                 It is important to understand that observed power cannot be used to make any claims about the alternative hypothesis, since it is computed from a sample, not the total population.
                 """)
 
