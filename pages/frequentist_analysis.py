@@ -75,7 +75,7 @@ def get_user_inputs():
         "Choose the test type:",
         options=['greater', 'two-sided', 'less'],
         index=['greater', 'two-sided', 'less'].index(st.session_state.tail),
-        help="A one-sided test focuses on a change in one specific direction. Choose 'greater' if you only care whether the variant is significantly better than the control. Choose 'less' if you only care whether the variant is significantly worse than the control. For detecting a significant change in either direction (better or worse), choose 'two-sided'. Power may increase with a one-sided test."
+        help="A one-sided test focuses on a change in one specific direction. Choose 'greater' if you only care whether the variant is significantly better than the control. Choose 'less' if you only care whether the variant is significantly worse than the control. For detecting a significant change in either direction (better or worse), choose 'two-sided'. P-value may be smaller in a one-sided test."
     )
 
     return num_variants, visitor_counts, variant_conversions, st.session_state.risk, st.session_state.tail
