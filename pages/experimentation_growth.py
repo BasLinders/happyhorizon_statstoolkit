@@ -120,7 +120,7 @@ def plot_simulation_results(simulation_df, n_experiments_max, intersection_exper
     ax.set_xlim(left=0, right=n_experiments_max)
     ax.set_ylim(bottom=0)
     st.pyplot(fig)
-    st.pyplot(fig, clear_figure=True)
+    plt.clf()
 
 # --- Streamlit App ---
 
