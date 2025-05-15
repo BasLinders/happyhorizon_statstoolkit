@@ -109,7 +109,7 @@ def plot_simulation_results(simulation_df, n_experiments_max, intersection_exper
             ax.annotate(f"+{max_uplift:.2f}%", (0, max_uplift), textcoords="offset points", xytext=(5,5), ha='left', color='black')
 
             # --- x-axis label ---
-            ax.text(intersection_experiments, -.25, f"{intersection_experiments}", ha='center', va='top', color='red', bbox=dict(facecolor='white', edgecolor='red'))
+            ax.text(intersection_experiments, -.5, f"{intersection_experiments}", ha='center', va='top', color='red', bbox=dict(facecolor='white', edgecolor='red'))
 
 
     ax.set_xlabel("Number of Experiments")
@@ -120,6 +120,7 @@ def plot_simulation_results(simulation_df, n_experiments_max, intersection_exper
     ax.set_xlim(left=0, right=n_experiments_max)
     ax.set_ylim(bottom=0)
     st.pyplot(fig)
+    st.pyplot(fig, clear_figure=True)
 
 # --- Streamlit App ---
 
