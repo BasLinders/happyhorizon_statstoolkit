@@ -109,7 +109,14 @@ def plot_simulation_results(simulation_df, n_experiments_max, intersection_exper
             ax.annotate(f"+{max_uplift:.2f}%", (0, max_uplift), textcoords="offset points", xytext=(5,5), ha='left', color='black')
 
             # --- x-axis label ---
-            ax.text(intersection_experiments, -.5, f"{intersection_experiments}", ha='center', va='top', color='red', bbox=dict(facecolor='white', edgecolor='red'))
+            ax.text(intersection_experiments, -0.015,  # Adjust this Y value for desired spacing
+                    f"{intersection_experiments}",
+                    transform=ax.get_xaxis_transform(),
+                    ha='center',
+                    va='top',
+                    color='red',
+                    bbox=dict(facecolor='white', edgecolor='white', pad=0.5), # pad=0.8
+                    clip_on=False)
 
 
     ax.set_xlabel("Number of Experiments")
