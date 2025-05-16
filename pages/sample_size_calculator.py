@@ -27,11 +27,11 @@ def get_user_input():
         if st.session_state.get("calculation_mode") == "Calculate Sample Size based on MDE":
             st.number_input("What MDE are you aiming for?", min_value=1, max_value=100, step=1, value=st.session_state.get("mde", 5), key="mde")
     st.selectbox(
-        "Hypothesis type ('Greater' or 'Two-sided'): ",
-        options=['Greater', 'Two-sided'], 
-        index=['Greater', 'Two-sided'].index(st.session_state.get("tails", 'Greater')),
+        "Hypothesis type ('One-sided' or 'Two-sided'): ",
+        options=['One-sided', 'Two-sided'], 
+        index=['One-sided', 'Two-sided'].index(st.session_state.get("tails", 'One-sided')),
         key="tails",
-        help="Choose 'Greater' (one-sided) when testing only for improvement (B > A); this requires fewer samples and results in a possible lower MDE. Choose 'Two-sided' when testing for any difference (better or worse); this is safer but requires more samples and possibly raises the MDE."
+        help="Choose 'One-sided' when testing only for improvement (B > A) or decline (B < A); this requires fewer samples and results in a possible lower MDE. Choose 'Two-sided' when testing for any difference (better or worse); this is more comprehensive because it can detect significant effects in either direction, but generally requires more samples and possibly raises the MDE."
     )
 
 # Holm-Bonferroni correction for MDE calculation
@@ -55,7 +55,7 @@ def perform_mde_calculation(num_variants, baseline_visitors, baseline_conversion
     if num_variants > 2:
         adjusted_z_alpha = holm_bonferroni(num_variants - 1, alpha, tails)
     else:
-        adjusted_z_alpha = norm.ppf(1 - alpha) if tails == 'Greater' else norm.ppf(1 - alpha / 2)
+        adjusted_z_alpha = norm.ppf(1 - alpha) if tails == 'One-sided' else norm.ppf(1 - alpha / 2)
 
     # Z-score for power
     z_power = norm.ppf(power)
@@ -155,7 +155,7 @@ def calculate_sample_size(num_variants, baseline_visitors, baseline_conversions,
             z_alpha_adjusted = holm_bonferroni(num_comparisons, alpha, tails)
             correction_applied = True
         else: # num_variants == 2
-            if tails == 'Greater':
+            if tails == 'One-sided':
                 z_alpha_adjusted = norm.ppf(1 - alpha)
             else: # Two-sided
                 z_alpha_adjusted = norm.ppf(1 - alpha / 2)
@@ -268,7 +268,7 @@ def run():
                 st.session_state.get("baseline_conversions", 0) > st.session_state.get("baseline_visitors", 0) or
                 not (0 < st.session_state.get("risk", 0) <= 100) or
                 not (0 < st.session_state.get("trust", 0) <= 100) or
-                st.session_state.get("tails") not in ['Greater', 'Two-sided']):
+                st.session_state.get("tails") not in ['One-sided', 'Two-sided']):
                 st.write("<span style='color: #ff6600;'>*Please enter valid inputs for all fields (Visitors > 0, Conversions >= 0 and <= Visitors, Risk/Trust between 0-100).</span>", unsafe_allow_html=True)
             else:
                 display_mde_table(st.session_state.get("num_variants", 2),
@@ -276,7 +276,7 @@ def run():
                                   st.session_state.get("baseline_conversions", 0),
                                   st.session_state.get("risk", 90),
                                   st.session_state.get("trust", 80),
-                                  st.session_state.get("tails", 'Greater'))
+                                  st.session_state.get("tails", 'One-sided'))
 
     elif calculation_mode == "Calculate Sample Size based on MDE":
         if st.button("Calculate Sample Size"):
@@ -287,7 +287,7 @@ def run():
                     not (0 < st.session_state.get("risk", 90) <= 100) or
                     not (0 < st.session_state.get("trust", 80) <= 100) or
                     st.session_state.get("mde", 5) <= 0 or
-                    st.session_state.get("tails", 'Greater') not in ['Greater', 'Two-sided']):
+                    st.session_state.get("tails", 'One-sided') not in ['One-sided', 'Two-sided']):
                 # If input is INVALID, show an error message
                 st.write("<span style='color: #ff6600;'>*Please enter valid inputs for all fields (Visitors > 0, Conversions >= 0 and <= Visitors, Risk/Trust between 0-100, MDE > 0).</span>", unsafe_allow_html=True)
             else:
@@ -298,7 +298,7 @@ def run():
                                       st.session_state.get("mde", 5),
                                       st.session_state.get("risk", 90),
                                       st.session_state.get("trust", 80),
-                                      st.session_state.get("tails", 'Greater'))
+                                      st.session_state.get("tails", 'One-sided'))
 
 if __name__ == "__main__":
     run()
