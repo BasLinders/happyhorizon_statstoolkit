@@ -29,7 +29,7 @@ def get_user_input():
     st.selectbox(
         "Hypothesis type ('One-sided' or 'Two-sided'): ",
         options=['One-sided', 'Two-sided'], 
-        index=['One-sided', 'Two-sided'].index(st.session_state.get("tails", 'One-sided')),
+        index=['One-sided', 'Two-sided'].index(st.session_state.get("tails", 'Two-sided')),
         key="tails",
         help="Choose 'One-sided' when testing only for improvement (B > A) or decline (B < A); this requires fewer samples and results in a possible lower MDE. Choose 'Two-sided' when testing for any difference (better or worse); this is more comprehensive because it can detect significant effects in either direction, but generally requires more samples and possibly raises the MDE."
     )
@@ -276,7 +276,7 @@ def run():
                                   st.session_state.get("baseline_conversions", 0),
                                   st.session_state.get("risk", 90),
                                   st.session_state.get("trust", 80),
-                                  st.session_state.get("tails", 'One-sided'))
+                                  st.session_state.get("tails", 'Two-sided'))
 
     elif calculation_mode == "Calculate Sample Size based on MDE":
         if st.button("Calculate Sample Size"):
@@ -298,7 +298,7 @@ def run():
                                       st.session_state.get("mde", 5),
                                       st.session_state.get("risk", 90),
                                       st.session_state.get("trust", 80),
-                                      st.session_state.get("tails", 'One-sided'))
+                                      st.session_state.get("tails", 'Two-sided'))
 
 if __name__ == "__main__":
     run()
