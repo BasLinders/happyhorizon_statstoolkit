@@ -799,7 +799,7 @@ def display_frequentist_summary(
 
     if num_variants >= 3:
         st.write("### Šidák Correction applied")
-        st.info(f"The Šidák correction was applied due to 3 or more variants in the test. The alpha threshold has been set to **{results['sidak_alpha']:.4f}** instead of {alpha_unadjusted}.")
+        st.info(f"The Šidák correction was applied due to 3 or more variants in the test. The alpha threshold has been set to **{results['sidak_alpha']:.4f}** instead of {alpha_unadjusted:.4f}.")
     
     st.write("## Results summary")
     st.write("---")
