@@ -36,6 +36,7 @@ def get_bayesian_inputs():
 
     num_variants = st.session_state.num_variants
 
+    # Ensure that the lists in the session state have the correct length
     for key, default_value in [("visitor_counts", 0), ("conversion_counts", 0), ("aovs", 0.0)]:
         if len(st.session_state[key]) != num_variants:
             current_len = len(st.session_state[key])
@@ -47,59 +48,76 @@ def get_bayesian_inputs():
     alphabet = string.ascii_uppercase
     st.write("---")
 
+    # Create two columns for visitors and conversions
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.write("#### Visitors")
+    with col2:
+        st.write("#### Conversions")
+
+    # Add the input fields for each variant to the respective columns
     for i in range(num_variants):
-        st.write(f"#### Data for Variant {alphabet[i]}")
-        col1, col2, col3 = st.columns(3)
         with col1:
             st.session_state.visitor_counts[i] = st.number_input(
-                "Visitors",
+                f"Visitors for variant {alphabet[i]}",
                 min_value=0, step=1,
                 value=st.session_state.visitor_counts[i],
-                key=f"b_visitors_{i}"
+                key=f"b_visitors_{i}",
+                label_visibility="visible"
             )
         with col2:
             st.session_state.conversion_counts[i] = st.number_input(
-                "Conversions",
+                f"Conversions for variant {alphabet[i]}",
                 min_value=0, step=1,
                 value=st.session_state.conversion_counts[i],
-                key=f"b_conversions_{i}"
+                key=f"b_conversions_{i}",
+                label_visibility="visible"
             )
-        with col3:
+            
+    st.write("---")
+    st.write("#### Average Order Value (€)")
+
+    # Create columns for the AOV inputs. The number of columns is equal to the number of variants.
+    aov_cols = st.columns(num_variants)
+    for i, col in enumerate(aov_cols):
+         with col:
             st.session_state.aovs[i] = st.number_input(
-                "Average Order Value (€)",
+                f"Variant {alphabet[i]}",
                 min_value=0.0, step=0.01,
                 value=st.session_state.aovs[i],
                 key=f"b_aov_{i}"
             )
-        st.write("---")
-        
-    st.write("### Algemene Testinstellingen")
+
+    st.write("---")
+    st.write("### General Test Settings")
 
     st.session_state.probability_winner = st.number_input(
-        "Minimum probability for a winner?", 
-        min_value=0.0, max_value=100.0, step=0.01, 
-        value=st.session_state.probability_winner, 
-        help="Enter the success percentage that determines if your test is a winner."
+        "Minimum probability for a winner?",
+        min_value=0.0, max_value=100.0, step=0.01,
+        value=st.session_state.probability_winner,
+        help="Enter the success rate that determines if your test has a winner."
     )
     
     st.session_state.runtime_days = st.number_input(
-        "For how many days did your test run?", 
+        "How many days did your test run?",
         min_value=0, step=1, 
         value=st.session_state.runtime_days
     )
 
-    use_priors = st.checkbox("Use prior knowledge?", help="Take previous test data into account when evaluating this experiment.")
+    use_priors = st.checkbox("Use adjusted priors?", help="Take into account previous test data when evaluating this experiment.")
     if use_priors:
         st.write("##### Prior Beliefs")
         col1, col2 = st.columns(2)
         with col1:
-            expected_sample_size = st.number_input("What is the total expected sample size of the experiment?", min_value=1000, step=1)
+            expected_sample_size = st.number_input("What is the total expected sample size of the experiment?", min_value=1000, step=1, value=10000)
         with col2:
-            expected_conversion = st.number_input("Expected Conversion Rate", min_value=0.01, max_value=100.00, step=0.01)
-        belief_strength = st.selectbox("Belief Strength", ["weak", "moderate", "strong"], index=1, help="Indicate how strong your belief is in the expected conversion rate.")
+            expected_conversion = st.number_input("Expected Conversion Rate (%)", min_value=0.01, max_value=100.00, step=0.01, value=5.0)
+
+        belief_strength = st.selectbox("Strength of Belief", ["weak", "moderate", "strong"], index=1, help="Indicate how strong your belief is in the expected conversion rate.")
         alpha_prior, beta_prior = get_beta_priors(expected_conversion, belief_strength, expected_sample_size)
     else:
-        alpha_prior, beta_prior = 1, 1
+        alpha_prior, beta_prior = 1.0, 1.0
 
     return (
         st.session_state.visitor_counts,
@@ -118,6 +136,7 @@ def get_frequentist_inputs():
         key="frequentist_num_variants"
     )
 
+    st.write("---")
     num_variants = st.session_state.num_variants
 
     for key, default_value in [("visitor_counts", 0), ("conversion_counts", 0), ("aovs", 0.0)]:
@@ -151,7 +170,7 @@ def get_frequentist_inputs():
                 value=st.session_state.conversion_counts[i],
                 key=f"f_conversions_{i}"
             )
-
+    st.write("---")
     st.session_state.confidence_level = st.number_input(
         "In %, how confident do you want to be in the results?",
         min_value=0, step=1,
@@ -431,11 +450,11 @@ def perform_multi_variant_risk_assessment(
 
         results.append({
             "Variant": string.ascii_uppercase[i],
-            "Chance to Beat Control": prob_challenger_is_better * 100,
-            "Chance to be Best Overall": probabilities_to_be_best[i] * 100,
-            "Expected Monetary Uplift": expected_monetary_uplift,
-            "Expected Monetary Risk": expected_monetary_risk,
-            "Expected Total Contribution": total_contribution
+            "Chance to Beat Control": round((prob_challenger_is_better * 100), 2),
+            "Chance to be Best Overall": round((probabilities_to_be_best[i] * 100), 2),
+            "Expected Monetary Uplift": round(expected_monetary_uplift, 2),
+            "Expected Monetary Risk": round(expected_monetary_risk, 2),
+            "Expected Total Contribution": round(total_contribution, 2)
         })
 
     if not results:
@@ -476,6 +495,7 @@ def display_results_per_variant(
         else:
             bayesian_result = "<span style='color: black; font-weight: bold;'>inconclusive</span>. There is no real effect to be found, or you need to collect more data"
         
+        st.write(f"#### Variant {challenger_label} vs Control (A)")
         st.markdown(
             f"Variant {challenger_label} has a {round(probability_challenger_better * 100, 2)}% chance to win with a relative change of {round(observed_uplift_challenger, 2)}%. "
             f"Because your winning threshold was set to {int(probability_winner)}%, this experiment is {bayesian_result}.",
@@ -778,7 +798,7 @@ def display_frequentist_summary(
 
     if num_variants >= 3:
         st.write("### Šidák Correction applied")
-        st.write("The Šidák correction... was applied due to 3 or more variants in the test.")
+        st.write("The Šidák correction was applied due to 3 or more variants in the test.")
     
     st.write("## Results summary")
     st.write("---")
@@ -825,20 +845,21 @@ def display_frequentist_summary(
 
 # Main logic
 def run():
-    """
+    st.title("Experiment Analysis")
+    st.markdown("""
     This app provides methods for Bayesian analysis and Frequentist analysis (z-test). Choose the appropriate method for your case.
     
-    Bayesian features
+    ### Bayesian features
     - Probability assessement
     - Simulations of uplifts
     - Business risk assessment
     
-    Frequentist features
+    ### Frequentist features
     - Assessment for statistical significance
     - Non-inferiority assessment for non-significant uplifts
-    """
+    """)
+    st.write("---")
     initialize_session_state()
-    st.title("A/B/n Experiment Analysis Tool")
     
     analysis_method = st.selectbox(
         "Choose your analysis method:",
@@ -911,7 +932,7 @@ def run():
             "Select the test hypothesis (tail):",
             ('two-sided', 'greater', 'less'),
             horizontal=True,
-            help="'two-sided' (A != B), 'greater' (B > A), 'less' (B < A)"
+            help="'two-sided' (A != B), 'greater' (B > A), 'less' (B < A). Be aware that 'greater' and 'less' are directional tests, while 'two-sided' is non-directional. Real-world problems often require a two-sided test, but you can choose based on your hypothesis."
         )
         non_inferiority_margin = st.number_input(
             "Non-inferiority margin (absolute %)", 
