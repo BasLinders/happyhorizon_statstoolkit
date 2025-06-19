@@ -786,6 +786,7 @@ def display_frequentist_summary(
     observed_powers = results['observed_powers']
     conversion_rates = results['conversion_rates']
     sidak_alpha = results['sidak_alpha']
+    alpha_unadjusted = results['alpha']
     tail = results['tail']
     alphabet = string.ascii_uppercase
     
@@ -798,7 +799,7 @@ def display_frequentist_summary(
 
     if num_variants >= 3:
         st.write("### Šidák Correction applied")
-        st.write("The Šidák correction was applied due to 3 or more variants in the test.")
+        st.info(f"The Šidák correction was applied due to 3 or more variants in the test. The alpha threshold has been set to **{results['sidak_alpha']:.4f}** instead of {alpha_unadjusted}.")
     
     st.write("## Results summary")
     st.write("---")
