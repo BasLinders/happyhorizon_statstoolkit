@@ -508,6 +508,7 @@ def display_results_per_variant(
     if all(aov > 0 for aov in aovs) and runtime_days > 0:
         if df is not None:
             st.write("")
+            st.write("#### Business Risk Assessment")
             st.write("""
                      The table below shows the potential contribution to the revenue over a period of 6 months, with the AOVs as constants.
                      Please note: on smaller data sets of < 1000 conversions, the simulation might find more extreme values for a variant.
