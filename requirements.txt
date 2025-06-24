@@ -3,7 +3,7 @@ streamlit
 scikit-learn
 scikit-posthocs
 seaborn
-scipy
+scipy==1.15.3
 pandas
 numpy
 matplotlib
