@@ -278,17 +278,18 @@ def run():
 
             # --- Monte Carlo Simulation ---
             n_experiments_range = list(range(1, n_experiments_max + 1))
-            simulation_df = monte_carlo_simulation(
-                cr_base,
-                n_experiments_range,
-                winrate,
-                mde_min,
-                mde_max,
-                sigmoid_k,
-                sigmoid_x0,
-                iterations=DEFAULT_ITERATIONS,
-                uplift_scaling_factor=uplift_scaling_factor, #Pass down scaling factor
-            )
+            with st.spinner("Analysis in progress..."):
+                simulation_df = monte_carlo_simulation(
+                    cr_base,
+                    n_experiments_range,
+                    winrate,
+                    mde_min,
+                    mde_max,
+                    sigmoid_k,
+                    sigmoid_x0,
+                    iterations=DEFAULT_ITERATIONS,
+                    uplift_scaling_factor=uplift_scaling_factor, #Pass down scaling factor
+                )
 
             st.write("### Simulation Results")
             st.dataframe(simulation_df)

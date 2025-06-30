@@ -947,23 +947,23 @@ def run():
                 st.write("---")
                 try:
                     # --- Calculations ---
-                    test_results = calculate_frequentist_statistics(
-                        visitor_counts,
-                        conversion_counts,
-                        confidence_level,
-                        st.session_state.tail
-                    )
-
-                    # --- Visualization and Results ---
-                    if test_results:
-                        plot_conversion_distributions(test_results)
-                        display_frequentist_summary(
-                            test_results, 
-                            visitor_counts, 
+                    with st.spinner("Analysis in progress..."):
+                        test_results = calculate_frequentist_statistics(
+                            visitor_counts,
                             conversion_counts,
-                            non_inferiority_margin=non_inferiority_margin
+                            confidence_level,
+                            st.session_state.tail
                         )
 
+                        # --- Visualization and Results ---
+                        if test_results:
+                            plot_conversion_distributions(test_results)
+                            display_frequentist_summary(
+                                test_results, 
+                                visitor_counts, 
+                                conversion_counts,
+                                non_inferiority_margin=non_inferiority_margin
+                            )
                 except Exception as e:
                     st.error(f"An error occurred during calculation: {e}")
             else:
