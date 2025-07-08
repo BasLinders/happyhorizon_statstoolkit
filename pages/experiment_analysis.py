@@ -537,6 +537,20 @@ def calculate_frequentist_statistics(visitor_counts, conversion_counts, confiden
     conversion_rates = [c / v if v > 0 else 0 for c, v in zip(conversion_counts, visitor_counts)]
     standard_errors = [np.sqrt(cr * (1 - cr) / v) if v > 0 else 0 for cr, v in zip(conversion_rates, visitor_counts)]
 
+    # Confidence interval calculation
+    z_critical = norm.ppf(1 - (alpha / 2))
+    margins_of_error = [z_critical * se for se in standard_errors]
+    confidence_intervals = [
+        (cr - moe, cr + moe)
+        for cr, moe in zip(conversion_rates, margins_of_error)
+    ]
+
+    lower_boundaries = [interval[0] for interval in confidence_intervals]
+    upper_boundaries = [interval[1] for interval in confidence_intervals]
+
+    lowest_interval = min(lower_boundaries)
+    highest_interval = max(upper_boundaries)
+    
     # SRM Check
     observed = np.array(visitor_counts)
     expected = np.array([sum(observed) / num_variants] * num_variants)
@@ -625,6 +639,9 @@ def calculate_frequentist_statistics(visitor_counts, conversion_counts, confiden
     results = {
         "num_variants": num_variants,
         "tail": tail,
+        "confidence_intervals": confidence_intervals,
+        "lowest boundary": lowest_interval,
+        "highest boundary": highest_interval,
         "conversion_rates": conversion_rates,
         "standard_errors": standard_errors,
         "z_stats": z_stats,
@@ -809,6 +826,25 @@ def display_frequentist_summary(
 
         st.write(f"### Test results for {alphabet[i]} vs {alphabet[0]}")
 
+        # Show confidence intervals
+        control_ci = results['confidence_intervals'][0]
+        challenger_ci = results['confidence_intervals'][i]
+
+        col1, col2 = st.columns(2)
+        with col1:
+            st.metric(
+                label=f"Conversion Rate Control ({alphabet[0]})",
+                value=f"{results['conversion_rates'][0]*100:.2f}%",
+                help=f"Het {results['confidence_level']}% betrouwbaarheidsinterval is [{control_ci[0]*100:.2f}% - {control_ci[1]*100:.2f}%]"
+            )
+        with col2:
+            st.metric(
+                label=f"Conversion Rate Challenger ({alphabet[i]})",
+                value=f"{results['conversion_rates'][i]*100:.2f}%",
+                help=f"Het {results['confidence_level']}% betrouwbaarheidsinterval is [{challenger_ci[0]*100:.2f}% - {challenger_ci[1]*100:.2f}%]"
+            )
+        st.write("")
+        
         # --- Superiority Test ---
         if is_significant[challenger_index_in_lists]:
             st.markdown(f" * **Statistically significant result** for {alphabet[i]} with p-value: {p_values[challenger_index_in_lists]:.4f}!")
