@@ -835,13 +835,13 @@ def display_frequentist_summary(
             st.metric(
                 label=f"Conversion Rate Control ({alphabet[0]})",
                 value=f"{results['conversion_rates'][0]*100:.2f}%",
-                help=f"Het {results['confidence_level']}% betrouwbaarheidsinterval is [{control_ci[0]*100:.2f}% - {control_ci[1]*100:.2f}%]"
+                help=f"The {results['confidence_level']}% confidence interval is [{control_ci[0]*100:.2f}% - {control_ci[1]*100:.2f}%]"
             )
         with col2:
             st.metric(
                 label=f"Conversion Rate Challenger ({alphabet[i]})",
                 value=f"{results['conversion_rates'][i]*100:.2f}%",
-                help=f"Het {results['confidence_level']}% betrouwbaarheidsinterval is [{challenger_ci[0]*100:.2f}% - {challenger_ci[1]*100:.2f}%]"
+                help=f"The {results['confidence_level']}% confidence interval is [{challenger_ci[0]*100:.2f}% - {challenger_ci[1]*100:.2f}%]"
             )
         st.write("")
         
