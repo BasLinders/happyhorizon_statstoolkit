@@ -537,7 +537,7 @@ def calculate_frequentist_statistics(visitor_counts, conversion_counts, confiden
     conversion_rates = [c / v if v > 0 else 0 for c, v in zip(conversion_counts, visitor_counts)]
     standard_errors = [np.sqrt(cr * (1 - cr) / v) if v > 0 else 0 for cr, v in zip(conversion_rates, visitor_counts)]
 
-    # Confidence interval calculation
+    # Confidence interval calculation for conversion rates
     z_critical = norm.ppf(1 - (alpha / 2))
     margins_of_error = [z_critical * se for se in standard_errors]
     confidence_intervals = [
@@ -551,6 +551,19 @@ def calculate_frequentist_statistics(visitor_counts, conversion_counts, confiden
     lowest_interval = min(lower_boundaries)
     highest_interval = max(upper_boundaries)
     
+
+    # Confidence interval for the difference
+    confidence_intervals_diff = []
+
+    for i in range(1, num_variants):
+        diff_cr = conversion_rates[i] - conversion_rates[0]
+        se_diff = np.sqrt(standard_errors[i]**2 + standard_errors[0]**2)
+        moe_diff = z_critical * se_diff
+        
+        # Confidence interval for the difference
+        ci_diff = (diff_cr - moe_diff, diff_cr + moe_diff)
+        confidence_intervals_diff.append(ci_diff)
+
     # SRM Check
     observed = np.array(visitor_counts)
     expected = np.array([sum(observed) / num_variants] * num_variants)
@@ -639,7 +652,9 @@ def calculate_frequentist_statistics(visitor_counts, conversion_counts, confiden
     results = {
         "num_variants": num_variants,
         "tail": tail,
-        "confidence_intervals": confidence_intervals,
+        "confidence_intervals": confidence_intervals, # CI for each variant
+        "confidence_intervals_diff": confidence_intervals_diff, # CI for the difference
+        "conversion_rates": conversion_rates,
         "lowest boundary": lowest_interval,
         "highest boundary": highest_interval,
         "conversion_rates": conversion_rates,
@@ -826,11 +841,13 @@ def display_frequentist_summary(
 
         st.write(f"### Test results for {alphabet[i]} vs {alphabet[0]}")
 
-        # Show confidence intervals
+        # Show confidence intervals for each variant
         control_ci = results['confidence_intervals'][0]
         challenger_ci = results['confidence_intervals'][i]
+        ci_difference = results['confidence_intervals_diff'][challenger_index_in_lists] 
+        observed_diff = conversion_rates[i] - conversion_rates[0]
 
-        col1, col2 = st.columns(2)
+        col1, col2, col3 = st.columns(3)
         with col1:
             st.metric(
                 label=f"Conversion Rate Control ({alphabet[0]})",
@@ -842,6 +859,12 @@ def display_frequentist_summary(
                 label=f"Conversion Rate Challenger ({alphabet[i]})",
                 value=f"{results['conversion_rates'][i]*100:.2f}%",
                 help=f"The {results['confidence_level']}% confidence interval is [{challenger_ci[0]*100:.2f}% - {challenger_ci[1]*100:.2f}%]"
+            )
+        with col3:
+            st.metric(
+                label=f"Uplift CI ({alphabet[i]} vs {alphabet[0]})",
+                value=f"{observed_diff*100:+.2f}%", # The '+' forces a +/- sign
+                help=f"The {results['confidence_level']}% confidence interval for the uplift is from {ci_difference[0]*100:+.2f}% to {ci_difference[1]*100:+.2f}%."
             )
         st.write("")
         
