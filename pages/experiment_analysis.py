@@ -216,7 +216,9 @@ def validate_inputs(visitors, conversions, aovs=None):
 # -- Bayesian helper functions --
 
 def calculate_probabilities(visitor_counts, conversion_counts, alpha_prior=1, beta_prior=1, num_samples=10000, seed=42):
-    np.random.seed(seed)
+    # np.random.seed(seed) -- older method
+    np.random.default_rng(seed=seed) # modern method
+    
     num_variants = len(visitor_counts)
     
     all_samples = []
