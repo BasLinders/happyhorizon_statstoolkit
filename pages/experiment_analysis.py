@@ -360,8 +360,8 @@ def plot_uplift_histograms(uplift_distributions, observed_uplifts):
         line_label = f'Observed Uplift ({challenger_label} vs {control_label}): {observed_uplift:.2f}%'
         line_observed_uplift = ax.axvline(x=observed_uplift, color='red', linestyle='--', linewidth=2, label=line_label)
         
-        patch_a = mpatches.Patch(color='lightcoral', label=f'{control_label} is beter')
-        patch_b = mpatches.Patch(color='lightgreen', label=f'{challenger_label} is beter')
+        patch_a = mpatches.Patch(color='lightcoral', label=f'{control_label} is better')
+        patch_b = mpatches.Patch(color='lightgreen', label=f'{challenger_label} is better')
         
         ax.set_title(f'Distribution of Simulated Uplift: Variant {challenger_label} vs. Variant {control_label}')
         ax.set_xlabel('Percentage Uplift in Conversion Rate (%)')
