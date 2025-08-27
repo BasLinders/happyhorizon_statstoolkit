@@ -19,7 +19,7 @@ def initialize_session_state():
     num_variants = st.session_state.num_variants
     st.session_state.setdefault("visitor_counts", [0] * num_variants)
     st.session_state.setdefault("conversion_counts", [0] * num_variants)
-    st.session_state.setdefault("aovs", [0.0] * num_variants)
+    st.session_state.setdefault("aovs", [None] * num_variants)
     st.session_state.setdefault("confidence_level", 95)
     st.session_state.setdefault("tail", 'two-sided')
     st.session_state.setdefault("probability_winner", 80.0)
