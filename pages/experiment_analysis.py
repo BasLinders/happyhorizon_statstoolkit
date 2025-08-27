@@ -79,15 +79,16 @@ def get_bayesian_inputs():
     st.write("#### Average Order Value (€)")
 
     # Create columns for the AOV inputs. The number of columns is equal to the number of variants.
-    aov_cols = st.columns(num_variants)
-    for i, col in enumerate(aov_cols):
-         with col:
-            st.session_state.aovs[i] = st.number_input(
-                f"Variant {alphabet[i]}",
-                min_value=0.0, step=0.01,
-                value=st.session_state.aovs[i],
-                key=f"b_aov_{i}"
-            )
+    # aov_cols = st.columns(num_variants)
+
+    # Don't create columns. Streamlit can't handle multi-column input well.
+    for i in range(num_variants):
+        st.session_state.aovs[i] = st.number_input(
+            f"Average Order Value for Variant {alphabet[i]}",
+            min_value=0.0, step=0.01,
+            value=st.session_state.aovs[i],
+            key=f"b_aov_{i}"
+        )
 
     st.write("---")
     st.write("### General Test Settings")
