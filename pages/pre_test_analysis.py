@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 
 st.set_page_config(
-    page_title="Sample Size / MDE Calculator",
+    page_title="Pre-test analysis",
     page_icon="🔢",
 )
 
@@ -237,7 +237,7 @@ def calculate_sample_size(num_variants, baseline_visitors, baseline_conversions,
         st.write(f"*Note: The {holm_bonferroni.__name__ if 'holm_bonferroni' in globals() else 'configured multiple comparison correction'} correction was applied ({num_comparisons} comparisons) affecting the required significance level.*")
     
 def run():
-    st.title("Sample Size Calculator")
+    st.title("Pre-test analysis")
     """
     This calculator provides two ways to plan for the runtime of your experiment.
     
