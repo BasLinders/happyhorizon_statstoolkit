@@ -24,7 +24,7 @@ This toolkit has been created for the purposes of analyzing data from online con
 <span style='color:#009900; font-weight: 600; margin-right: 6px;'>&#10003;</span>**Experimentation growth estimation**: Calculate annual compound growth potential for experimentation<br>
 <span style='color:#009900; font-weight: 600; margin-right: 6px;'>&#10003;</span>**Interaction analysis**: Verify if your experiments negatively impacted each other or not<br>
 <span style='color:#009900; font-weight: 600; margin-right: 6px;'>&#10003;</span>**SRM calculator**: Identify if your visitors were distributed as expected in your experiment<br>
-<span style='color:#009900; font-weight: 600; margin-right: 6px;'>&#10003;</span>**Sample Size / MDE calculator**: Calculate the runtime to reach an effect
+<span style='color:#009900; font-weight: 600; margin-right: 6px;'>&#10003;</span>**Pre-test analysis**: Calculate the runtime to reach an effect
 
 ### How to Use
 - Select a page from the sidebar to view different tools.
