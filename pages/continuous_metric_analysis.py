@@ -40,6 +40,8 @@ def preprocess_data(df):
         errors.append("'total_item_quantity' contains null values.")
     if 'purchase_revenue' in df and df['purchase_revenue'].isnull().any():
         errors.append("'purchase_revenue' contains null values.")
+    if 'profit' in df and df['profit'].isnull().any():
+        errors.append("'profit' contains null values.")
 
     # Ensure categorical variable
     df['experience_variant_label'] = pd.Categorical(df['experience_variant_label'])
@@ -49,6 +51,8 @@ def preprocess_data(df):
         df['total_item_quantity'] = pd.to_numeric(df['total_item_quantity'], errors='coerce')
     if 'purchase_revenue' in df:
         df['purchase_revenue'] = pd.to_numeric(df['purchase_revenue'], errors='coerce')
+    if 'profit' in df:
+        df['profit'] = pd.to_numeric(df['profit'], errors='coerce')
 
     return df, errors
 
@@ -418,9 +422,13 @@ def perform_stat_tests_and_conclusions(df, kpi, model_after):
 
                     # Dunn's test for post-hoc analysis                
                     try:
-                        posthoc_results = sp.posthoc_dunn(groups, p_adjust='bonferroni')
+                        posthoc_results_df = sp.posthoc_dunn(groups, p_adjust='bonferroni')
+                        group_names = df_clean['experience_variant_label'].unique()
+                        name_map = {i+1: name for i, name in enumerate(group_names)}
+                        posthoc_results_df.rename(columns=name_map, index=name_map, inplace=True)
+                        
                         st.write("_(p-values adjusted using Bonferroni method)_")
-                        st.dataframe(posthoc_results)
+                        st.dataframe(posthoc_results_df)
                     except Exception as posthoc_e:
                          st.error(f"Error during Dunn's post-hoc test: {posthoc_e}")
 
@@ -526,7 +534,8 @@ def run():
         data=pd.DataFrame({
             "experience_variant_label": ["A", "B", "B", "A"],
             "total_item_quantity": [5, 2, 4, 1],
-            "purchase_revenue": [114.35, 45.74, 91.48, 22.87]
+            "purchase_revenue": [114.35, 45.74, 91.48, 22.87],
+            "profit": [34.10, 12.50, 27.30, 5.60]
         }).to_csv(index=False),
         file_name="template.csv",
         mime="text/csv"
@@ -544,7 +553,12 @@ def run():
         st.write("### A random sample of your data:")
         st.write(df.sample(10))
 
-        kpi = st.selectbox("Select the KPI to analyze:", ['purchase_revenue', 'total_item_quantity'])
+        kpi = st.selectbox("Select the KPI to analyze:", ['purchase_revenue', 'profit', 'total_item_quantity'])
+
+        filter_zero_profit = False
+        if kpi == 'profit':
+            filter_zero_profit = st.checkbox("Exclude rows where profit is zero (recommended for ANOVA)", value=True)
+
         outlier_handling = st.selectbox("Select how to handle outliers:", ['None', 'Winsorizing (STD/Percentile)', 'Log Transform', 'Removal'], help='Choose the method for handling outliers. "None" uses a default > 5 standard deviation definition for detection purposes.')
 
         method = None
@@ -579,9 +593,15 @@ def run():
 
 
         if st.button("Calculate my test results"):
-            # --- Outlier Handling ---
             processed_df = df.copy()
+            
+            if kpi == 'profit' and filter_zero_profit:
+                initial_rows = len(processed_df)
+                processed_df = processed_df[processed_df['profit'] > 0]
+                rows_removed = initial_rows - len(processed_df)
+                st.info(f"Filtered out {rows_removed} rows where profit was zero.")
 
+            # --- Outlier Handling ---
             if outlier_handling == 'Winsorizing (STD/Percentile)':
                 processed_df, lower_cap, upper_cap, cap_desc = winsorize_data(processed_df, kpi, method, outlier_stdev, percentile)
 
