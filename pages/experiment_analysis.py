@@ -874,7 +874,7 @@ def display_frequentist_summary(
         # --- Superiority Test ---
         if is_significant[challenger_index_in_lists]:
             st.markdown(f" * **Statistically significant result** for {alphabet[i]} with p-value: {p_values[challenger_index_in_lists]:.4f}!")
-            st.markdown(f" * **Observed power**: {observed_powers[challenger_index_in_lists] * 100:.2f}%")
+            # st.markdown(f" * **Observed power**: {observed_powers[challenger_index_in_lists] * 100:.2f}%")
             st.markdown(f" * **Conversion rate change** for {alphabet[i]}: {((conversion_rates[i] - conversion_rates[0]) / conversion_rates[0]) * 100:.2f}%")
             if conversion_rates[i] > conversion_rates[0]:
                 st.success(f"Variant **{alphabet[i]}** is a **winner**, congratulations!")
@@ -884,7 +884,7 @@ def display_frequentist_summary(
         # --- Non-inferiority Test ---
         else:
             st.markdown(f" * The Z-test is not statistically significant (p = {p_values[challenger_index_in_lists]:.4f}).")
-            st.markdown(f" * **Observed power**: {observed_powers[challenger_index_in_lists] * 100:.2f}%")
+            # st.markdown(f" * **Observed power**: {observed_powers[challenger_index_in_lists] * 100:.2f}%")
             st.markdown(f" * **Conversion rate change for {alphabet[i]}:** {((conversion_rates[i] - conversion_rates[0]) / conversion_rates[0]) * 100:.2f}%")
 
             if tail == 'greater' or tail == 'two-sided':
