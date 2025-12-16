@@ -489,7 +489,7 @@ def display_results_per_variant(
         
         probability_challenger_better = probabilities_to_be_best[challenger_index]
         probability_control_better = probabilities_to_be_best[control_index]
-        observed_uplift_challenger = observed_uplifts[i - 1]
+        observed_uplift_challenger = observed_uplifts[i - 1] * 100
 
         if round(probability_challenger_better * 100, 2) >= probability_winner:
             bayesian_result = "a <span style='color: green; font-weight: bold;'>winner</span>"
