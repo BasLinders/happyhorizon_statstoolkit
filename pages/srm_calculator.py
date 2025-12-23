@@ -54,7 +54,7 @@ def run():
     expected_proportions = st.session_state.expected_proportions
 
     st.write("")
-    if st.button("Check for Sample Ratio Mismatch"):
+    if st.button("Check for Sample Ratio Mismatch", type="primary"):
         if sum(expected_proportions) != 100:
             st.error("The total sample proportion should be equal to 100.")
         else:

@@ -592,7 +592,7 @@ def run():
         plt.clf()
 
 
-        if st.button("Calculate my test results"):
+        if st.button("Calculate my test results", type="primary"):
             processed_df = df.copy()
             
             if kpi == 'profit' and filter_zero_profit:

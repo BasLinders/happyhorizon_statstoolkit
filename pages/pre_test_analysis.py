@@ -262,7 +262,7 @@ def run():
     get_user_input()  # Get inputs
 
     if calculation_mode == "Calculate MDE based on Runtime":
-        if st.button("Calculate MDE"):
+        if st.button("Calculate MDE", type="primary"):
             # Validate input using st.session_state
             if (st.session_state.get("baseline_visitors", 0) <= 0 or
                 st.session_state.get("baseline_conversions", 0) < 0 or
@@ -280,7 +280,7 @@ def run():
                                   st.session_state.get("tails", 'Two-sided'))
 
     elif calculation_mode == "Calculate Sample Size based on MDE":
-        if st.button("Calculate Sample Size"):
+        if st.button("Calculate Sample Size", type="primary"):
             # Add Validation Block using st.session_state
             if (st.session_state.get("baseline_visitors", 0) <= 0 or
                     st.session_state.get("baseline_conversions", 0) < 0 or

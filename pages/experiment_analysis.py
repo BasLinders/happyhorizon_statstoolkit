@@ -947,7 +947,7 @@ def run():
         ) = get_bayesian_inputs()
 
         st.write("")
-        if st.button("Calculate Bayesian Results"):
+        if st.button("Calculate Bayesian Results", type="primary"):
             if validate_inputs(visitor_counts, conversion_counts, aovs):
                 st.write("---")
                 try:
@@ -1004,7 +1004,7 @@ def run():
         ) / 100
 
         st.write("")
-        if st.button("Calculate Frequentist Results"):
+        if st.button("Calculate Frequentist Results", type="primary"):
             if validate_inputs(visitor_counts, conversion_counts):
                 st.write("---")
                 try:

@@ -239,7 +239,7 @@ def run():
         help="Enter the number of experiments for which to show the intersection lines on the plot."
     )
 
-    if st.button("Calculate Projected Uplift"):
+    if st.button("Calculate Projected Uplift", type="primary"):
         if used_months > 0 and visitors_base > 0 and conv_base > 0 and n_experiments_max > 0:
             # Annualization
             v_twelve = round((visitors_base / used_months) * 12)

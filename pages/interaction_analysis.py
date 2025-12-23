@@ -58,7 +58,7 @@ def run():
         BB_c = st.session_state.BB_c
 
     st.write("")
-    if st.button("Calculate interaction effect"):
+    if st.button("Calculate interaction effect", type="primary"):
         if AA_u > 0 and AB_u > 0 and BA_u > 0 and BB_u > 0 and AA_c > 0 and AB_c > 0 and BA_c > 0 and BB_c > 0:
             # Creating dataframes for each combination
             data_AA = pd.DataFrame({'Combination': 'AA', 'User': range(1, AA_u+1), 'Conversion': [1]*AA_c + [0]*(AA_u - AA_c)})
