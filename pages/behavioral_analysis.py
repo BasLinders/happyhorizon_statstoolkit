@@ -285,17 +285,24 @@ def run():
         # --- VISUALIZATION (PRE-CALC) ---
         st.subheader("Data Distribution")
         viz_col1, viz_col2 = st.columns(2)
+        data_mean = df[kpi].mean()
+        data_std = df[kpi].std()
+        range_min = max(0, data_mean - 3.5 * data_std)
+        range_max = data_mean + 3.5 * data_std
         
         with viz_col1:
             st.caption("Boxplot (Visualizing Skew)")
             fig_box, ax_box = plt.subplots()
             sns.boxplot(x='experience_variant_label', y=kpi, data=df, ax=ax_box)
+            ax_box.set_ylim(range_min, range_max)
             st.pyplot(fig_box)
             
         with viz_col2:
-            st.caption("Distribution (Density)")
+            st.caption("Distribution (Histogram + KDE)")
             fig_hist, ax_hist = plt.subplots()
-            sns.kdeplot(data=df, x=kpi, hue='experience_variant_label', fill=True, ax=ax_hist)
+            #sns.kdeplot(data=df, x=kpi, hue='experience_variant_label', fill=True, ax=ax_hist)
+            sns.histplot(data=df, x=kpi, hue='experience_variant_label', kde=True, ax=ax_hist, element="step", alpha=0.3)
+            ax_hist.set_xlim(range_min, range_max)
             st.pyplot(fig_hist)
 
         # --- EXECUTION BUTTON ---
