@@ -1,14 +1,17 @@
 import streamlit as st
+import pandas as pd
 import numpy as np
-from scipy.stats import norm, beta
+import scipy.stats as stats
 from statsmodels.stats.proportion import proportions_ztest
-import scipy.stats as st
 import matplotlib.pyplot as plt
 from statsmodels.sandbox.stats.multicomp import multipletests  # For error spending
 
 ## -- HELPER FUNCTIONS --
 def log_likelihood_ratio(p0, p1, x, n):
     """Calculates the log-likelihood ratio for a given number of conversions."""
+    eps = 1e-10
+    p0 = np.clip(p0, eps, 1 - eps)
+    p1 = np.clip(p1, eps, 1 - eps)
     loglr = x * np.log(p1 / p0) + (n - x) * np.log((1 - p1) / (1 - p0))
     return loglr
 
@@ -82,7 +85,7 @@ def sprt_test_error_spending(p0, p1, conversions_b_cumulative, visitors_b_cumula
 
     return llr_values, A_values, B_values, results
 
-print("SPRT function with error spending defined.")
+st.write("SPRT function with error spending defined.")
 
 # Example error spending functions
 
@@ -94,7 +97,8 @@ def o_brien_fleming_spending(alpha, proportion):
 
 def pocock_spending(alpha, proportion):
     """Pocock type error spending function (constant spending rate)."""
-    return alpha * np.log(1 + (np.exp(1) - 1) * proportion)
+    # return alpha * np.log(1 + (np.exp(1) - 1) * proportion)
+    return 2 * (1 - stats.norm.cdf(stats.norm.ppf(1 - alpha / 2) / np.sqrt(proportion)))
 
 def haybittle_peto_spending(alpha, proportion):
     """Haybittle-Peto type error spending function (conservative early spending)."""
@@ -118,9 +122,9 @@ llr_values_obf, A_values_obf, B_values_obf, results_obf = sprt_test_error_spendi
     error_spending_function=o_brien_fleming_spending
 )
 
-print("\nSPRT Results with O'Brien-Fleming Error Spending:")
+st.write("\nSPRT Results with O'Brien-Fleming Error Spending:")
 for i in range(len(results_obf)):
-    print(f"Interval {i+1}: LLR = {llr_values_obf[i:.4f]}, Upper A = {A_values_obf[i:.4f]}, Lower B = {B_values_obf[i:.4f]}, Result = {results_obf[i]}")
+    st.write(f"Interval {i+1}: LLR = {llr_values_obf[i:.4f]}, Upper A = {A_values_obf[i:.4f]}, Lower B = {B_values_obf[i:.4f]}, Result = {results_obf[i]}")
     if "Reject H0" in results_obf[i] or "Fail to reject H0" in results_obf[i]:
         break
 
@@ -131,9 +135,9 @@ llr_values_pocock, A_values_pocock, B_values_pocock, results_pocock = sprt_test_
     error_spending_function=pocock_spending
 )
 
-print("\nSPRT Results with Pocock Error Spending:")
+st.write("\nSPRT Results with Pocock Error Spending:")
 for i in range(len(results_pocock)):
-    print(f"Interval {i+1}: LLR = {llr_values_pocock[i:.4f]}, Upper A = {A_values_pocock[i:.4f]}, Lower B = {B_values_pocock[i:.4f]}, Result = {results_pocock[i]}")
+    st.write(f"Interval {i+1}: LLR = {llr_values_pocock[i:.4f]}, Upper A = {A_values_pocock[i:.4f]}, Lower B = {B_values_pocock[i:.4f]}, Result = {results_pocock[i]}")
     if "Reject H0" in results_pocock[i] or "Fail to reject H0" in results_pocock[i]:
         break
 
@@ -144,9 +148,9 @@ llr_values_no_spending, A_values_no_spending, B_values_no_spending, results_no_s
     error_spending_function=None
 )
 
-print("\nSPRT Results without Error Spending:")
+st.write("\nSPRT Results without Error Spending:")
 for i in range(len(results_no_spending)):
-    print(f"Interval {i+1}: LLR = {llr_values_no_spending[i:.4f]}, Upper A = {A_values_no_spending[i:.4f]}, Lower B = {B_values_no_spending[i:.4f]}, Result = {results_no_spending[i]}")
+    st.write(f"Interval {i+1}: LLR = {llr_values_no_spending[i:.4f]}, Upper A = {A_values_no_spending[i:.4f]}, Lower B = {B_values_no_spending[i:.4f]}, Result = {results_no_spending[i]}")
     if "Reject H0" in results_no_spending[i] or "Fail to reject H0" in results_no_spending[i]:
         break
 
@@ -267,7 +271,7 @@ with st.form(key='data_entry_form'):
                     save_cumulative_data(new_data)
                     st.success(f"Data for Interval {current_interval} added.")
                     # Rerun to clear the form fields and update data display
-                    st.experimental_rerun()
+                    st.rerun()
             else:
                 # First data point
                 new_data = {
@@ -278,7 +282,7 @@ with st.form(key='data_entry_form'):
                 }
                 save_cumulative_data(new_data)
                 st.success(f"Data for Interval {current_interval} added.")
-                st.experimental_rerun()
+                st.rerun()
 
 
 # --- Display Cumulative Data ---
@@ -360,4 +364,4 @@ st.header("Data Management")
 if st.button("Clear All Cumulative Data"):
     clear_cumulative_data()
     st.warning("All cumulative data has been cleared.")
-    st.experimental_rerun()
+    st.rerun()
