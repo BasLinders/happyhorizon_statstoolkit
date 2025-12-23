@@ -21,7 +21,7 @@ def initialize_session_state():
     st.session_state.setdefault("conversion_counts", [0] * num_variants)
     st.session_state.setdefault("aovs", [None] * num_variants)
     st.session_state.setdefault("confidence_level", 95)
-    st.session_state.setdefault("tail", 'two-sided')
+    st.session_state.setdefault("tail", 'Greater')
     st.session_state.setdefault("probability_winner", 80.0)
     st.session_state.setdefault("runtime_days", 0)
 
@@ -581,13 +581,13 @@ def calculate_frequentist_statistics(visitor_counts, conversion_counts, confiden
     ]
 
     # P-values
-    if tail == 'greater':
+    if tail == 'Greater':
         p_values = [1 - norm.cdf(z) for z in z_stats]
-    elif tail == 'less':
+    elif tail == 'Less':
         p_values = [norm.cdf(z) for z in z_stats]
-    else: # 'two-sided'
+    else: # 'Two-sided'
         p_values = [2 * (1 - norm.cdf(abs(z))) for z in z_stats]
-
+    
     significant_results = [p <= sidak_alpha for p in p_values]
 
     # --- Observed Power Analysis ---
@@ -603,7 +603,7 @@ def calculate_frequentist_statistics(visitor_counts, conversion_counts, confiden
             z_delta = abs(cr_c - cr_v) / se_unpooled
             power = None
             
-            if t in ['greater', 'less']:
+            if t in ['Greater', 'Less']:
                 z_alpha = norm.ppf(1 - corrected_alpha)
                 power = norm.cdf(z_delta - z_alpha)
             else:
@@ -628,9 +628,9 @@ def calculate_frequentist_statistics(visitor_counts, conversion_counts, confiden
             p_value = 2 * (1 - norm.cdf(abs(z_stat)))
 
             # Adjust p-value based on tail
-            if tail == 'greater':
+            if tail == 'Greater':
                 p_value = 1 - norm.cdf(z_stat)
-            elif tail == 'less':
+            elif tail == 'Less':
                 p_value = norm.cdf(z_stat)
             else:
                 p_value = 2 * (1 - norm.cdf(abs(z_stat)))
@@ -887,7 +887,7 @@ def display_frequentist_summary(
             # st.markdown(f" * **Observed power**: {observed_powers[challenger_index_in_lists] * 100:.2f}%")
             st.markdown(f" * **Conversion rate change for {alphabet[i]}:** {((conversion_rates[i] - conversion_rates[0]) / conversion_rates[0]) * 100:.2f}%")
 
-            if tail == 'greater' or tail == 'two-sided':
+            if tail == 'Greater' or tail == 'Two-sided':
                 se_unpooled = np.sqrt(
                     (conversion_rates[0] * (1 - conversion_rates[0]) / visitor_counts[0]) + 
                     (conversion_rates[i] * (1 - conversion_rates[i]) / visitor_counts[i])
@@ -926,7 +926,7 @@ def run():
     
     analysis_method = st.selectbox(
         "Choose your analysis method:",
-        ("Bayesian Analysis", "Frequentist Analysis")
+        ("Frequentist Analysis", "Bayesian Analysis")
     )
     st.write("---")
 
@@ -993,9 +993,9 @@ def run():
         
         st.session_state.tail = st.radio(
             "Select the test hypothesis (tail):",
-            ('two-sided', 'greater', 'less'),
+            ('Greater', 'Less', 'Two-sided'),
             horizontal=True,
-            help="'two-sided' (A != B), 'greater' (B > A), 'less' (B < A). Be aware that 'greater' and 'less' are directional tests, while 'two-sided' is non-directional. Real-world problems often require a two-sided test, but you can choose based on your hypothesis."
+            help="'Two-sided' (A != B), 'Greater' (B > A), 'Less' (B < A). Be aware that 'Greater' and 'Less' are directional tests, while 'Two-sided' is non-directional. For a directional claim, choose a one-sided hypothesis."
         )
         non_inferiority_margin = st.number_input(
             "Non-inferiority margin (absolute %)", 
