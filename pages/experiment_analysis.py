@@ -924,9 +924,11 @@ def run():
     st.write("---")
     initialize_session_state()
     
-    analysis_method = st.selectbox(
+    analysis_method = st.radio(
         "Choose your analysis method:",
-        ("Frequentist Analysis", "Bayesian Analysis")
+        ("Frequentist Analysis", "Bayesian Analysis"),
+        horizontal=True,
+        help="Frequentist analysis uses z-tests and confidence intervals to assess statistical significance. Bayesian analysis uses simulations to estimate probabilities and potential business impact."
     )
     st.write("---")
 
