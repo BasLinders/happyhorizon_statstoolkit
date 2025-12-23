@@ -293,7 +293,7 @@ def run():
         with viz_col1:
             st.caption("Boxplot (Visualizing Skew)")
             fig_box, ax_box = plt.subplots()
-            sns.boxplot(x='experience_variant_label', y=kpi, data=df, ax=ax_box)
+            sns.boxplot(x='experience_variant_label', y=kpi, data=df, ax=ax_box, palette=sns.color_palette("hls", 8))
             ax_box.set_ylim(range_min, range_max)
             st.pyplot(fig_box)
             

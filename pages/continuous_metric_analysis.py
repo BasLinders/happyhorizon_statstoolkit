@@ -553,13 +553,28 @@ def run():
         st.write("### A random sample of your data:")
         st.write(df.sample(10))
 
-        kpi = st.selectbox("Select the KPI to analyze:", ['purchase_revenue', 'profit', 'total_item_quantity'])
+        possible_kpis = ['purchase_revenue', 'total_item_quantity', 'profit']
+        available_kpis = [col for col in possible_kpis if col in df.columns]
+
+        if 'profit' in df.columns:
+            # Check for negative values
+            if df['profit'].min() < 0:
+                st.warning("Warning: Your 'profit' column contains negative values. This is common (losses), but be aware of how this impacts log transformations or specific tests.")
+
+        # If no valid KPIs are found, stop
+        if not available_kpis:
+            st.error("Error: None of the expected columns (purchase_revenue, total_item_quantity, profit) were found in your CSV.")
+            return
+
+        kpi = st.selectbox("Select the KPI to analyze:", available_kpis)
 
         filter_zero_profit = False
-        if kpi == 'profit':
-            filter_zero_profit = st.checkbox("Exclude rows where profit is zero (recommended for ANOVA)", value=True)
+        
+        # Only show this checkbox if the user SELECTED profit AND the column actually has zeros
+        if kpi == 'profit' and (df['profit'] == 0).any():
+             filter_zero_profit = st.checkbox("Exclude rows where profit is zero (recommended for ANOVA)", value=True)
 
-        outlier_handling = st.selectbox("Select how to handle outliers:", ['None', 'Winsorizing (STD/Percentile)', 'Log Transform', 'Removal'], help='Choose the method for handling outliers. "None" uses a default > 5 standard deviation definition for detection purposes.')
+        outlier_handling = st.selectbox("Select how to handle outliers:", ['None', 'Winsorizing (STD/Percentile)', 'Log Transform', 'Removal'], help='Choose the method for handling outliers. "None" uses a default > 5 standard deviation definition for detection purposes. Only use Log Transform when your data does not contain negative numbers.')
 
         method = None
         outlier_stdev = None
@@ -580,15 +595,25 @@ def run():
             st.warning(f"{outliers_mask.sum()} Outliers detected in a relatively small dataset. The OLS method was used for outlier detection. You can adjust the outlier handling method in the options above.")
 
         # Show raw data plots before any processing
+        data_mean = df[kpi].mean()
+        data_std = df[kpi].std()
+        raw_min = max(0, data_mean - 3.5 * data_std) 
+        raw_max = data_mean + 3.5 * data_std
+        num_variants = len(df['experience_variant_label'].unique())
+
         st.write("### Raw Data Box Plot")
-        sns.boxplot(x='experience_variant_label', y=kpi, data=df)
-        st.pyplot(plt)
+        fig_box, ax_box = plt.subplots()
+        sns.boxplot(x='experience_variant_label', y=kpi, data=df, palette=sns.color_palette("hls", num_variants), hue='experience_variant_label', legend=False)
+        ax_box.set_ylim(raw_min, raw_max)
+        st.pyplot(fig_box)
         plt.clf()
 
         st.write("### Raw Data Histogram with KDE")
-        sns.histplot(df[kpi], kde=True, bins=30)
+        fig_hist, ax_hist = plt.subplots()
+        sns.histplot(df[kpi], kde=True, bins=30, ax=ax_hist)
+        ax_hist.set_xlim(raw_min, raw_max)
         plt.title("Raw Data Histogram with KDE")
-        st.pyplot(plt)
+        st.pyplot(fig_hist)
         plt.clf()
 
 
@@ -619,25 +644,56 @@ def run():
             else:
                 st.write("No outlier handling applied.")
 
-            # --- Refit the model AFTER outlier handling ---
+            # --- Refit the model after outlier handling ---
             model_after = smf.ols(f'{kpi} ~ C(experience_variant_label)', data=processed_df).fit()
 
             # --- Processed Data Plots (using the processed data) ---
+            data_mean = processed_df[kpi].mean()
+            data_std = processed_df[kpi].std()
+            processed_min = max(0, data_mean - 3.5 * data_std)
+            processed_max = data_mean + 3.5 * data_std
+            num_variants = len(processed_df['experience_variant_label'].unique())
+            
             st.write("### Refitted Data Box Plot")
-            sns.boxplot(x='experience_variant_label', y=kpi, data=processed_df)
-            st.pyplot(plt)
+            fig_box, ax_box = plt.subplots()
+            sns.boxplot(x='experience_variant_label', y=kpi, data=processed_df, palette=sns.color_palette("hls", num_variants), hue='experience_variant_label', legend=False)
+            ax_box.set_ylim(processed_min, processed_max)
+            st.pyplot(fig_box)
             plt.clf()
 
             st.write("### Refitted QQ Plot")
-            qqplot(model_after.resid,  marker='o')  # Use residuals from the new model
-            plt.title("QQ Plot of Residuals") # Clear title
-            st.pyplot(plt)
+            influence = model_after.get_influence()
+            std_residuals = pd.Series(influence.resid_studentized_internal)
+            plot_data = std_residuals
+            caption_text = ""
+
+            if len(std_residuals) > 5000:
+                plot_data = std_residuals.sample(5000, random_state=42)  # Sample to avoid performance issues
+                caption_text = f"Note: Due to a large dataset, only a 5000 points (out of {len(std_residuals):,}) are plotted for efficiency."
+
+            fig_qq = plt.figure()
+            ax_qq = fig_qq.add_subplot(111)
+
+            sm.qqplot(plot_data, line='45', ax=ax_qq, alpha=0.2, markersize=4, marker='o')
+            plt.title("QQ Plot of Standardized Residuals")
+            plt.ylabel("Standardized Residuals (Z-Score)")
+            plt.xlabel("Theoretical Quantiles")
+
+            st.pyplot(fig_qq)
+            if caption_text:
+                st.caption(caption_text)
+
             plt.clf()
 
             st.write("### Refitted Data Histogram with KDE")
-            sns.histplot(model_after.resid, kde=True, bins=30) # Use residuals from the new model
-            plt.title("Histogram of Residuals with KDE") # Clear title
-            st.pyplot(plt)
+            resid_std = model_after.resid.std()
+            resid_min = -3.5 * resid_std
+            resid_max = 3.5 * resid_std
+            fig_hist, ax_hist = plt.subplots()
+            sns.histplot(model_after.resid, kde=True, bins=30, ax=ax_hist) # Use residuals from the new model
+            ax_hist.set_xlim(resid_min, resid_max)
+            plt.title("Histogram of Residuals with KDE")
+            st.pyplot(fig_hist)
             plt.clf()
 
             perform_stat_tests_and_conclusions(processed_df, kpi, model_after)  # Pass the refitted model
