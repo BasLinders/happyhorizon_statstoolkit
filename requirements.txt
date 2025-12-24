@@ -10,3 +10,4 @@ matplotlib
 pingouin
 statsmodels
 statistics
+st_supabase_connection
