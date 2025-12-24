@@ -126,17 +126,13 @@ def run():
         1.  **Start New:** Generate a unique ID and define your success metrics (Alpha, Beta, MDE). 
             * *Note: These are locked once the test starts to ensure integrity.*
         2.  **Update Regularly:** Come back daily/weekly to input your **cumulative** data.
-        3.  **Check the Graph:** * **Upper Limit:** Success! (Reject Null)
+        3.  **Check the Graph:** 
+            * **Upper Limit:** Success! (Reject Null)
             * **Lower Limit:** Futility/Failure. (Accept Null)
         
-        > **Important:** > * Data is stored for **42 days (6 weeks)** and then automatically deleted.
+        > * **Important:** Data is stored for **42 days (6 weeks)** and then automatically deleted.
         > * **Save your Experiment ID!** It is the only key to retrieve your data.
-            """)
-        st.markdown("""
-                    Upload a CSV file with your transaction data to discover association rules.
-                    The file must contain at least columns for **transaction ID** and **item/product**. 
-                    A **category** column is optional.
-    """)
+        """)
     
     # Initialize Session State for locking
     if 'params_locked' not in st.session_state: st.session_state['params_locked'] = False
