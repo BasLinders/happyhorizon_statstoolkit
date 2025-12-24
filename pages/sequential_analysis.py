@@ -57,7 +57,7 @@ def get_experiment_params(experiment_id):
         st.error(f"Error fetching params: {e}")
         return None
 
-def save_experiment_params(experiment_id, p0, p1, alpha, beta):
+def save_experiment_params(experiment_id, p0, p1, alpha, beta, max_visitors):
     """Save the immutable rules of the experiment."""
     try:
         data = {
@@ -65,7 +65,8 @@ def save_experiment_params(experiment_id, p0, p1, alpha, beta):
             "p0": float(p0),
             "p1": float(p1),
             "alpha": float(alpha),
-            "beta": float(beta)
+            "beta": float(beta),
+            "max_visitors": int(max_visitors)
         }
         conn.table("experiment_params").insert(data).execute()
         return True
@@ -109,16 +110,32 @@ def save_data_point(experiment_id, date, visitors, conversions):
 def run():
     st.title("Sequential Experiment Analysis (SPRT)")
     st.markdown("""
-    Check your experiment results without the need for a fixed-horizon sample. 
+    ### Faster A/B Testing with Sequential Analysis
+    Standard A/B tests require you to wait for a fixed sample size to avoid "peeking" errors. 
+    **This tool is different.** It uses **Sequential Testing (SPRT)**, allowing you to update data and check results **any time** without invalidating your statistics.
 
-    You can either start a new experiment, or load an existing one (remember to save the corresponding ID somewhere).
+    #### Why use this?
+    * **Stop Winners Early:** Deploy successful features days or weeks faster.
+    * **Cut Losers Fast:** Identify "futility" (no chance of winning) early to save traffic.
+    * **Rigorous:** Mathematically valid stopping rules, unlike standard z-tests.
+    """)
 
-    Features:
-    - Wald's Sequential Probability Ratio Test
-    - Experiment retrieval through a unique, randomly generated ID
-    - Experiment parameters are locked in once the ID is generated (so no cheating)
-    
-    Parameters are locked once the experiment starts.
+    with st.expander("How to use", expanded=False):
+        st.markdown("""
+        #### How to use
+        1.  **Start New:** Generate a unique ID and define your success metrics (Alpha, Beta, MDE). 
+            * *Note: These are locked once the test starts to ensure integrity.*
+        2.  **Update Regularly:** Come back daily/weekly to input your **cumulative** data.
+        3.  **Check the Graph:** * **Upper Limit:** Success! (Reject Null)
+            * **Lower Limit:** Futility/Failure. (Accept Null)
+        
+        > **Important:** > * Data is stored for **42 days (6 weeks)** and then automatically deleted.
+        > * **Save your Experiment ID!** It is the only key to retrieve your data.
+            """)
+        st.markdown("""
+                    Upload a CSV file with your transaction data to discover association rules.
+                    The file must contain at least columns for **transaction ID** and **item/product**. 
+                    A **category** column is optional.
     """)
     
     # Initialize Session State for locking
@@ -178,10 +195,14 @@ def run():
             p1_val = float(defaults.get('p1', 0.12))
             alpha_val = float(defaults.get('alpha', 0.05))
             beta_val = float(defaults.get('beta', 0.20))
+            max_visitors_val = int(defaults.get('max_visitors', 10000))
 
             # The Input Fields
             p0_param = st.number_input("Baseline CR (p0)", value=p0_val, format="%.4f", disabled=is_locked)
-            p1_param = st.number_input("Target CR (p1)", value=p1_val, format="%.4f", disabled=is_locked, help="Calculation: p0 * (1 + relative MDE)")
+            p1_param = st.number_input("Target CR (p1)", value=p1_val, format="%.4f", disabled=is_locked, 
+                                       help="Set this to the Minimum Effect Size that justifies rolling out the feature. If the true effect is smaller than this, the test will stop early for Futility.")
+            max_visitors = st.number_input("Max Visitors (Safety Cap)", value=max_visitors_val, step=100, disabled=is_locked,
+                                help="If the test reaches this number of visitors without a result, it will be stopped as 'Inconclusive'.")
             c1, c2 = st.columns(2)
             alpha = c1.number_input("Alpha", value=alpha_val, step=0.01, disabled=is_locked)
             beta = c2.number_input("Beta", value=beta_val, step=0.01, disabled=is_locked)
@@ -196,7 +217,7 @@ def run():
                         st.error("p1 must be > p0")
                     else:
                         # SAVE to DB
-                        saved = save_experiment_params(st.session_state['exp_id'], p0_param, p1_param, alpha, beta)
+                        saved = save_experiment_params(st.session_state['exp_id'], p0_param, p1_param, alpha, beta, max_visitors)
                         if saved:
                             st.session_state['params_locked'] = True
                             st.session_state['fetched_params'] = {
@@ -262,15 +283,28 @@ def run():
         col3.metric("Upper Bound (Stop for Success)", f"{upper_bound:.2f}")
         
         # 3. Decision Logic
+        latest_vis = df.iloc[-1]['visitors']
+        if latest_vis > 0:
+            latest_cr = df.iloc[-1]['conversions'] / latest_vis
+        else:
+            latest_cr = 0.0
+        
         if latest_llr > upper_bound:
-            st.success(f"### Result: SIGNIFICANT (Reject H0)")
+            st.success(f"### Result: SIGNIFICANT POSITIVE (Reject H0)")
             st.write(f"The Variant is statistically superior. You can stop the test early at {latest_vis} visitors.")
         elif latest_llr < lower_bound:
-            st.error(f"### Result: FUTILITY (Accept H0)")
-            st.write(f"The Variant is unlikely to reach the target. Recommended to stop to save resources.")
+            if latest_cr < p0_param:
+                st.error(f"### Result: SIGNIFICANT NEGATIVE")
+                st.write(f"The Variant is performing **worse** than Control (Observed CR: {latest_cr:.4f} vs Baseline: {p0_param}). Stop immediately.")
+            else:
+                st.error(f"### Result: FUTILITY (Accept H0)")
+                st.write(f"The Variant is unlikely to reach the target. Recommended to stop to save resources.")
         else:
-            st.warning(f"### Result: INCONCLUSIVE")
-            st.write("Continue collecting data. The test has not yet breached a boundary.")
+            if latest_vis >= max_visitors:
+                st.write("Maximum sample size reached without a decision.")
+            else:
+                st.warning(f"### Result: INCONCLUSIVE")
+                st.write("Continue collecting data. The test has not yet breached a boundary.")
         
         # 4. Visualization
         st.markdown("### Test Trajectory")
