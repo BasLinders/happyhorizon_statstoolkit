@@ -224,6 +224,9 @@ def run():
                                 'p0': p0_param, 'p1': p1_param, 'alpha': alpha, 'beta': beta
                             }
                             st.rerun()
+            else:
+                # Add this 'else' block so the form always has a button
+                st.form_submit_button("Parameters Locked", disabled=True)
 
     # --- MAIN PAGE CONTENT ---
     exp_id = st.session_state.get('exp_id')
