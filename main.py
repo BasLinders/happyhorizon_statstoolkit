@@ -11,7 +11,7 @@ logo_url = "https://cdn.homerun.co/49305/hh-woordmerk-rgb-blue-met-discriptor166
 st.image(logo_url, width=200)
 
 st.title("Happy Horizon Experimentation Toolkit")
-st.write("### <span style='color: orange;'>v0.6.8.1-beta</span>", unsafe_allow_html=True)
+st.write("### <span style='color: orange;'>v0.6.9-beta</span>", unsafe_allow_html=True)
 st.write("""
 This is the main page for the Happy Horizon Experimentation Toolkit. You can navigate to individual apps using the sidebar.
 
@@ -24,6 +24,7 @@ This toolkit has been created for the purposes of analyzing data from online con
 <span style='color:#009900; font-weight: 600; margin-right: 6px;'>&#10003;</span>**Continuous metric analysis**: Analyze metrics such as revenue / items per transaction<br>
 <span style='color:#009900; font-weight: 600; margin-right: 6px;'>&#10003;</span>**Experimentation growth estimation**: Calculate annual compound growth potential for experimentation<br>
 <span style='color:#009900; font-weight: 600; margin-right: 6px;'>&#10003;</span>**Interaction analysis**: Verify if your experiments negatively impacted each other or not<br>
+<span style='color:#009900; font-weight: 600; margin-right: 6px;'>&#10003;</span>**Sequential analysis**: Get instant feedback about test significance without the need for fixed sample sizes<br>
 <span style='color:#009900; font-weight: 600; margin-right: 6px;'>&#10003;</span>**SRM calculator**: Identify if your visitors were distributed as expected in your experiment<br>
 <span style='color:#009900; font-weight: 600; margin-right: 6px;'>&#10003;</span>**Pre-test analysis**: Calculate the runtime to reach an effect
 
