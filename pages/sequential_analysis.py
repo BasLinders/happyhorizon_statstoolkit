@@ -148,10 +148,11 @@ def run():
     defaults = st.session_state.get('fetched_params', {})
     is_locked = st.session_state.get('params_locked', False)
     
-    # --- SIDEBAR: SETUP & LOADING ---
+# --- SIDEBAR: SETUP & LOADING ---
     with st.sidebar:
         st.header("1. Experiment Setup")
 
+        # 1. Test Type Selection (Synced with DB)
         options = ["One-sample (fixed baseline)", "Two-sample (concurrent control/variant)"]
         saved_type = defaults.get('test_type', options[0])
         try:
@@ -159,13 +160,9 @@ def run():
         except ValueError:
             default_index = 0
 
-        test_type = st.radio(
-                            "Test format",
-                            options,
-                            index=default_index,
-                            disabled=is_locked
-                            )
+        test_type = st.radio("Test format", options, index=default_index, disabled=is_locked)
         
+        # Dynamic Labels
         if test_type == "One-sample (fixed baseline)":
             p0_label = "Baseline CR (p0)"
             p0_help = "The fixed historical conversion rate (CR) you want to beat."
@@ -173,19 +170,17 @@ def run():
             p0_label = "Estimated baseline CR (p0)"
             p0_help = "Used only to calculate sample size estimates. The actual Control CR will be measured live."
 
-        # A. Mode Selection
+        # 2. Mode Selection
         mode = st.radio("Mode", ["Load Existing", "Start New"], label_visibility="collapsed")
         
-        # B. ID Management
+        # 3. ID Management
         if mode == "Start New":
             if st.button("Generate New ID"):
-                # Reset state for a fresh start
                 st.session_state['exp_id'] = str(uuid.uuid4())
                 st.session_state['params_locked'] = False
                 st.session_state['fetched_params'] = {}
                 st.rerun()
             
-            # Display ID if generated
             if st.session_state.get('exp_id'):
                 st.success(f"New ID: {st.session_state['exp_id']}")
         
@@ -194,7 +189,6 @@ def run():
             if st.button("Load"):
                 if input_id:
                     st.session_state['exp_id'] = input_id
-                    # 1. Try to fetch Locked Parameters
                     params = get_experiment_params(input_id)
                     if params:
                         st.session_state['fetched_params'] = params
@@ -212,65 +206,50 @@ def run():
         if is_locked:
             st.info("Parameters are locked for this ID.")
 
-        with st.form("entry_form"):
-            # Date
-            d_date = st.date_input("Date")
+        with st.form("setup_form"):
+            p0_val = float(defaults.get('p0', 0.10))
+            p1_val = float(defaults.get('p1', 0.12))
+            alpha_val = float(defaults.get('alpha', 0.05))
+            beta_val = float(defaults.get('beta', 0.20))
+            max_visitors_val = int(defaults.get('max_visitors', 10000))
+
+            p0_param = st.number_input(p0_label, value=p0_val, format="%.4f", disabled=is_locked, help=p0_help)
+            p1_param = st.number_input("Target CR (p1)", value=p1_val, format="%.4f", disabled=is_locked, 
+                                     help="Set this to the Minimum Effect Size.")
+            max_visitors = st.number_input("Max Visitors (Safety Cap)", value=max_visitors_val, step=100, disabled=is_locked)
             
-            # Helper to find previous values
-            prev_vis = int(df.iloc[-1]['visitors']) if not df.empty else 0
-            prev_conv = int(df.iloc[-1]['conversions']) if not df.empty else 0
-            
-            # Different layouts for different tests
-            if current_test_type == "Two-sample (concurrent control/variant)":
-                
-                st.divider() # Visual separation
-                
-                # --- Row 1: Control Group ---
-                st.markdown("### Control Group")
-                c_a1, c_a2 = st.columns(2)
-                d_vis_c = c_a1.number_input("Control Visitors", min_value=0)
-                d_conv_c = c_a2.number_input("Control Conversions", min_value=0)
-                
-                # --- Row 2: Variant Group ---
-                st.markdown("### Variant Group")
-                c_b1, c_b2 = st.columns(2)
-                d_vis = c_b1.number_input("Variant Visitors", min_value=0)
-                d_conv = c_b2.number_input("Variant Conversions", min_value=0)
-                
-                # Prepare data for saving
-                save_v_c, save_c_c = d_vis_c, d_conv_c
-        
-            else:
-                # --- Original One-Sample Layout (Side-by-Side) ---
-                st.divider()
-                st.markdown("### Variant Data")
-                c1, c2 = st.columns(2)
-                d_vis = c1.number_input(f"Cumulative Visitors (Prev: {prev_vis})", min_value=prev_vis, value=prev_vis)
-                d_conv = c2.number_input(f"Cumulative Conversions (Prev: {prev_conv})", min_value=prev_conv, value=prev_conv)
-                
-                save_v_c, save_c_c = 0, 0
-        
-        st.divider()
-        if st.form_submit_button("Add Data Point"):
-            if d_vis < d_conv:
-                st.error("Visitors cannot be less than conversions.")
-            else:
-                save_data_point(exp_id, d_date, d_vis, d_conv, v_control=save_v_c, c_control=save_c_c)
-                st.rerun()
+            c1, c2 = st.columns(2)
+            alpha = c1.number_input("Alpha", value=alpha_val, step=0.01, disabled=is_locked)
+            beta = c2.number_input("Beta", value=beta_val, step=0.01, disabled=is_locked)
+
+            if not is_locked:
+                submitted = st.form_submit_button("Start & Lock Experiment")
+                if submitted:
+                    if not st.session_state.get('exp_id'):
+                        st.error("Generate an ID first!")
+                    elif p1_param <= p0_param:
+                        st.error("p1 must be > p0")
+                    else:
+                        saved = save_experiment_params(st.session_state['exp_id'], p0_param, p1_param, alpha, beta, max_visitors, test_type=test_type)
+                        if saved:
+                            st.session_state['params_locked'] = True
+                            st.session_state['fetched_params'] = {
+                                'p0': p0_param, 'p1': p1_param, 'alpha': alpha, 'beta': beta, 
+                                'max_visitors': max_visitors, 'test_type': test_type
+                            }
+                            st.rerun()
             else:
                 st.form_submit_button("Parameters Locked", disabled=True)
 
     # --- MAIN PAGE CONTENT ---
     exp_id = st.session_state.get('exp_id')
     
-    # Stop if we don't have an ID OR if params aren't locked yet
     if not exp_id or not st.session_state.get('params_locked'):
         st.info("**To Begin:** Select 'Start New' to generate an ID and lock your parameters.")
         st.stop()
 
     st.markdown(f"### Experiment: `{exp_id}`")
     
-    # Load Data
     df = get_experiment_data(exp_id)
     
     # Use the test type from the locked params, fallback to One-sample
@@ -279,37 +258,44 @@ def run():
     # --- DATA ENTRY ---
     st.subheader("Update Data")
 
+    # Correct form name here
     with st.form("entry_form"):
-        c1, c2, c3 = st.columns(3)
-        d_date = c1.date_input("Date")
+        # Date is outside columns
+        d_date = st.date_input("Date")
         
-        # Helper to find previous values
         prev_vis = int(df.iloc[-1]['visitors']) if not df.empty else 0
         prev_conv = int(df.iloc[-1]['conversions']) if not df.empty else 0
         
-        # Logic Fork for Inputs
+        # LOGIC FORK: Layouts
         if current_test_type == "Two-sample (concurrent control/variant)":
-            st.markdown("**(A) Control Group**")
-            d_vis_c = c2.number_input("Control Visitors", min_value=0)
-            d_conv_c = c3.number_input("Control Conversions", min_value=0)
+            st.divider()
             
-            st.markdown("**(B) Variant Group**")
-            # Reuse columns for layout, but better to create new ones for clarity if needed
-            d_vis = c2.number_input("Variant Visitors", min_value=0)
-            d_conv = c3.number_input("Variant Conversions", min_value=0)
+            # Row 1: Control
+            st.markdown("### Control Group")
+            c_a1, c_a2 = st.columns(2)
+            d_vis_c = c_a1.number_input("Control Visitors", min_value=0)
+            d_conv_c = c_a2.number_input("Control Conversions", min_value=0)
+            
+            # Row 2: Variant
+            st.markdown("### Variant Group")
+            c_b1, c_b2 = st.columns(2)
+            d_vis = c_b1.number_input("Variant Visitors", min_value=0)
+            d_conv = c_b2.number_input("Variant Conversions", min_value=0)
             
             save_v_c, save_c_c = d_vis_c, d_conv_c
         
         else:
-            d_vis = c2.number_input(f"Cumulative Visitors (Prev: {prev_vis})", min_value=prev_vis, value=prev_vis)
-            d_conv = c3.number_input(f"Cumulative Conversions (Prev: {prev_conv})", min_value=prev_conv, value=prev_conv)
+            st.divider()
+            st.markdown("### Variant Data")
+            c1, c2 = st.columns(2)
+            d_vis = c1.number_input(f"Cumulative Visitors (Prev: {prev_vis})", min_value=prev_vis, value=prev_vis)
+            d_conv = c2.number_input(f"Cumulative Conversions (Prev: {prev_conv})", min_value=prev_conv, value=prev_conv)
             save_v_c, save_c_c = 0, 0
         
+        st.divider()
         if st.form_submit_button("Add Data Point"):
             if d_vis < d_conv:
                 st.error("Visitors cannot be less than conversions.")
-            elif d_vis == prev_vis and d_conv == prev_conv:
-                st.warning("No new data added.")
             else:
                 save_data_point(exp_id, d_date, d_vis, d_conv, v_control=save_v_c, c_control=save_c_c)
                 st.rerun()
@@ -319,17 +305,14 @@ def run():
         st.divider()
         st.subheader("Sequential Analysis")
 
-        current_test_type = st.session_state['fetched_params'].get('test_type', "One-sample (fixed baseline)")
-
         if current_test_type == "Two-sample (concurrent control/variant)":
             st.info("**Data collection mode**")
             st.write("Two-Sample data is being saved securely to the database.")
-            st.warning("Analysis for Two-Sample tests is currently under construction. Please use One-Sample mode for immediate graphical results.")
+            st.warning("Analysis for Two-Sample tests is currently under construction.")
 
             with st.expander("View Raw Data"):
                 st.dataframe(df)
         else: 
-        
             # 1. Use the locked parameters
             upper_bound, lower_bound = calculate_wald_boundaries(alpha, beta)
             
@@ -338,7 +321,6 @@ def run():
             latest_llr = df.iloc[-1]['llr']
             latest_vis = df.iloc[-1]['visitors']
             
-            # 2. Display Metrics
             col1, col2, col3 = st.columns(3)
             col1.metric("Lower Bound (Stop for Futility)", f"{lower_bound:.2f}")
             col2.metric("Current LLR", f"{latest_llr:.2f}", delta_color="off")
@@ -357,10 +339,10 @@ def run():
             elif latest_llr < lower_bound:
                 if latest_cr < p0_param:
                     st.error(f"### Result: SIGNIFICANT NEGATIVE")
-                    st.write(f"The Variant is performing **worse** than Control (Observed CR: {latest_cr:.4f} vs Baseline: {p0_param}). Stop immediately.")
+                    st.write(f"The Variant is performing **worse** than Control. Stop immediately.")
                 else:
                     st.error(f"### Result: FUTILITY (Accept H0)")
-                    st.write(f"The Variant is unlikely to reach the target. Recommended to stop to save resources.")
+                    st.write(f"The Variant is unlikely to reach the target.")
             else:
                 if latest_vis >= max_visitors:
                     st.write("Maximum sample size reached without a decision.")
