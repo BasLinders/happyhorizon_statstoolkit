@@ -212,38 +212,51 @@ def run():
         if is_locked:
             st.info("Parameters are locked for this ID.")
 
-        with st.form("setup_form"):
-            p0_val = float(defaults.get('p0', 0.10))
-            p1_val = float(defaults.get('p1', 0.12))
-            alpha_val = float(defaults.get('alpha', 0.05))
-            beta_val = float(defaults.get('beta', 0.20))
-            max_visitors_val = int(defaults.get('max_visitors', 10000)) # FIXED default
-
-            p0_param = st.number_input(p0_label, value=p0_val, format="%.4f", disabled=is_locked, help=p0_help)
-            p1_param = st.number_input("Target CR (p1)", value=p1_val, format="%.4f", disabled=is_locked, 
-                                     help="Set this to the Minimum Effect Size. If true effect is smaller, test stops for Futility.")
-            max_visitors = st.number_input("Max Visitors (Safety Cap)", value=max_visitors_val, step=100, disabled=is_locked,
-                                help="If the test reaches this number of visitors without a result, it will be stopped as 'Inconclusive'.")
-            c1, c2 = st.columns(2)
-            alpha = c1.number_input("Alpha", value=alpha_val, step=0.01, disabled=is_locked)
-            beta = c2.number_input("Beta", value=beta_val, step=0.01, disabled=is_locked)
-
-            if not is_locked:
-                submitted = st.form_submit_button("Start & Lock Experiment")
-                if submitted:
-                    if not st.session_state.get('exp_id'):
-                        st.error("Generate an ID first!")
-                    elif p1_param <= p0_param:
-                        st.error("p1 must be > p0")
-                    else:
-                        saved = save_experiment_params(st.session_state['exp_id'], p0_param, p1_param, alpha, beta, max_visitors, test_type=test_type)
-                        if saved:
-                            st.session_state['params_locked'] = True
-                            st.session_state['fetched_params'] = {
-                                'p0': p0_param, 'p1': p1_param, 'alpha': alpha, 'beta': beta, 
-                                'max_visitors': max_visitors, 'test_type': test_type
-                            }
-                            st.rerun()
+        with st.form("entry_form"):
+            # Date
+            d_date = st.date_input("Date")
+            
+            # Helper to find previous values
+            prev_vis = int(df.iloc[-1]['visitors']) if not df.empty else 0
+            prev_conv = int(df.iloc[-1]['conversions']) if not df.empty else 0
+            
+            # Different layouts for different tests
+            if current_test_type == "Two-sample (concurrent control/variant)":
+                
+                st.divider() # Visual separation
+                
+                # --- Row 1: Control Group ---
+                st.markdown("### Control Group")
+                c_a1, c_a2 = st.columns(2)
+                d_vis_c = c_a1.number_input("Control Visitors", min_value=0)
+                d_conv_c = c_a2.number_input("Control Conversions", min_value=0)
+                
+                # --- Row 2: Variant Group ---
+                st.markdown("### Variant Group")
+                c_b1, c_b2 = st.columns(2)
+                d_vis = c_b1.number_input("Variant Visitors", min_value=0)
+                d_conv = c_b2.number_input("Variant Conversions", min_value=0)
+                
+                # Prepare data for saving
+                save_v_c, save_c_c = d_vis_c, d_conv_c
+        
+            else:
+                # --- Original One-Sample Layout (Side-by-Side) ---
+                st.divider()
+                st.markdown("### Variant Data")
+                c1, c2 = st.columns(2)
+                d_vis = c1.number_input(f"Cumulative Visitors (Prev: {prev_vis})", min_value=prev_vis, value=prev_vis)
+                d_conv = c2.number_input(f"Cumulative Conversions (Prev: {prev_conv})", min_value=prev_conv, value=prev_conv)
+                
+                save_v_c, save_c_c = 0, 0
+        
+        st.divider()
+        if st.form_submit_button("Add Data Point"):
+            if d_vis < d_conv:
+                st.error("Visitors cannot be less than conversions.")
+            else:
+                save_data_point(exp_id, d_date, d_vis, d_conv, v_control=save_v_c, c_control=save_c_c)
+                st.rerun()
             else:
                 st.form_submit_button("Parameters Locked", disabled=True)
 
