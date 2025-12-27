@@ -355,16 +355,16 @@ def run():
                     st.warning(f"### Result: INCONCLUSIVE")
                     st.write("Continue collecting data. The test has not yet breached a boundary.")
         
-        # 4. Visualization
-        st.markdown("### Test Trajectory")
-        chart_data = df[['visitors', 'llr']].copy()
-        chart_data['Upper Boundary'] = upper_bound
-        chart_data['Lower Boundary'] = lower_bound
-        
-        st.line_chart(chart_data.set_index('visitors'), color=["#FF4B4B", "#0000FF", "#0000FF"]) 
-        
-        with st.expander("View Raw Data"):
-            st.dataframe(df.sort_values("measurement_date", ascending=False))
+            # 4. Visualization
+            st.markdown("### Test Trajectory")
+            chart_data = df[['visitors', 'llr']].copy()
+            chart_data['Upper Boundary'] = upper_bound
+            chart_data['Lower Boundary'] = lower_bound
+            
+            st.line_chart(chart_data.set_index('visitors'), color=["#FF4B4B", "#0000FF", "#0000FF"]) 
+            
+            with st.expander("View Raw Data"):
+                st.dataframe(df.sort_values("measurement_date", ascending=False))
     
     else:
         st.write("Waiting for data entries...")
