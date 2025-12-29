@@ -118,7 +118,7 @@ def run():
     st.markdown("""
     ### Faster A/B Testing with Sequential Analysis
     Standard A/B tests require you to wait for a fixed sample size to avoid "peeking" errors. 
-    **This tool is different.** It uses **Sequential Testing (SPRT)**, allowing you to update data and check results **any time** without invalidating your statistics.
+    **This tool is different.** It uses **Sequential Probability Ratio Testing (SPRT)**, allowing you to update data and check results **any time** without invalidating your statistics.
 
     #### Why use this?
     * **Stop Winners Early:** Deploy successful features days or weeks faster.
