@@ -160,7 +160,7 @@ def run():
     with st.expander("How to use SPRT", expanded=False):
         st.markdown("""
         #### How to use SPRT
-        1.  **Start New:** Generate a unique ID and define your success metrics (Alpha / significance, Beta / power, MDE). 
+        1.  **Start New:** Generate a unique ID and define your success metrics (Alpha / significance, Beta / power). 
             * *Note: These are locked once the test starts to ensure integrity.*
         2.  **Update Regularly:** Come back daily/weekly to input your **cumulative** data.
         3.  **Check the Graph:** 
