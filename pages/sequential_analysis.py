@@ -64,19 +64,20 @@ def get_experiment_params(experiment_id):
     try:
         response = conn.table("experiment_params").select("*").eq("experiment_id", experiment_id).execute()
         if len(response.data) > 0:
-            return response.data[0]
+            params = response.data[0]
+            return params
         return None
     except Exception as e:
         st.error(f"Error fetching params: {e}")
         return None
 
-def save_experiment_params(experiment_id, p0, p1, alpha, beta, max_visitors, test_type):
+def save_experiment_params(experiment_id, p0, tau, alpha, beta, max_visitors, test_type):
     """Save the immutable rules of the experiment."""
     try:
         data = {
             "experiment_id": experiment_id,
             "p0": float(p0),
-            "p1": float(p1),
+            "tau": float(tau),
             "alpha": float(alpha),
             "beta": float(beta),
             "max_visitors": int(max_visitors),
@@ -181,7 +182,7 @@ def run():
 
     if is_locked:
         p0_param = defaults.get('p0')
-        p1_param = defaults.get('p1')
+        tau_param = defaults.get('p1')
         alpha = defaults.get('alpha')
         beta = defaults.get('beta')
         max_visitors = defaults.get('max_visitors')
@@ -252,8 +253,12 @@ def run():
             max_visitors_val = int(defaults.get('max_visitors', 10000))
 
             p0_param = st.number_input(p0_label, value=p0_val, format="%.4f", disabled=is_locked, help=p0_help)
-            p1_param = st.number_input("Target CR (p1)", value=p1_val, format="%.4f", disabled=is_locked, 
-                                     help="Set this to the Minimum Effect Size.")
+            tau_param = st.select_slider(
+                "Test sensitivity (Tau)",
+                options=[0.0001, 0.001, 0.005, 0.01, 0.05, 0.1],
+                value=float(defaults.get('p1', 0.01)), # Reusing the p1 column in DB to store tau
+                help="Lower values (0.001) are more conservative. Higher values (0.05) detect large effects faster."
+                )
             max_visitors = st.number_input("Max Visitors (Safety Cap)", value=max_visitors_val, step=100, disabled=is_locked)
             
             c1, c2 = st.columns(2)
@@ -265,14 +270,14 @@ def run():
                 if submitted:
                     if not st.session_state.get('exp_id'):
                         st.error("Generate an ID first!")
-                    elif p1_param <= p0_param:
-                        st.error("p1 must be > p0")
+                    elif tau_param <= 0:
+                        st.error("Sensitivity (Tau) must be greater than 0.")
                     else:
-                        saved = save_experiment_params(st.session_state['exp_id'], p0_param, p1_param, alpha, beta, max_visitors, test_type=test_type)
+                        saved = save_experiment_params(st.session_state['exp_id'], p0_param, tau_param, alpha, beta, max_visitors, test_type=test_type)
                         if saved:
                             st.session_state['params_locked'] = True
                             st.session_state['fetched_params'] = {
-                                'p0': p0_param, 'p1': p1_param, 'alpha': alpha, 'beta': beta, 
+                                'p0': p0_param, 'p1': tau_param, 'alpha': alpha, 'beta': beta, 
                                 'max_visitors': max_visitors, 'test_type': test_type
                             }
                             st.rerun()
@@ -347,7 +352,9 @@ def run():
 
         # Calculate boundaries (Unified for both types)
         upper_bound, lower_bound = calculate_msprt_boundaries(alpha, beta)
-
+        
+        current_tau = defaults.get('p1', 0.01) if is_locked else tau_param
+        
         # Calculate LLR based on Test Type
         if current_test_type == "One-sample (fixed baseline)":
             # Simulate a control group using the fixed baseline p0_param
@@ -356,14 +363,14 @@ def run():
                 conversions_a=row['visitors'] * p0_param, 
                 visitors_b=row['visitors'], 
                 conversions_b=row['conversions'], 
-                tau=0.01
+                tau=current_tau
             ), axis=1)
         else:
             # Standard Two-sample calculation
             df['llr'] = df.apply(lambda row: calculate_msprt_llr(
                 row['visitors_control'], row['conversions_control'], 
                 row['visitors'], row['conversions'], 
-                tau=0.01
+                tau=current_tau
             ), axis=1)
 
         # 3. Decision Metrics
