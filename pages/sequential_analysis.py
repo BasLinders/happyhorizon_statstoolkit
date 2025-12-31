@@ -138,9 +138,9 @@ def run():
         st.markdown("""
         #### Benefits of SPRT
         Compared to fixed-horizon testing, SPRT has certain advantages.
-        * **Stop Winners Early:** Deploy successful features days or weeks faster.
-        * **Cut Losers Fast:** Identify "futility" (no chance of winning) early to save traffic and/or money.
-        * **Rigorous:** Mathematically valid stopping rules, unlike standard z-tests ('peeking' is valid).
+        * **Stop winners early:** Deploy successful features days or weeks faster.
+        * **Cut losers fast:** Identify "futility" (no chance of winning) early to save traffic and/or money.
+        * **Rigorous:** Mathematically valid stopping rules, unlike standard z-tests (The mSPRT boundaries are "always-valid.").
         """)
     with st.expander("When to use SPRT", expanded=False):
         st.markdown("""
@@ -159,12 +159,13 @@ def run():
     with st.expander("How to use SPRT", expanded=False):
         st.markdown("""
         #### How to use SPRT
-        1.  **Start New:** Generate a unique ID and define your success metrics (Alpha, Beta, MDE). 
+        1.  **Start New:** Generate a unique ID and define your success metrics (Alpha / significance, Beta / power, MDE). 
             * *Note: These are locked once the test starts to ensure integrity.*
         2.  **Update Regularly:** Come back daily/weekly to input your **cumulative** data.
         3.  **Check the Graph:** 
             * **Upper Limit:** Success! (Reject Null)
             * **Lower Limit:** Futility/Failure. (Accept Null)
+            * **In Between lines:** Inconclusive - keep testing.
         
         > * **Important:** Data is stored for **42 days (6 weeks)** and then automatically deleted.
         > * **Save your Experiment ID!** It is the only key to retrieve your data.
