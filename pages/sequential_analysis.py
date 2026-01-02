@@ -224,13 +224,13 @@ def run():
             st.info("Parameters are locked for this ID.")
 
         with st.form("setup_form"):
-            p0_val = float(defaults.get('p0', 0.10))
+            p0_val = float(defaults.get('p0', 0.10)) if test_type == "One-sample (fixed baseline)" else 0.0
             p1_val = float(defaults.get('p1', 0.12))
             alpha_val = float(defaults.get('alpha', 0.05))
             beta_val = float(defaults.get('beta', 0.20))
             max_visitors_val = int(defaults.get('max_visitors', 10000))
 
-            p0_param = st.number_input(p0_label, value=p0_val, format="%.4f", disabled=is_locked, help=p0_help)
+            p0_param = st.number_input(p0_label, value=p0_val, format="%.4f", disabled=is_locked, help=p0_help) if test_type == "One-sample (fixed baseline)" else p0_val
             p1_param = st.number_input("Target CR (p1)", value=p1_val, format="%.4f", disabled=is_locked, 
                                      help="Set this to the Minimum Effect Size.")
             max_visitors = st.number_input("Max Visitors (Safety Cap)", value=max_visitors_val, step=100, disabled=is_locked)
