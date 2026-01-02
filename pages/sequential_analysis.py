@@ -252,7 +252,7 @@ def run():
             beta_val = float(defaults.get('beta', 0.20))
             max_visitors_val = int(defaults.get('max_visitors', 10000))
 
-            p0_param = st.number_input(p0_label, value=p0_val, format="%.4f", disabled=is_locked, help=p0_help)
+            p0_param = st.number_input(p0_label, value=p0_val, format="%.4f", disabled=is_locked, help=p0_help) if test_type == "One-sample (fixed baseline)" else 0.0
             tau_param = st.select_slider(
                 "Test sensitivity (Tau)",
                 options=[0.0001, 0.001, 0.005, 0.01, 0.05, 0.1],
