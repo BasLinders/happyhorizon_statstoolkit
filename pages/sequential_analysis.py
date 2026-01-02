@@ -12,38 +12,51 @@ conn = st.connection("supabase", type=SupabaseConnection)
 
 # --- 2. STATISTICAL FUNCTIONS ---
 
-def calculate_wald_boundaries(alpha, beta):
+def calculate_msprt_boundaries(alpha, beta):
     """
-    Calculates the upper (rejection) and lower (futility) boundaries
-    for Wald's Sequential Probability Ratio Test (SPRT).
+    Calculates boundaries for mSPRT.
+    Uses always-valid thresholds for continuous monitoring.
     """
     # Boundary A (Upper): Log-likelihood ratio threshold for rejecting H0 (Success)
     # Approximation: A = (1 - beta) / alpha
-    upper = np.log((1 - beta) / alpha)
-    
+    #upper = np.log((1 - beta) / alpha)
+    upper = np.log(1 / alpha) # more conservative alpha threshold for mSPRT
+
     # Boundary B (Lower): Log-likelihood ratio threshold for accepting H0 (Futility)
     # Approximation: B = beta / (1 - alpha)
-    lower = np.log(beta / (1 - alpha))
+    #lower = np.log(beta / (1 - alpha))
+    lower = np.log(beta) # more conservative beta threshold for mSPRT
     
     return upper, lower
 
-def calculate_llr(p0, p1, conversions, visitors):
+def calculate_msprt_llr(visitors_a, conversions_a, visitors_b, conversions_b, tau=0.01):
     """
-    Calculates the cumulative Log Likelihood Ratio for Binomial data.
+    Calculates the Log-Likelihood Ratio for mSPRT using a mixing distribution with tau as prior variance of the lift.
     """
-    if visitors == 0:
+    if visitors_a == 0 or visitors_b == 0:
         return 0.0
-    
-    # Clip probabilities to avoid log(0)
-    eps = 1e-9
-    p0 = np.clip(p0, eps, 1 - eps)
-    p1 = np.clip(p1, eps, 1 - eps)
-    
-    # LLR = x * log(p1/p0) + (n-x) * log((1-p1)/(1-p0))
-    term1 = conversions * np.log(p1 / p0)
-    term2 = (visitors - conversions) * np.log((1 - p1) / (1 - p0))
-    
-    return term1 + term2
+
+    # Conversion rates
+    p_a = conversions_a / visitors_a
+    p_b = conversions_b / visitors_b
+
+    # Pooled conversion rate for variance calculation
+    p_pool = (conversions_a + conversions_b) / (visitors_a + visitors_b)
+
+    # Avoid log(0) or division by zero in edge cases
+    if p_pool <= 0 or p_pool >= 1:
+        return 0.0
+
+    # Approximate variance of the difference (V)
+    var = p_pool * (1 - p_pool) * (1/visitors_a + 1/visitors_b)
+
+    # Observed difference
+    diff = p_b - p_a
+
+    # mSPRT LLR Formula: 0.5 * [ln(V / (V + tau)) + (diff^2 / V) * (tau / (V + tau))]
+    llr = 0.5 * (np.log(var / (var + tau)) + (diff**2 / var) * (tau / (var + tau)))
+
+    return llr
 
 # --- 3. DATABASE FUNCTIONS ---
 def get_experiment_params(experiment_id):
@@ -51,19 +64,20 @@ def get_experiment_params(experiment_id):
     try:
         response = conn.table("experiment_params").select("*").eq("experiment_id", experiment_id).execute()
         if len(response.data) > 0:
-            return response.data[0]
+            params = response.data[0]
+            return params
         return None
     except Exception as e:
         st.error(f"Error fetching params: {e}")
         return None
 
-def save_experiment_params(experiment_id, p0, p1, alpha, beta, max_visitors, test_type):
+def save_experiment_params(experiment_id, p0, tau, alpha, beta, max_visitors, test_type):
     """Save the immutable rules of the experiment."""
     try:
         data = {
             "experiment_id": experiment_id,
             "p0": float(p0),
-            "p1": float(p1),
+            "tau": float(tau),
             "alpha": float(alpha),
             "beta": float(beta),
             "max_visitors": int(max_visitors),
@@ -125,9 +139,9 @@ def run():
         st.markdown("""
         #### Benefits of SPRT
         Compared to fixed-horizon testing, SPRT has certain advantages.
-        * **Stop Winners Early:** Deploy successful features days or weeks faster.
-        * **Cut Losers Fast:** Identify "futility" (no chance of winning) early to save traffic and/or money.
-        * **Rigorous:** Mathematically valid stopping rules, unlike standard z-tests ('peeking' is valid).
+        * **Stop winners early:** Deploy successful features days or weeks faster.
+        * **Cut losers fast:** Identify "futility" (no chance of winning) early to save traffic and/or money.
+        * **Rigorous:** Mathematically valid stopping rules, unlike standard z-tests (The mSPRT boundaries are "always-valid.").
         """)
     with st.expander("When to use SPRT", expanded=False):
         st.markdown("""
@@ -146,12 +160,13 @@ def run():
     with st.expander("How to use SPRT", expanded=False):
         st.markdown("""
         #### How to use SPRT
-        1.  **Start New:** Generate a unique ID and define your success metrics (Alpha, Beta, MDE). 
+        1.  **Start New:** Generate a unique ID and define your success metrics (Alpha / significance, Beta / power). 
             * *Note: These are locked once the test starts to ensure integrity.*
         2.  **Update Regularly:** Come back daily/weekly to input your **cumulative** data.
         3.  **Check the Graph:** 
             * **Upper Limit:** Success! (Reject Null)
             * **Lower Limit:** Futility/Failure. (Accept Null)
+            * **In Between lines:** Inconclusive - keep testing.
         
         > * **Important:** Data is stored for **42 days (6 weeks)** and then automatically deleted.
         > * **Save your Experiment ID!** It is the only key to retrieve your data.
@@ -164,6 +179,13 @@ def run():
     # Logic: Use fetched values if locked, otherwise use defaults
     defaults = st.session_state.get('fetched_params', {})
     is_locked = st.session_state.get('params_locked', False)
+
+    if is_locked:
+        p0_param = defaults.get('p0')
+        tau_param = defaults.get('p1')
+        alpha = defaults.get('alpha')
+        beta = defaults.get('beta')
+        max_visitors = defaults.get('max_visitors')
     
 # --- SIDEBAR: SETUP & LOADING ---
     with st.sidebar:
@@ -230,9 +252,13 @@ def run():
             beta_val = float(defaults.get('beta', 0.20))
             max_visitors_val = int(defaults.get('max_visitors', 10000))
 
-            p0_param = st.number_input(p0_label, value=p0_val, format="%.4f", disabled=is_locked, help=p0_help) if test_type == "One-sample (fixed baseline)" else p0_val
-            p1_param = st.number_input("Target CR (p1)", value=p1_val, format="%.4f", disabled=is_locked, 
-                                     help="Set this to the Minimum Effect Size.")
+            p0_param = st.number_input(p0_label, value=p0_val, format="%.4f", disabled=is_locked, help=p0_help)
+            tau_param = st.select_slider(
+                "Test sensitivity (Tau)",
+                options=[0.0001, 0.001, 0.005, 0.01, 0.05, 0.1],
+                value=float(defaults.get('p1', 0.01)), # Reusing the p1 column in DB to store tau
+                help="Lower values (0.001) are more conservative. Higher values (0.05) detect large effects faster."
+                )
             max_visitors = st.number_input("Max Visitors (Safety Cap)", value=max_visitors_val, step=100, disabled=is_locked)
             
             c1, c2 = st.columns(2)
@@ -244,14 +270,14 @@ def run():
                 if submitted:
                     if not st.session_state.get('exp_id'):
                         st.error("Generate an ID first!")
-                    elif p1_param <= p0_param:
-                        st.error("p1 must be > p0")
+                    elif tau_param <= 0:
+                        st.error("Sensitivity (Tau) must be greater than 0.")
                     else:
-                        saved = save_experiment_params(st.session_state['exp_id'], p0_param, p1_param, alpha, beta, max_visitors, test_type=test_type)
+                        saved = save_experiment_params(st.session_state['exp_id'], p0_param, tau_param, alpha, beta, max_visitors, test_type=test_type)
                         if saved:
                             st.session_state['params_locked'] = True
                             st.session_state['fetched_params'] = {
-                                'p0': p0_param, 'p1': p1_param, 'alpha': alpha, 'beta': beta, 
+                                'p0': p0_param, 'p1': tau_param, 'alpha': alpha, 'beta': beta, 
                                 'max_visitors': max_visitors, 'test_type': test_type
                             }
                             st.rerun()
@@ -282,6 +308,8 @@ def run():
         
         prev_vis = int(df.iloc[-1]['visitors']) if not df.empty else 0
         prev_conv = int(df.iloc[-1]['conversions']) if not df.empty else 0
+        prev_vis_c = int(df.iloc[-1]['visitors_control']) if (not df.empty and current_test_type == "Two-sample (concurrent control/variant)") else 0
+        prev_conv_c = int(df.iloc[-1]['conversions_control']) if (not df.empty and current_test_type == "Two-sample (concurrent control/variant)") else 0
         
         # LOGIC FORK: Layouts
         if current_test_type == "Two-sample (concurrent control/variant)":
@@ -290,14 +318,14 @@ def run():
             # Row 1: Control
             st.markdown("### Control Group")
             c_a1, c_a2 = st.columns(2)
-            d_vis_c = c_a1.number_input("Control Visitors", min_value=0)
-            d_conv_c = c_a2.number_input("Control Conversions", min_value=0)
+            d_vis_c = c_a1.number_input(f"Cumulative Visitors (Prev: {prev_vis_c})", min_value=prev_vis_c, value=prev_vis_c)
+            d_conv_c = c_a2.number_input(f"Cumulative Conversions (Prev: {prev_conv_c})", min_value=prev_conv_c, value=prev_conv_c)
             
             # Row 2: Variant
             st.markdown("### Variant Group")
             c_b1, c_b2 = st.columns(2)
-            d_vis = c_b1.number_input("Variant Visitors", min_value=0)
-            d_conv = c_b2.number_input("Variant Conversions", min_value=0)
+            d_vis = c_b1.number_input(f"Cumulative Visitors (Prev: {prev_vis})", min_value=prev_vis, value=prev_vis)
+            d_conv = c_b2.number_input(f"Cumulative Conversions (Prev: {prev_conv})", min_value=prev_conv, value=prev_conv)
             
             save_v_c, save_c_c = d_vis_c, d_conv_c
         
@@ -322,50 +350,89 @@ def run():
         st.divider()
         st.subheader("Sequential Analysis")
 
-        if current_test_type == "Two-sample (concurrent control/variant)":
-            st.info("**Data collection mode**")
-            st.write("Two-Sample data is being saved securely to the database.")
-            st.warning("Analysis for Two-Sample tests is currently under construction.")
+        # Calculate boundaries (Unified for both types)
+        upper_bound, lower_bound = calculate_msprt_boundaries(alpha, beta)
+        
+        current_tau = defaults.get('p1', 0.01) if is_locked else tau_param
+        
+        # Calculate LLR based on Test Type
+        if current_test_type == "One-sample (fixed baseline)":
+            # Simulate a control group using the fixed baseline p0_param
+            df['llr'] = df.apply(lambda row: calculate_msprt_llr(
+                visitors_a=row['visitors'], 
+                conversions_a=row['visitors'] * p0_param, 
+                visitors_b=row['visitors'], 
+                conversions_b=row['conversions'], 
+                tau=current_tau
+            ), axis=1)
+        else:
+            # Standard Two-sample calculation
+            df['llr'] = df.apply(lambda row: calculate_msprt_llr(
+                row['visitors_control'], row['conversions_control'], 
+                row['visitors'], row['conversions'], 
+                tau=current_tau
+            ), axis=1)
 
-            with st.expander("View Raw Data"):
-                st.dataframe(df)
-        else: 
-            # 1. Use the locked parameters
-            upper_bound, lower_bound = calculate_wald_boundaries(alpha, beta)
+        # 3. Decision Metrics
+        latest_llr = df.iloc[-1]['llr']
+        latest_vis = df.iloc[-1]['visitors']
+        
+        col1, col2, col3 = st.columns(3)
+        col1.metric("Lower Bound (Futility)", f"{lower_bound:.2f}")
+        col2.metric("Current LLR", f"{latest_llr:.2f}")
+        col3.metric("Upper Bound (Success)", f"{upper_bound:.2f}")
+
+        # Approximate probability of success (very rough estimate)
+        prob_success = min(max((latest_llr / upper_bound) * 100, 0), 100) if latest_llr > 0 else 0
+
+        # Add a progress bar
+        st.write(f"**Estimated Confidence in Variant:** {prob_success:.2f}%")
+        st.progress(prob_success / 100)
+
+        # --- TIME ESTIMATION ---
+        # Only estimate if test is inconclusive and showing some positive movement
+        if not df.empty and latest_llr > 0 and not (latest_llr > upper_bound or latest_llr < lower_bound):
+            # Calculate Velocity
+            first_date = df['measurement_date'].min()
+            last_date = df['measurement_date'].max()
+            days_elapsed = max((last_date - first_date).days, 1)
             
-            df['llr'] = df.apply(lambda row: calculate_llr(p0_param, p1_param, row['conversions'], row['visitors']), axis=1)
+            avg_daily_visitors = latest_vis / days_elapsed
             
-            latest_llr = df.iloc[-1]['llr']
-            latest_vis = df.iloc[-1]['visitors']
+            # Calculate Projection
+            # How much LLR do we gain per visitor on average?
+            llr_per_vis = latest_llr / latest_vis
+            remaining_llr = upper_bound - latest_llr
             
-            col1, col2, col3 = st.columns(3)
-            col1.metric("Lower Bound (Stop for Futility)", f"{lower_bound:.2f}")
-            col2.metric("Current LLR", f"{latest_llr:.2f}", delta_color="off")
-            col3.metric("Upper Bound (Stop for Success)", f"{upper_bound:.2f}")
+            if llr_per_vis > 0:
+                est_vis_needed = remaining_llr / llr_per_vis
+                est_days = est_vis_needed / avg_daily_visitors
+                
+                st.info(f"**Estimation:** Based on current velocity, you need approx. **{est_vis_needed:.0f}** more visitors (**{est_days:.1f} days**) to reach the success boundary.")
             
-            # 3. Decision Logic
-            latest_vis = df.iloc[-1]['visitors']
-            if latest_vis > 0:
-                latest_cr = df.iloc[-1]['conversions'] / latest_vis
+        # 3. Decision Logic
+        latest_vis = df.iloc[-1]['visitors']
+        if latest_vis > 0:
+            latest_cr = df.iloc[-1]['conversions'] / latest_vis
+        else:
+            latest_cr = 0.0
+        
+        if latest_llr > upper_bound:
+            st.success(f"### Result: SIGNIFICANT POSITIVE (Reject H0)")
+            st.write(f"The Variant is statistically superior. You can stop the test early at {latest_vis} visitors.")
+        elif latest_llr < lower_bound:
+            if latest_cr < p0_param:
+                st.error(f"### Result: SIGNIFICANT NEGATIVE")
+                st.write(f"The Variant is performing **worse** than Control. Stop immediately.")
             else:
-                latest_cr = 0.0
-            
-            if latest_llr > upper_bound:
-                st.success(f"### Result: SIGNIFICANT POSITIVE (Reject H0)")
-                st.write(f"The Variant is statistically superior. You can stop the test early at {latest_vis} visitors.")
-            elif latest_llr < lower_bound:
-                if latest_cr < p0_param:
-                    st.error(f"### Result: SIGNIFICANT NEGATIVE")
-                    st.write(f"The Variant is performing **worse** than Control. Stop immediately.")
-                else:
-                    st.error(f"### Result: FUTILITY (Accept H0)")
-                    st.write(f"The Variant is unlikely to reach the target.")
+                st.error(f"### Result: FUTILITY (Accept H0)")
+                st.write(f"The Variant is unlikely to reach the target.")
+        else:
+            if latest_vis >= max_visitors:
+                st.write("Maximum sample size reached without a decision.")
             else:
-                if latest_vis >= max_visitors:
-                    st.write("Maximum sample size reached without a decision.")
-                else:
-                    st.warning(f"### Result: INCONCLUSIVE")
-                    st.write("Continue collecting data. The test has not yet breached a boundary.")
+                st.warning(f"### Result: INCONCLUSIVE")
+                st.write("Continue collecting data. The test has not yet breached a boundary.")
         
             # 4. Visualization
             st.markdown("### Test Trajectory")
