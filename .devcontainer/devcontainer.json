@@ -5,12 +5,12 @@
     "codespaces": {
       "openFiles": [
         "README.md",
-        "bayesian_calculator.py"
+        "main.py"
       ]
     }
   },
   "postAttachCommand": {
-    "server": "streamlit run bayesian_calculator.py --server.enableCORS false --server.enableXsrfProtection false"
+    "server": "streamlit run main.py --server.enableCORS false --server.enableXsrfProtection false"
   },
   "portsAttributes": {
     "8501": {
