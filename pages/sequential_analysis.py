@@ -262,8 +262,8 @@ def run():
             max_visitors = st.number_input("Max Visitors (Safety Cap)", value=max_visitors_val, step=100, disabled=is_locked)
             
             c1, c2 = st.columns(2)
-            alpha = c1.number_input("Alpha", value=alpha_val, step=0.01, disabled=is_locked)
-            beta = c2.number_input("Beta", value=beta_val, step=0.01, disabled=is_locked)
+            alpha = c1.number_input("Alpha", value=alpha_val, step=0.01, disabled=is_locked, help="The risk of a False Positive (Type I error). A value of 0.05 means you accept a 5% chance of finding a 'winner' by luck (95% Confidence).")
+            beta = c2.number_input("Beta", value=beta_val, step=0.01, disabled=is_locked, help="The risk of a False Negative (Type II error). A value of 0.20 means you accept a 20% chance of missing a real winner (80% Power).")
 
             if not is_locked:
                 submitted = st.form_submit_button("Start & Lock Experiment")
