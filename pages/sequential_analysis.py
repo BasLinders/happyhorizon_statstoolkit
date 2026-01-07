@@ -256,7 +256,7 @@ def run():
             tau_param = st.select_slider(
                 "Test sensitivity (Tau)",
                 options=[0.0001, 0.001, 0.005, 0.01, 0.05, 0.1],
-                value=float(defaults.get('p1', 0.01)), # Reusing the p1 column in DB to store tau
+                value=float(defaults.get('tau', 0.01)),
                 help="Lower values (0.001) are more conservative. Higher values (0.05) detect large effects faster."
                 )
             max_visitors = st.number_input("Max Visitors (Safety Cap)", value=max_visitors_val, step=100, disabled=is_locked)
@@ -353,7 +353,7 @@ def run():
         # Calculate boundaries (Unified for both types)
         upper_bound, lower_bound = calculate_msprt_boundaries(alpha, beta)
         
-        current_tau = defaults.get('p1', 0.01) if is_locked else tau_param
+        current_tau = defaults.get('tau', 0.01) if is_locked else tau_param
         
         # Calculate LLR based on Test Type
         if current_test_type == "One-sample (fixed baseline)":
