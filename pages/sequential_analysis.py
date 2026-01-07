@@ -182,7 +182,7 @@ def run():
 
     if is_locked:
         p0_param = defaults.get('p0')
-        tau_param = defaults.get('p1')
+        tau_param = defaults.get('tau')
         alpha = defaults.get('alpha')
         beta = defaults.get('beta')
         max_visitors = defaults.get('max_visitors')
@@ -247,7 +247,7 @@ def run():
 
         with st.form("setup_form"):
             p0_val = float(defaults.get('p0', 0.10)) if test_type == "One-sample (fixed baseline)" else 0.01
-            p1_val = float(defaults.get('p1', 0.12))
+            tau_val = float(defaults.get('tau', 0.12))
             alpha_val = float(defaults.get('alpha', 0.05))
             beta_val = float(defaults.get('beta', 0.20))
             max_visitors_val = int(defaults.get('max_visitors', 10000))
@@ -318,14 +318,14 @@ def run():
             # Row 1: Control
             st.markdown("### Control Group")
             c_a1, c_a2 = st.columns(2)
-            d_vis_c = c_a1.number_input(f"Cumulative Visitors (Prev: {prev_vis_c})", min_value=prev_vis_c, value=prev_vis_c)
-            d_conv_c = c_a2.number_input(f"Cumulative Conversions (Prev: {prev_conv_c})", min_value=prev_conv_c, value=prev_conv_c)
+            d_vis_c = c_a1.number_input(f"Cumulative Visitors (Prev: {prev_vis_c})", min_value=prev_vis_c, value=prev_vis_c, key="ctrl_vis_2s")
+            d_conv_c = c_a2.number_input(f"Cumulative Conversions (Prev: {prev_conv_c})", min_value=prev_conv_c, value=prev_conv_c, key="ctrl_conv_2s")
             
             # Row 2: Variant
             st.markdown("### Variant Group")
             c_b1, c_b2 = st.columns(2)
-            d_vis = c_b1.number_input(f"Cumulative Visitors (Prev: {prev_vis})", min_value=prev_vis, value=prev_vis)
-            d_conv = c_b2.number_input(f"Cumulative Conversions (Prev: {prev_conv})", min_value=prev_conv, value=prev_conv)
+            d_vis = c_b1.number_input(f"Cumulative Visitors (Prev: {prev_vis})", min_value=prev_vis, value=prev_vis, key="var_vis_2s")
+            d_conv = c_b2.number_input(f"Cumulative Conversions (Prev: {prev_conv})", min_value=prev_conv, value=prev_conv, key="var_conv_2s")
             
             save_v_c, save_c_c = d_vis_c, d_conv_c
         
@@ -333,8 +333,8 @@ def run():
             st.divider()
             st.markdown("### Variant Data")
             c1, c2 = st.columns(2)
-            d_vis = c1.number_input(f"Cumulative Visitors (Prev: {prev_vis})", min_value=prev_vis, value=prev_vis)
-            d_conv = c2.number_input(f"Cumulative Conversions (Prev: {prev_conv})", min_value=prev_conv, value=prev_conv)
+            d_vis = c1.number_input(f"Cumulative Visitors (Prev: {prev_vis})", min_value=prev_vis, value=prev_vis, key="var_vis_1s")
+            d_conv = c2.number_input(f"Cumulative Conversions (Prev: {prev_conv})", min_value=prev_conv, value=prev_conv, key="var_conv_1s")
             save_v_c, save_c_c = 0, 0
         
         st.divider()
