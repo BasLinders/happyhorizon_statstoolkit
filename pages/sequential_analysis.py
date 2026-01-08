@@ -451,13 +451,23 @@ def run():
         if latest_llr > upper_bound:
             st.success(f"### Result: SIGNIFICANT POSITIVE (Reject H0)")
             st.write(f"The Variant is statistically superior. You can stop the test early at {latest_vis} visitors.")
+    
         elif latest_llr < lower_bound:
-            if latest_cr < p0_param:
+            if current_test_type == "Two-sample (concurrent control/variant)":
+                 # Calculate actual control CR from the dataframe
+                 ctrl_vis = df.iloc[-1]['visitors_control']
+                 ctrl_conv = df.iloc[-1]['conversions_control']
+                 benchmark_cr = ctrl_conv / ctrl_vis if ctrl_vis > 0 else 0
+            else:
+                 benchmark_cr = p0_param
+    
+            if latest_cr < benchmark_cr:
                 st.error(f"### Result: SIGNIFICANT NEGATIVE")
-                st.write(f"The Variant is performing **worse** than Control. Stop immediately.")
+                st.write(f"The Variant is performing **worse** than Control (Observed {latest_cr:.2%} vs {benchmark_cr:.2%}). Stop immediately.")
             else:
                 st.error(f"### Result: FUTILITY (Accept H0)")
                 st.write(f"The Variant is unlikely to reach the target.")
+            
         else:
             if latest_vis >= max_visitors:
                 st.write("Maximum sample size reached without a decision.")
@@ -465,7 +475,7 @@ def run():
                 st.warning(f"### Result: INCONCLUSIVE")
                 st.write("Continue collecting data. The test has not yet breached a boundary.")
 
-            show_visualization(df, upper_bound, lower_bound)
+        show_visualization(df, upper_bound, lower_bound)
             
             # 4. Visualization
             # chart_data = df[['visitors', 'llr']].copy()
