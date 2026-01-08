@@ -1,4 +1,5 @@
 import streamlit as st
+import altair as alt
 import pandas as pd
 import numpy as np
 import uuid
@@ -125,6 +126,36 @@ def save_data_point(experiment_id, date, v_variant, c_variant, v_control=0, c_co
     except Exception as e:
         st.error(f"Error saving data: {e}")
         return False
+
+def show_visualization(df, upper_bound, lower_bound):
+    if df.empty:
+        st.warning("No data to visualize yet.")
+        return
+        
+    chart_df = df.copy()
+    
+    y_values = [chart_df['llr'].max(), chart_df['llr'].min(), upper_bound, lower_bound]
+    max_y = max(y_values) * 1.2
+    min_y = min(y_values) * 1.2
+
+    line = alt.Chart(chart_df).mark_line(color='blue').encode(
+        x = alt.X('visitors', title='Cumulative Visitors'),
+        y = alt.Y('llr', title='Log Likelihood Ratio', scale=alt.Scale(domain=[min_y, max_y]))
+    )
+
+    # Succes zone shading (above upper bound)
+    success_zone = alt.Chart(pd.DataFrame({'y': [upper_bound], 'y2': [max_y]})).mark_rect(color='green', opacity=0.1).encode(y='y', y2='y2')
+
+    # Futility zone shading (below lower bound)
+    futility_zone = alt.Chart(pd.DataFrame({'y': [min_y], 'y2': [lower_bound]})).mark_rect(color='red', opacity=0.1).encode(y='y', y2='y2')
+
+    # Boundary lines
+    upper_line = alt.Chart(pd.DataFrame({'y': [upper_bound]})).mark_rule(color='green', strokeDash=[5,5]).encode(y='y')
+    lower_line = alt.Chart(pd.DataFrame({'y': [lower_bound]})).mark_rule(color='red', strokeDash=[5,5]).encode(y='y')
+    chart = (success_zone + futility_zone + upper_line + lower_line + line).properties(height=400).interactive()
+
+    st.markdown("### Test Trajectory")
+    st.altair_chart(chart, use_container_width=True)
 
 # --- 4. UI LOGIC ---
 def run():
@@ -433,17 +464,20 @@ def run():
             else:
                 st.warning(f"### Result: INCONCLUSIVE")
                 st.write("Continue collecting data. The test has not yet breached a boundary.")
-        
+
+            show_visualization(df, upper_bound, lower_bound)
+            
             # 4. Visualization
-            st.markdown("### Test Trajectory")
-            chart_data = df[['visitors', 'llr']].copy()
-            chart_data['Upper Boundary'] = upper_bound
-            chart_data['Lower Boundary'] = lower_bound
+            # chart_data = df[['visitors', 'llr']].copy()
+            # chart_data['Upper Boundary'] = upper_bound
+            # chart_data['Lower Boundary'] = lower_bound
             
-            st.line_chart(chart_data.set_index('visitors'), color=["#FF4B4B", "#0000FF", "#0000FF"]) 
+            # st.line_chart(chart_data.set_index('visitors'), color=["#FF4B4B", "#0000FF", "#0000FF"]) 
             
-            with st.expander("View Raw Data"):
-                st.dataframe(df.sort_values("measurement_date", ascending=False))
+            # with st.expander("View Raw Data"):
+            #    st.dataframe(df.sort_values("measurement_date", ascending=False))
+
+        
     
     else:
         st.write("Waiting for data entries...")
