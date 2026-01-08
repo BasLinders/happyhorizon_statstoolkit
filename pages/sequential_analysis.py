@@ -1,16 +1,17 @@
 import streamlit as st
+import altair as alt
 import pandas as pd
 import numpy as np
 import uuid
 from st_supabase_connection import SupabaseConnection
 
-# --- 1. CONFIGURATION & CONNECTION ---
+# --- CONFIGURATION & CONNECTION ---
 st.set_page_config(page_title="Sequential Analysis", layout="wide")
 
 # Initialize Supabase Connection
 conn = st.connection("supabase", type=SupabaseConnection)
 
-# --- 2. STATISTICAL FUNCTIONS ---
+# --- STATISTICAL FUNCTIONS ---
 
 def calculate_msprt_boundaries(alpha, beta):
     """
@@ -58,7 +59,7 @@ def calculate_msprt_llr(visitors_a, conversions_a, visitors_b, conversions_b, ta
 
     return llr
 
-# --- 3. DATABASE FUNCTIONS ---
+# --- DATABASE FUNCTIONS ---
 def get_experiment_params(experiment_id):
     """Fetch setup parameters (p0, p1, alpha, beta) for an ID."""
     try:
@@ -126,15 +127,160 @@ def save_data_point(experiment_id, date, v_variant, c_variant, v_control=0, c_co
         st.error(f"Error saving data: {e}")
         return False
 
-# --- 4. UI LOGIC ---
-def run():
-    st.title("Sequential Experiment Analysis (SPRT)")
-    st.markdown("""
-    ### Faster A/B Testing with Sequential Analysis
-    Standard A/B tests require you to wait for a fixed sample size to avoid "peeking" errors. 
-    **This tool is different.** It uses **Sequential Probability Ratio Testing (SPRT)**, allowing you to update data and check results **any time** without invalidating your statistics.
-    """)
+def delete_last_data_point(row_id):
+    """Deletes a specific row by ID (to undo the last entry if an error was made)"""
+    try:
+        conn.table("msprt_data").delete().eq("id", row_id).execute()
+        st.toast("Last entry deleted", icon="🗑️")
+        return True
+    except Exception as e:
+        st.error("Error deleting data: {e}")
+        return False
 
+# --- VISUALIZATIONS ---
+def show_visualization(df, upper_bound, lower_bound):
+    if df.empty:
+        st.warning("No data to visualize yet.")
+        return
+        
+    chart_df = df.copy()
+    
+    y_values = [chart_df['llr'].max(), chart_df['llr'].min(), upper_bound, lower_bound]
+    max_y = max(y_values) * 1.2
+    min_y = min(y_values) * 1.2
+
+    line = alt.Chart(chart_df).mark_line(color='blue').encode(
+        x = alt.X('visitors', title='Cumulative Visitors'),
+        y = alt.Y('llr', title='Log Likelihood Ratio', scale=alt.Scale(domain=[min_y, max_y]))
+    )
+
+    # Succes zone shading (above upper bound)
+    success_zone = alt.Chart(pd.DataFrame({'y': [upper_bound], 'y2': [max_y]})).mark_rect(color='green', opacity=0.1).encode(y='y', y2='y2')
+
+    # Futility zone shading (below lower bound)
+    futility_zone = alt.Chart(pd.DataFrame({'y': [min_y], 'y2': [lower_bound]})).mark_rect(color='red', opacity=0.1).encode(y='y', y2='y2')
+
+    # Boundary lines
+    upper_line = alt.Chart(pd.DataFrame({'y': [upper_bound]})).mark_rule(color='green', strokeDash=[5,5]).encode(y='y')
+    lower_line = alt.Chart(pd.DataFrame({'y': [lower_bound]})).mark_rule(color='red', strokeDash=[5,5]).encode(y='y')
+    chart = (success_zone + futility_zone + upper_line + lower_line + line).properties(height=400).interactive()
+
+    st.markdown("### Test Trajectory")
+    st.altair_chart(chart, use_container_width=True)
+
+# --- ANALYSIS ---
+def analysis_section(df, params):
+    alpha = params['alpha']
+    beta = params['beta']
+    tau_param = params['tau']
+    p0_param = params['p0']
+    test_type = params['test_type']
+    max_visitors = params['max_visitors']
+    
+    st.divider()
+    st.subheader("Sequential Analysis")
+
+    # Calculate boundaries (Unified for both types)
+    upper_bound, lower_bound = calculate_msprt_boundaries(alpha, beta)
+    
+    current_tau = tau_param
+    
+    # Calculate LLR based on Test Type
+    if test_type == "One-sample (fixed baseline)":
+        # Simulate a control group using the fixed baseline p0_param
+        df['llr'] = df.apply(lambda row: calculate_msprt_llr(
+            visitors_a=row['visitors'], 
+            conversions_a=row['visitors'] * p0_param, 
+            visitors_b=row['visitors'], 
+            conversions_b=row['conversions'], 
+            tau=current_tau
+        ), axis=1)
+    else:
+        # Standard Two-sample calculation
+        df['llr'] = df.apply(lambda row: calculate_msprt_llr(
+            row['visitors_control'], row['conversions_control'], 
+            row['visitors'], row['conversions'], 
+            tau=current_tau
+        ), axis=1)
+
+    # 3. Decision Metrics
+    latest_llr = df.iloc[-1]['llr']
+    latest_vis = df.iloc[-1]['visitors']
+    
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Lower Bound (Futility)", f"{lower_bound:.2f}")
+    col2.metric("Current LLR", f"{latest_llr:.2f}")
+    col3.metric("Upper Bound (Success)", f"{upper_bound:.2f}")
+
+    # Approximate probability of success (very rough estimate)
+    prob_success = min(max((latest_llr / upper_bound) * 100, 0), 100) if latest_llr > 0 else 0
+
+    # Add a progress bar
+    st.write(f"**Estimated Confidence in Variant:** {prob_success:.2f}%")
+    st.progress(prob_success / 100)
+
+    # --- TIME ESTIMATION ---
+    # Only estimate if test is inconclusive and showing some positive movement
+    if not df.empty and latest_llr > 0 and not (latest_llr > upper_bound or latest_llr < lower_bound):
+        # Calculate Velocity
+        first_date = df['measurement_date'].min()
+        last_date = df['measurement_date'].max()
+        days_elapsed = max((last_date - first_date).days, 1)
+        
+        avg_daily_visitors = latest_vis / days_elapsed
+        
+        # Calculate Projection
+        # How much LLR do we gain per visitor on average?
+        llr_per_vis = latest_llr / latest_vis
+        remaining_llr = upper_bound - latest_llr
+        
+        if llr_per_vis > 0:
+            est_vis_needed = remaining_llr / llr_per_vis
+            est_days = est_vis_needed / avg_daily_visitors
+            
+            st.info(f"**Estimation:** Based on current velocity, you need approx. **{est_vis_needed:.0f}** more visitors (**{est_days:.1f} days**) to reach the success boundary.")
+        
+    # 3. Decision Logic
+    latest_vis = df.iloc[-1]['visitors']
+    if latest_vis > 0:
+        latest_cr = df.iloc[-1]['conversions'] / latest_vis
+    else:
+        latest_cr = 0.0
+
+    # Positive
+    if latest_llr > upper_bound:
+        st.success(f"### Result: SIGNIFICANT POSITIVE (Reject H0)")
+        st.write(f"The Variant is statistically superior. You can stop the test early at {latest_vis} visitors.")
+
+    # Negative / futility
+    elif latest_llr < lower_bound:
+        if test_type == "Two-sample (concurrent control/variant)":
+             # Calculate actual control CR from the dataframe
+             ctrl_vis = df.iloc[-1]['visitors_control']
+             ctrl_conv = df.iloc[-1]['conversions_control']
+             benchmark_cr = ctrl_conv / ctrl_vis if ctrl_vis > 0 else 0
+        else:
+             benchmark_cr = p0_param
+
+        if latest_cr < benchmark_cr:
+            st.error(f"### Result: SIGNIFICANT NEGATIVE")
+            st.write(f"The Variant is performing **worse** than Control (Observed {latest_cr:.2%} vs {benchmark_cr:.2%}). Stop immediately.")
+        else:
+            st.error(f"### Result: FUTILITY (Accept H0)")
+            st.write(f"The Variant is unlikely to reach the target.")
+
+    # Inconclusive
+    else:
+        if latest_vis >= max_visitors:
+            st.write("Maximum sample size reached without a decision.")
+        else:
+            st.warning(f"### Result: INCONCLUSIVE")
+            st.write("Continue collecting data. The test has not yet breached a boundary.")
+
+    show_visualization(df, upper_bound, lower_bound)
+
+# --- DOCUMENTATION ---
+def show_documentation():
     with st.expander("Benefits of SPRT", expanded=False):
         st.markdown("""
         #### Benefits of SPRT
@@ -150,7 +296,7 @@ def run():
         * **Safety is a concern:** You want to kill a 'losing' experiment immediately if it's tanking metrics.
         * **The observed effect is huge:** If the new feature is a massive success, SPRT will let you ship it in (for example) 3 days instead of 14.
         * **The cost of testing is high:** If every user in the experiment costs money, stopping early saves budget.
-
+    
         ### When to use fixed-horizon testing
         * If you have a **strict deadline**.
         * SPRT has a **slightly wider confidence interval** and will thus overestimate the treatment effect.
@@ -171,23 +317,9 @@ def run():
         > * **Important:** Data is stored for **42 days (6 weeks)** and then automatically deleted.
         > * **Save your Experiment ID!** It is the only key to retrieve your data.
         """)
-    
-    # Initialize Session State for locking
-    if 'params_locked' not in st.session_state: st.session_state['params_locked'] = False
-    if 'fetched_params' not in st.session_state: st.session_state['fetched_params'] = {}
 
-    # Logic: Use fetched values if locked, otherwise use defaults
-    defaults = st.session_state.get('fetched_params', {})
-    is_locked = st.session_state.get('params_locked', False)
-
-    if is_locked:
-        p0_param = defaults.get('p0')
-        tau_param = defaults.get('tau')
-        alpha = defaults.get('alpha')
-        beta = defaults.get('beta')
-        max_visitors = defaults.get('max_visitors')
-    
-# --- SIDEBAR: SETUP & LOADING ---
+# --- USER INPUT ---
+def setup_sidebar(defaults, is_locked):
     with st.sidebar:
         st.header("1. Experiment Setup")
 
@@ -247,7 +379,7 @@ def run():
 
         with st.form("setup_form"):
             p0_val = float(defaults.get('p0', 0.10)) if test_type == "One-sample (fixed baseline)" else 0.01
-            tau_val = float(defaults.get('tau', 0.12))
+            tau_val = float(defaults.get('tau') or 0.01)
             alpha_val = float(defaults.get('alpha', 0.05))
             beta_val = float(defaults.get('beta', 0.20))
             max_visitors_val = int(defaults.get('max_visitors', 10000))
@@ -256,7 +388,7 @@ def run():
             tau_param = st.select_slider(
                 "Test sensitivity (Tau)",
                 options=[0.0001, 0.001, 0.005, 0.01, 0.05, 0.1],
-                value=float(defaults.get('tau', 0.01)),
+                value=tau_val,
                 help="Lower values (0.001) are more conservative. Higher values (0.05) detect large effects faster."
                 )
             max_visitors = st.number_input("Max Visitors (Safety Cap)", value=max_visitors_val, step=100, disabled=is_locked)
@@ -283,6 +415,78 @@ def run():
                             st.rerun()
             else:
                 st.form_submit_button("Parameters Locked", disabled=True)
+    return {
+        "p0": p0_param,
+        "tau": tau_param,
+        "alpha": alpha,
+        "beta": beta,
+        "max_visitors": max_visitors,
+        "test_type": test_type
+    }
+
+def render_data_entry_form(exp_id, df, current_test_type):
+    st.subheader("Update Data")
+    with st.form("entry_form"):
+        d_date = st.date_input("Date")
+        
+        # Helper for previous values
+        prev_vis = int(df.iloc[-1]['visitors']) if not df.empty else 0
+        prev_conv = int(df.iloc[-1]['conversions']) if not df.empty else 0
+        prev_vis_c = int(df.iloc[-1]['visitors_control']) if (not df.empty and 'visitors_control' in df.columns) else 0
+        prev_conv_c = int(df.iloc[-1]['conversions_control']) if (not df.empty and 'conversions_control' in df.columns) else 0
+
+        # Layout Fork
+        if current_test_type == "Two-sample (concurrent control/variant)":
+            st.divider()
+            st.markdown("### Control Group")
+            c1, c2 = st.columns(2)
+            d_vis_c = c1.number_input(f"Cumulative Visitors (Prev: {prev_vis_c})", min_value=prev_vis_c, value=prev_vis_c, key="vc")
+            d_conv_c = c2.number_input(f"Cumulative Conversions (Prev: {prev_conv_c})", min_value=prev_conv_c, value=prev_conv_c, key="cc")
+            
+            st.markdown("### Variant Group")
+            c3, c4 = st.columns(2)
+            d_vis = c3.number_input(f"Cumulative Visitors (Prev: {prev_vis})", min_value=prev_vis, value=prev_vis, key="vv")
+            d_conv = c4.number_input(f"Cumulative Conversions (Prev: {prev_conv})", min_value=prev_conv, value=prev_conv, key="cv")
+            
+            save_v_c, save_c_c = d_vis_c, d_conv_c
+        else:
+            st.divider()
+            st.markdown("### Variant Data")
+            c1, c2 = st.columns(2)
+            d_vis = c1.number_input(f"Cumulative Visitors (Prev: {prev_vis})", min_value=prev_vis, value=prev_vis, key="v1")
+            d_conv = c2.number_input(f"Cumulative Conversions (Prev: {prev_conv})", min_value=prev_conv, value=prev_conv, key="c1")
+            save_v_c, save_c_c = 0, 0
+
+        st.divider()
+        if st.form_submit_button("Add Data Point"):
+            if d_vis < d_conv:
+                st.error("Visitors cannot be less than conversions.")
+            else:
+                save_data_point(exp_id, d_date, d_vis, d_conv, v_control=save_v_c, c_control=save_c_c)
+                st.rerun()
+
+# --- UI LOGIC / ORCHESTRATION ---
+def run():
+    st.title("Sequential Experiment Analysis (SPRT)")
+    st.markdown("""
+    ### Faster A/B Testing with Sequential Analysis
+    Standard A/B tests require you to wait for a fixed sample size to avoid "peeking" errors. 
+    **This tool is different.** It uses **Sequential Probability Ratio Testing (SPRT)**, allowing you to update data and check results **any time** without invalidating your statistics.
+    """)
+
+    # Load documentation
+    show_documentation()
+    
+    # Initialize Session State for locking
+    if 'params_locked' not in st.session_state: st.session_state['params_locked'] = False
+    if 'fetched_params' not in st.session_state: st.session_state['fetched_params'] = {}
+
+    # Logic: Use fetched values if locked, otherwise use defaults
+    defaults = st.session_state.get('fetched_params', {})
+    is_locked = st.session_state.get('params_locked', False)
+    
+    # --- SIDEBAR: SETUP & LOADING ---
+    params = setup_sidebar(defaults, is_locked)
 
     # --- MAIN PAGE CONTENT ---
     exp_id = st.session_state.get('exp_id')
@@ -299,152 +503,24 @@ def run():
     current_test_type = st.session_state['fetched_params'].get('test_type', "One-sample (fixed baseline)")
     
     # --- DATA ENTRY ---
-    st.subheader("Update Data")
+    render_data_entry_form(exp_id, df, params['test_type'])
 
-    # Correct form name here
-    with st.form("entry_form"):
-        # Date is outside columns
-        d_date = st.date_input("Date")
-        
-        prev_vis = int(df.iloc[-1]['visitors']) if not df.empty else 0
-        prev_conv = int(df.iloc[-1]['conversions']) if not df.empty else 0
-        prev_vis_c = int(df.iloc[-1]['visitors_control']) if (not df.empty and current_test_type == "Two-sample (concurrent control/variant)") else 0
-        prev_conv_c = int(df.iloc[-1]['conversions_control']) if (not df.empty and current_test_type == "Two-sample (concurrent control/variant)") else 0
-        
-        # LOGIC FORK: Layouts
-        if current_test_type == "Two-sample (concurrent control/variant)":
-            st.divider()
-            
-            # Row 1: Control
-            st.markdown("### Control Group")
-            c_a1, c_a2 = st.columns(2)
-            d_vis_c = c_a1.number_input(f"Cumulative Visitors (Prev: {prev_vis_c})", min_value=prev_vis_c, value=prev_vis_c, key="ctrl_vis_2s")
-            d_conv_c = c_a2.number_input(f"Cumulative Conversions (Prev: {prev_conv_c})", min_value=prev_conv_c, value=prev_conv_c, key="ctrl_conv_2s")
-            
-            # Row 2: Variant
-            st.markdown("### Variant Group")
-            c_b1, c_b2 = st.columns(2)
-            d_vis = c_b1.number_input(f"Cumulative Visitors (Prev: {prev_vis})", min_value=prev_vis, value=prev_vis, key="var_vis_2s")
-            d_conv = c_b2.number_input(f"Cumulative Conversions (Prev: {prev_conv})", min_value=prev_conv, value=prev_conv, key="var_conv_2s")
-            
-            save_v_c, save_c_c = d_vis_c, d_conv_c
-        
-        else:
-            st.divider()
-            st.markdown("### Variant Data")
-            c1, c2 = st.columns(2)
-            d_vis = c1.number_input(f"Cumulative Visitors (Prev: {prev_vis})", min_value=prev_vis, value=prev_vis, key="var_vis_1s")
-            d_conv = c2.number_input(f"Cumulative Conversions (Prev: {prev_conv})", min_value=prev_conv, value=prev_conv, key="var_conv_1s")
-            save_v_c, save_c_c = 0, 0
-        
-        st.divider()
-        if st.form_submit_button("Add Data Point"):
-            if d_vis < d_conv:
-                st.error("Visitors cannot be less than conversions.")
-            else:
-                save_data_point(exp_id, d_date, d_vis, d_conv, v_control=save_v_c, c_control=save_c_c)
-                st.rerun()
+    # --- UNDO FUNCTIONALITY ---
+    if not df.empty:
+        last_entry = df.iloc[-1]
+        last_id = int(last_entry['id'])
+        last_date = last_entry['measurement_date']
 
+        if st.button(f"Undo last entry {last_date}", type="secondary"):
+            delete_last_data_point(last_id)
+            st.rerun()
+    
     # --- ANALYSIS SECTION ---
     if not df.empty:
-        st.divider()
-        st.subheader("Sequential Analysis")
-
-        # Calculate boundaries (Unified for both types)
-        upper_bound, lower_bound = calculate_msprt_boundaries(alpha, beta)
-        
-        current_tau = defaults.get('tau', 0.01) if is_locked else tau_param
-        
-        # Calculate LLR based on Test Type
-        if current_test_type == "One-sample (fixed baseline)":
-            # Simulate a control group using the fixed baseline p0_param
-            df['llr'] = df.apply(lambda row: calculate_msprt_llr(
-                visitors_a=row['visitors'], 
-                conversions_a=row['visitors'] * p0_param, 
-                visitors_b=row['visitors'], 
-                conversions_b=row['conversions'], 
-                tau=current_tau
-            ), axis=1)
-        else:
-            # Standard Two-sample calculation
-            df['llr'] = df.apply(lambda row: calculate_msprt_llr(
-                row['visitors_control'], row['conversions_control'], 
-                row['visitors'], row['conversions'], 
-                tau=current_tau
-            ), axis=1)
-
-        # 3. Decision Metrics
-        latest_llr = df.iloc[-1]['llr']
-        latest_vis = df.iloc[-1]['visitors']
-        
-        col1, col2, col3 = st.columns(3)
-        col1.metric("Lower Bound (Futility)", f"{lower_bound:.2f}")
-        col2.metric("Current LLR", f"{latest_llr:.2f}")
-        col3.metric("Upper Bound (Success)", f"{upper_bound:.2f}")
-
-        # Approximate probability of success (very rough estimate)
-        prob_success = min(max((latest_llr / upper_bound) * 100, 0), 100) if latest_llr > 0 else 0
-
-        # Add a progress bar
-        st.write(f"**Estimated Confidence in Variant:** {prob_success:.2f}%")
-        st.progress(prob_success / 100)
-
-        # --- TIME ESTIMATION ---
-        # Only estimate if test is inconclusive and showing some positive movement
-        if not df.empty and latest_llr > 0 and not (latest_llr > upper_bound or latest_llr < lower_bound):
-            # Calculate Velocity
-            first_date = df['measurement_date'].min()
-            last_date = df['measurement_date'].max()
-            days_elapsed = max((last_date - first_date).days, 1)
+        analysis_section(df, params)
             
-            avg_daily_visitors = latest_vis / days_elapsed
-            
-            # Calculate Projection
-            # How much LLR do we gain per visitor on average?
-            llr_per_vis = latest_llr / latest_vis
-            remaining_llr = upper_bound - latest_llr
-            
-            if llr_per_vis > 0:
-                est_vis_needed = remaining_llr / llr_per_vis
-                est_days = est_vis_needed / avg_daily_visitors
-                
-                st.info(f"**Estimation:** Based on current velocity, you need approx. **{est_vis_needed:.0f}** more visitors (**{est_days:.1f} days**) to reach the success boundary.")
-            
-        # 3. Decision Logic
-        latest_vis = df.iloc[-1]['visitors']
-        if latest_vis > 0:
-            latest_cr = df.iloc[-1]['conversions'] / latest_vis
-        else:
-            latest_cr = 0.0
-        
-        if latest_llr > upper_bound:
-            st.success(f"### Result: SIGNIFICANT POSITIVE (Reject H0)")
-            st.write(f"The Variant is statistically superior. You can stop the test early at {latest_vis} visitors.")
-        elif latest_llr < lower_bound:
-            if latest_cr < p0_param:
-                st.error(f"### Result: SIGNIFICANT NEGATIVE")
-                st.write(f"The Variant is performing **worse** than Control. Stop immediately.")
-            else:
-                st.error(f"### Result: FUTILITY (Accept H0)")
-                st.write(f"The Variant is unlikely to reach the target.")
-        else:
-            if latest_vis >= max_visitors:
-                st.write("Maximum sample size reached without a decision.")
-            else:
-                st.warning(f"### Result: INCONCLUSIVE")
-                st.write("Continue collecting data. The test has not yet breached a boundary.")
-        
-            # 4. Visualization
-            st.markdown("### Test Trajectory")
-            chart_data = df[['visitors', 'llr']].copy()
-            chart_data['Upper Boundary'] = upper_bound
-            chart_data['Lower Boundary'] = lower_bound
-            
-            st.line_chart(chart_data.set_index('visitors'), color=["#FF4B4B", "#0000FF", "#0000FF"]) 
-            
-            with st.expander("View Raw Data"):
-                st.dataframe(df.sort_values("measurement_date", ascending=False))
-    
+        with st.expander("View Raw Data"):
+            st.dataframe(df.sort_values("measurement_date", ascending=False))
     else:
         st.write("Waiting for data entries...")
 
