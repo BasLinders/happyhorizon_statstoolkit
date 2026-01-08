@@ -127,6 +127,17 @@ def save_data_point(experiment_id, date, v_variant, c_variant, v_control=0, c_co
         st.error(f"Error saving data: {e}")
         return False
 
+def delete_last_data_point(row_id):
+    """Deletes a specific row by ID (to undo the last entry if an error was made)"""
+    try:
+        conn.table("msprt_data").delete().eq("id", row_id).execute()
+        st.toast("Last entry deleted", icon="🗑️")
+        return True
+    except Exception as e:
+        st.error("Error deleting data: {e}")
+        return False
+
+# --- VISUALIZATIONS ---
 def show_visualization(df, upper_bound, lower_bound):
     if df.empty:
         st.warning("No data to visualize yet.")
@@ -376,6 +387,16 @@ def run():
                 save_data_point(exp_id, d_date, d_vis, d_conv, v_control=save_v_c, c_control=save_c_c)
                 st.rerun()
 
+    # --- UNDO FUNCTIONALITY ---
+    if not df.empty:
+        last_entry = df.iloc[-1]
+        last_id = int(last_entry['id'])
+        last_date = last_entry['measurement_date']
+
+        if st.button(f"Undo last entry {last_date}", type="secondary"):
+            delete_last_data_point(last_id)
+            st.rerun()
+    
     # --- ANALYSIS SECTION ---
     if not df.empty:
         st.divider()
