@@ -281,21 +281,22 @@ def analysis_section(df, params):
 
 # --- DOCUMENTATION ---
 def show_documentation():
-    with st.expander("Benefits of SPRT", expanded=False):
+    with st.expander("Benefits of mSPRT", expanded=False):
         st.markdown("""
-        #### Benefits of SPRT
+        #### Benefits of mSPRT
         Compared to fixed-horizon testing, SPRT has certain advantages.
         * **Stop winners early:** Deploy successful features days or weeks faster.
         * **Cut losers fast:** Identify "futility" (no chance of winning) early to save traffic and/or money.
         * **Rigorous:** Mathematically valid stopping rules, unlike standard z-tests (The mSPRT boundaries are "always-valid.").
         """)
-    with st.expander("When to use SPRT", expanded=False):
+    with st.expander("When to use mSPRT", expanded=False):
         st.markdown("""
-        ### When to use SPRT
+        ### When to use mSPRT
         Sequential probability ratio testing is an agile tool. You should use it when:
         * **Safety is a concern:** You want to kill a 'losing' experiment immediately if it's tanking metrics.
         * **The observed effect is huge:** If the new feature is a massive success, SPRT will let you ship it in (for example) 3 days instead of 14.
         * **The cost of testing is high:** If every user in the experiment costs money, stopping early saves budget.
+        * **If you don't believe in p-values:** This tool looks for the Log-Likelihood ratio to cross upper- and lower boundaries, calculated from your alpha and beta values (still technically frequentist, but practical).
     
         ### When to use fixed-horizon testing
         * If you have a **strict deadline**.
@@ -303,9 +304,9 @@ def show_documentation():
         * If you're looking for a **tiny lift** (e.g. 0.5% increase) it might take longer to reach a conclusion than a fixed-horizon test as in this case, SPRT has generally less statistical power.
         * If stakeholders are better aligned with clear deadlines and mid- to long-term planning of experiments.
         """)
-    with st.expander("How to use SPRT", expanded=False):
+    with st.expander("How to use mSPRT", expanded=False):
         st.markdown("""
-        #### How to use SPRT
+        #### How to use mSPRT
         1.  **Start New:** Generate a unique ID and define your success metrics (Alpha / significance, Beta / power). 
             * *Note: These are locked once the test starts to ensure integrity.*
         2.  **Update Regularly:** Come back daily/weekly to input your **cumulative** data.
@@ -471,7 +472,7 @@ def run():
     st.markdown("""
     ### Faster A/B Testing with Sequential Analysis
     Standard A/B tests require you to wait for a fixed sample size to avoid "peeking" errors. 
-    **This tool is different.** It uses **Sequential Probability Ratio Testing (SPRT)**, allowing you to update data and check results **any time** without invalidating your statistics.
+    **This tool is different.** It uses **mixture Sequential Probability Ratio Testing (mSPRT)**, allowing you to update data and check results **any time** without invalidating your statistics.
     """)
 
     # Load documentation
