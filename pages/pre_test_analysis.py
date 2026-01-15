@@ -2,7 +2,6 @@ import streamlit as st
 from scipy.stats import norm
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 from prophet import Prophet
 
@@ -340,18 +339,29 @@ def perform_mde_calculation_forecast(forecast_df, num_variants, risk, trust, tai
 def run():
     st.title("Pre-test analysis")
     """
-    This calculator provides two ways to plan for the runtime of your experiment.
-    
-    1. MDE Projection (Weeks 1-6):
-        - Calculates the relative MDE for each week, assuming accumulating weekly samples. Outputs a table of weekly MDE vs. Sample Size.
-    2. Sample Size Calculation:
-        - Calculates the total sample size needed for your target relative MDE. Outputs the required sample size and test duration in days.
-    3. If your data is highly seasonal, use the forecasting method (Prophet). This will prevent your test being underpowered.
+    This calculator helps you plan for the runtime of your experiment.
 
     Enter the values below to start.
     """
+    with st.expander("How to plan your tests", expanded=False):
+        st.markdown("""
+        ### How to choose the right method:
 
-    st.write("")
+        **1. MDE Projection (Fixed Duration)**
+        * **Best for:** Strict deadlines.
+        * *Scenario:* "We only have 4 weeks to run this test. What is the smallest impact we can reliably detect?"
+        * *Output:* A table showing the Minimum Detectable Effect (MDE) achievable for Weeks 1 through 6.
+
+        **2. Sample Size Calculation (Target Effect)**
+        * **Best for:** Specific improvement goals.
+        * *Scenario:* "We need to detect a 5% lift to justify this feature. How long will that take?"
+        * *Output:* The total sample size required and the estimated runtime in days (based on average traffic).
+
+        **3. Seasonal Forecasting (Prophet)**
+        * **Best for:** Volatile, high-traffic, or event-driven sites.
+        * *Scenario:* "Our traffic spikes on weekends or is approaching a holiday (e.g., Black Friday)."
+        * *Why:* Standard calculators assume flat traffic. This method uses your historical data to **forecast** future daily traffic, preventing you from under-powering your test during traffic dips.
+        """)
 
     # Selectbox for choosing the calculation mode
     calculation_mode = st.selectbox(
@@ -441,29 +451,49 @@ def run():
                             
                             # Display Forecast Plot
                             st.write("### Traffic Forecast (Next 6 Weeks)")
-                            fig, ax = plt.subplots(figsize=(10,5))
                             
-                            # Plot main line
-                            ax.plot(forecast_data['ds'], forecast_data['pred_visitors'], label='Predicted Visitors', color='#0072B2')
-                            
-                            # Fill the confidence interval
-                            ax.fill_between(
-                                forecast_data['ds'],
-                                forecast_data['vis_lower'],
-                                forecast_data['vis_upper'],
-                                color='#0072B2',
-                                alpha=0.2,
-                                label=f'Confidence Interval ({int(forecast_confidence * 100)}%)'
-                            )
-                            
-                            # Formatting
-                            ax.set_title("Daily Visitor Forecast")
-                            ax.set_ylabel("Visitors")
-                            ax.grid(True, alpha=0.3)
-                            ax.legend()
+                            # Create Plotly Figure
+                            fig = go.Figure()
 
-                            st.pyplot(fig)
-                            plt.close(fig)
+                            # Main Line (Predicted Visitors)
+                            fig.add_trace(go.Scatter(
+                                x=forecast_data['ds'], 
+                                y=forecast_data['pred_visitors'],
+                                mode='lines',
+                                name='Predicted Visitors',
+                                line=dict(color='#0072B2')
+                            ))
+
+                            # Confidence Interval (Upper Bound) - Invisible line for filling
+                            fig.add_trace(go.Scatter(
+                                x=forecast_data['ds'], 
+                                y=forecast_data['vis_upper'],
+                                mode='lines',
+                                line=dict(width=0),
+                                showlegend=False,
+                                hoverinfo='skip'
+                            ))
+
+                            # Confidence Interval (Lower Bound) - Fills up to the Upper Bound
+                            fig.add_trace(go.Scatter(
+                                x=forecast_data['ds'], 
+                                y=forecast_data['vis_lower'],
+                                mode='lines',
+                                line=dict(width=0),
+                                fill='tonexty', # Fills to the previous trace (vis_upper)
+                                fillcolor='rgba(0, 114, 178, 0.2)', # Same blue, 0.2 opacity
+                                name=f'Confidence Interval ({int(forecast_confidence * 100)}%)'
+                            ))
+
+                            fig.update_layout(
+                                title="Daily Visitor Forecast",
+                                yaxis_title="Visitors",
+                                xaxis_title="Date",
+                                hovermode="x"
+                            )
+
+                            # Render
+                            st.plotly_chart(fig, use_container_width=True)
                             
                             # Run Calculation
                             results = perform_mde_calculation_forecast(
