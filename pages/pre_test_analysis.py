@@ -361,8 +361,8 @@ def run():
     )
 
     if calculation_mode == "Calculate MDE based on Runtime":
+        get_user_input()
         if st.button("Calculate MDE", type="primary"):
-            get_user_input()
             # Validate input using st.session_state
             if (st.session_state.get("baseline_visitors", 0) <= 0 or
                 st.session_state.get("baseline_conversions", 0) < 0 or
