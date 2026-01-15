@@ -3,6 +3,7 @@ from scipy.stats import norm
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import plotly.graph_objects as go
 from prophet import Prophet
 
 st.set_page_config(
@@ -26,7 +27,7 @@ def get_user_input():
 
     # Test parameter input
     with col2:
-        st.number_input("Desired confidence level (e.g., 90%):", min_value=0, max_value=100, step=1, value=st.session_state.get("risk", 90), key="risk")
+        st.number_input("Desired confidence level (e.g., 90%):", min_value=0, max_value=100, step=1, value=st.session_state.get("risk", 95), key="risk")
         st.number_input("Minimum trustworthiness (Power) (e.g., 80%):", min_value=0, max_value=100, step=1, value=st.session_state.get("trust", 80), key="trust")
         if st.session_state.get("calculation_mode") == "Calculate Sample Size based on MDE":
             st.number_input("What MDE are you aiming for?", min_value=1, max_value=100, step=1, value=st.session_state.get("mde", 5), key="mde")
