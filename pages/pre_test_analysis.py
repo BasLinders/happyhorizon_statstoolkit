@@ -2,11 +2,15 @@ import streamlit as st
 from scipy.stats import norm
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
+from prophet import Prophet
 
 st.set_page_config(
     page_title="Pre-test analysis",
     page_icon="🔢",
 )
+
+# --- USER INPUT ---
 
 # User input for both MDE and sample size calculation
 def get_user_input():
@@ -34,6 +38,8 @@ def get_user_input():
         key="tails",
         help="Choose 'One-sided' when testing only for improvement (B > A) or decline (B < A); this requires fewer samples and results in a possible lower MDE. Choose 'Two-sided' when testing for any difference (better or worse); this is more comprehensive because it can detect significant effects in either direction, but generally requires more samples and possibly raises the MDE."
     )
+
+# --- HELPER FUNCTIONS ---
 
 # Holm-Bonferroni correction for MDE calculation
 def holm_bonferroni(num_variants, alpha, tails):
@@ -236,7 +242,100 @@ def calculate_sample_size(num_variants, baseline_visitors, baseline_conversions,
 
     if correction_applied:
         st.write(f"*Note: The {holm_bonferroni.__name__ if 'holm_bonferroni' in globals() else 'configured multiple comparison correction'} correction was applied ({num_comparisons} comparisons) affecting the required significance level.*")
+
+# Forecasting with Prophet
+@st.cache_data(show_spinner=False)
+def run_prophet_forecast(df, periods=42, confidence_level=0.95):
+    """
+    Ingests a dataframe with columns ['ds', 'visitors', 'conversions']. Returns a dataframe of forecasted daily values for the next 'periods'days.
+    """
     
+    # Forecast Visitors
+    df_vis = df[['ds', 'visitors']].rename(columns={'visitors': 'y'})
+    m_vis = Prophet(yearly_seasonality=True, weekly_seasonality=True, interval_width=confidence_level)
+    m_vis.fit(df_vis)
+    future_vis = m_vis.make_future_dataframe(periods=periods)
+    forecast_vis = m_vis.predict(future_vis)
+
+    # Forecast Conversions
+    df_conv = df[['ds', 'conversions']].rename(columns={'conversions': 'y'})
+    m_conv = Prophet(yearly_seasonality=True, weekly_seasonality=True, interval_width=confidence_level)
+    m_conv.fit(df_conv)
+    future_conv = m_conv.make_future_dataframe(periods=periods)
+    forecast_conv = m_conv.predict(future_conv)
+
+    # Filter for future data only
+    last_date = df['ds'].max()
+    
+    # Keep yhat_lower and yhat_upper
+    cols_to_keep = ['ds', 'yhat', 'yhat_lower', 'yhat_upper']
+    
+    future_vis = forecast_vis[forecast_vis['ds'] > last_date][cols_to_keep].rename(
+        columns={'yhat': 'pred_visitors', 'yhat_lower': 'vis_lower', 'yhat_upper': 'vis_upper'}
+    )
+    
+    future_conv = forecast_conv[forecast_conv['ds'] > last_date][cols_to_keep].rename(
+        columns={'yhat': 'pred_conversions', 'yhat_lower': 'conv_lower', 'yhat_upper': 'conv_upper'}
+    )
+    
+    # Merge
+    forecast_final = pd.merge(future_vis, future_conv, on='ds')
+    
+    # Clip negative predictions to 0
+    cols_to_clip = ['pred_visitors', 'vis_lower', 'vis_upper', 'pred_conversions', 'conv_lower', 'conv_upper']
+    for col in cols_to_clip:
+        forecast_final[col] = forecast_final[col].clip(lower=0)
+    
+    return forecast_final
+
+def perform_mde_calculation_forecast(forecast_df, num_variants, risk, trust, tails):
+    """
+    Calculates MDE based on accumulating forecasted data rather than static averages.
+    """
+    alpha = 1 - (risk / 100)
+    power = trust / 100
+
+    # Adjust alpha for multiple comparisons
+    if num_variants > 2:
+        adjusted_z_alpha = holm_bonferroni(num_variants - 1, alpha, tails)
+    else:
+        adjusted_z_alpha = norm.ppf(1 - alpha) if tails == 'One-sided' else norm.ppf(1 - alpha / 2)
+
+    z_power = norm.ppf(power)
+
+    results = []
+    
+    # Iterate through weeks 1 to 6
+    for week in range(1, 7):
+        days_needed = week * 7
+        
+        # Slice the forecast for this duration
+        current_slice = forecast_df.head(days_needed)
+        
+        # Sum the traffic and conversions to get the "seasonal baseline" for this specific window
+        total_visitors = current_slice['pred_visitors'].sum()
+        total_conversions = current_slice['pred_conversions'].sum()
+        
+        if total_visitors <= 0:
+            results.append([week, 0, np.nan])
+            continue
+            
+        # Weighted Baseline Conversion Rate for this specific period
+        baseline_rate = total_conversions / total_visitors
+        baseline_rate = max(0.0001, min(0.9999, baseline_rate)) # ensure rate is valid
+        
+        # Visitors per variant
+        visitors_per_variant = total_visitors / num_variants
+        
+        # Standard Error & MDE
+        se = np.sqrt(2 * baseline_rate * (1 - baseline_rate) / visitors_per_variant)
+        mde_absolute = (adjusted_z_alpha + z_power) * se
+        mde_relative = (mde_absolute / baseline_rate) * 100
+        
+        results.append([week, int(visitors_per_variant), mde_relative])
+        
+    return results
+
 def run():
     st.title("Pre-test analysis")
     """
@@ -246,6 +345,7 @@ def run():
         - Calculates the relative MDE for each week, assuming accumulating weekly samples. Outputs a table of weekly MDE vs. Sample Size.
     2. Sample Size Calculation:
         - Calculates the total sample size needed for your target relative MDE. Outputs the required sample size and test duration in days.
+    3. If your data is highly seasonal, use the forecasting method (Prophet). This will prevent your test being underpowered.
 
     Enter the values below to start.
     """
@@ -255,7 +355,8 @@ def run():
     # Selectbox for choosing the calculation mode
     calculation_mode = st.selectbox(
         "Select Calculation Mode:",
-        ("Calculate MDE based on Runtime", "Calculate Sample Size based on MDE"),
+        ("Calculate MDE based on Runtime", "Calculate Sample Size based on MDE", "Seasonal (Prophet Forecast)"),
+        help="For stable traffic / conversions, choose either MDE or sample size calculation. If traffic and conversion is seasonal (or highly volatile), choose Seasonal.",
         key="calculation_mode"
     )
 
@@ -275,9 +376,9 @@ def run():
                 display_mde_table(st.session_state.get("num_variants", 2),
                                   st.session_state.get("baseline_visitors", 0),
                                   st.session_state.get("baseline_conversions", 0),
-                                  st.session_state.get("risk", 90),
+                                  st.session_state.get("risk", 95),
                                   st.session_state.get("trust", 80),
-                                  st.session_state.get("tails", 'Two-sided'))
+                                  st.session_state.get("tails", 'One-sided'))
 
     elif calculation_mode == "Calculate Sample Size based on MDE":
         if st.button("Calculate Sample Size", type="primary"):
@@ -297,9 +398,87 @@ def run():
                                       st.session_state.get("baseline_visitors", 0),
                                       st.session_state.get("baseline_conversions", 0),
                                       st.session_state.get("mde", 5),
-                                      st.session_state.get("risk", 90),
+                                      st.session_state.get("risk", 95),
                                       st.session_state.get("trust", 80),
                                       st.session_state.get("tails", 'One-sided'))
+    else:
+        st.write("### Upload Historical Data")
+        st.info("Upload a CSV with columns: `date` (YYYY-MM-DD), `visitors` (count), `conversions` (count). Ideally 1-2 years of data (not more!).")
+        
+        uploaded_file = st.file_uploader("Upload CSV", type=['csv'])
+        
+        # Common inputs for the seasonal mode
+        col1, col2 = st.columns(2)
+        with col1:
+             num_variants_s = st.number_input("Number of variants:", min_value=2, value=2, key="seas_variants")
+        with col2:
+             risk_s = st.number_input("Confidence level (%):", value=95, key="seas_risk")
+             trust_s = st.number_input("Power (%):", value=80, key="seas_trust")
+             tails_s = st.radio("Hypothesis:", ['One-sided', 'Two-sided'], key="seas_tails", horizontal=True)
+
+        if uploaded_file is not None:
+            try:
+                df = pd.read_csv(uploaded_file)
+                # Normalize columns for Prophet
+                df.columns = [c.lower() for c in df.columns]
+                
+                # Simple column mapping attempt
+                if 'date' in df.columns:
+                    df = df.rename(columns={'date': 'ds'})
+                
+                # Check for required columns
+                if not {'ds', 'visitors', 'conversions'}.issubset(df.columns):
+                    st.error("CSV must contain columns: 'date' (or 'ds'), 'visitors', 'conversions'")
+                else:
+                    df['ds'] = pd.to_datetime(df['ds'], dayfirst=True)
+                    forecast_confidence = 1 - (risk_s / 100)
+                    
+                    if st.button("Generate Forecast & Analysis", type="primary"):
+                        with st.spinner("Running Prophet Forecast..."):
+                            # Run Forecast
+                            forecast_data = run_prophet_forecast(df, periods=42, interval_width=forecast_confidence)
+                            
+                            # Display Forecast Plot
+                            st.write("### Traffic Forecast (Next 6 Weeks)")
+                            fig, ax = plt.subplots(figsize=(10,5))
+                            
+                            # Plot main line
+                            ax.plot(forecast_data['ds'], forecast_data['pred_visitors'], label='Predicted Visitors', color='#0072B2')
+                            
+                            # Fill the confidence interval
+                            ax.fill_between(
+                                forecast_data['ds'],
+                                forecast_data['vis_lower'],
+                                forecast_data['vis_upper'],
+                                color='#0072B2',
+                                alpha=0.2,
+                                label=f'Confidence Interval ({int(forecast_confidence * 100)}%)'
+                            )
+                            
+                            # Formatting
+                            ax.set_title("Daily Visitor Forecast")
+                            ax.set_ylabel("Visitors")
+                            ax.grid(True, alpha=0.3)
+                            ax.legend()
+
+                            st.pyplot(fig)
+                            plt.close(fig)
+                            
+                            # Run Calculation
+                            results = perform_mde_calculation_forecast(
+                                forecast_data, num_variants_s, risk_s, trust_s, tails_s
+                            )
+                            
+                            # Display Results
+                            res_df = pd.DataFrame(results, columns=['Week', 'Avg Visitors / Variant', 'Relative MDE (%)'])
+                            res_df['Relative MDE (%)'] = res_df['Relative MDE (%)'].map(lambda x: f"{x:.2f}%" if pd.notnull(x) else "N/A")
+                            
+                            st.write("### Seasonal MDE Results")
+                            st.write("This table calculates MDE using the **predicted** traffic and conversion rate for each specific week, accounting for seasonality.")
+                            st.table(res_df)
+                            
+            except Exception as e:
+                st.error(f"Error parsing file: {e}")
 
 if __name__ == "__main__":
     run()
