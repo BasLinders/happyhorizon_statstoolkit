@@ -8,6 +8,7 @@ import matplotlib.patches as mpatches
 import matplotlib.cm as cm
 from scipy.stats import beta, norm, chisquare
 import math
+import altair as alt
 
 st.set_page_config(
     page_title="Experiment Analysis",
@@ -178,8 +179,44 @@ def get_frequentist_inputs():
         value=st.session_state.get("confidence_level", 95),
         help="Set the confidence level for which you want to test (enter 90, 95, etc)."
     )
+
+    st.write("---")
+    st.write("### CUPED Variance Reduction (Optional)")
+    with st.expander("How CUPED works", expanded=False):
+        st.markdown("""
+            ### CUPED (Controlled-experiment Using Pre-Experiment Data)
+
+            CUPED is a variance reduction technique that uses historical data to account for pre-existing differences between users. 
+            By identifying how much of a user's behavior is 'typical' for them (based on the correlation between the pre-test and test periods), we can strip away the 'noise.'
+
+            *The result*: Narrower confidence intervals and the ability to detect smaller effects with the same sample size.
+
+            **How it works**
+            *HEXKIT* applies a variance adjustment factor based on the square of the Pearson correlation coefficient ($\rho^2$) found in your uploaded sample. 
+            The Standard Error is adjusted using the formula: $$SE_{adjusted} = \sqrt{\frac{p(1-p)(1-\rho^2)}{n}}$$This effectively 'shrinks' the probability density curves, making it easier to distinguish a real signal from background noise.   
+        """)
+
+        use_cuped = st.checkbox("Enhance precision with pre-test data CSV", help="Upload user-level data to reduce variance and reach significance faster.")
     
-    return st.session_state.visitor_counts, st.session_state.conversion_counts, st.session_state.confidence_level
+    reduction_factor = 1.0 # Default: no reduction
+    
+    if use_cuped:
+        uploaded_file = st.file_uploader("Upload CSV (user_id, pre_result, post_result)", type="csv")
+        if uploaded_file:
+            df_cuped = pd.read_csv(uploaded_file)
+            col_pre = st.selectbox("Select column: Data before test", df_cuped.columns)
+            col_post = st.selectbox("Select column: Data during test", df_cuped.columns)
+            
+            reduction_factor, corr = calculate_cuped_reduction_factor(df_cuped, col_pre, col_post)
+            
+            st.success(f"Correlation found: {corr:.2f}. Variance is reduced by {((1-reduction_factor)*100):.1f}%.")
+    
+    return (
+        st.session_state.visitor_counts, 
+        st.session_state.conversion_counts, 
+        st.session_state.confidence_level, 
+        reduction_factor
+        )
 
 def validate_inputs(visitors, conversions, aovs=None):
     
@@ -524,8 +561,54 @@ def display_results_per_variant(
 
 
 # -- Frequentist helper functions --
+def calculate_cuped_reduction_factor(df, pre_col, post_col):
+    """
+    Calculates the variance-reduction factor based on user-level data.
+    pre_col: data before the experiment
+    post_col: data from the experiment
+    """
+    try:
+        correlation = df[pre_col].corr(df[post_col])
+        # The variance-reduction factor of CUPED is (1 - rho^2)
+        reduction_factor = 1 - (correlation**2)
+        return reduction_factor, correlation
+    except Exception as e:
+        st.error(f"Error when calculating correlation: {e}")
+        return 1.0, 0.0
+    
+def display_ci_chart(results, current_variant_idx, alphabet):
+    # Prepare data for Control (0) and the current Variant (i)
+    indices = [0, current_variant_idx]
+    names = [f"({alphabet[0]}) Control", f"({alphabet[current_variant_idx]}) Challenger"]
+    
+    data = pd.DataFrame({
+        'Variant': names,
+        'CR': [results['conversion_rates'][i] * 100 for i in indices],
+        'Lower': [results['confidence_intervals'][i][0] * 100 for i in indices],
+        'Upper': [results['confidence_intervals'][i][1] * 100 for i in indices]
+    })
 
-def calculate_frequentist_statistics(visitor_counts, conversion_counts, confidence_level, tail):
+    # 1. Create the points (Means)
+    points = alt.Chart(data).mark_point(
+        filled=True, size=100, color='#009900'
+    ).encode(
+        x=alt.X('CR:Q', scale=alt.Scale(zero=False), title='Conversion Rate (%)'),
+        y=alt.Y('Variant:N', title=None),
+        tooltip=['Variant', alt.Tooltip('CR:Q', format='.2f')]
+    )
+
+    # 2. Create the ranges (Confidence Intervals)
+    error_bars = alt.Chart(data).mark_errorbar(thickness=3, color='#b7e1cd').encode(
+        x='Lower:Q',
+        x2='Upper:Q',
+        y='Variant:N'
+    )
+
+    # Layer them and display
+    chart = (error_bars + points).properties(width='container', height=150)
+    return chart
+
+def calculate_frequentist_statistics(visitor_counts, conversion_counts, confidence_level, tail, reduction_factor=1.0):
     # --- Input Validation & Setup ---
     if sum(visitor_counts) == 0 or any(v < 0 for v in visitor_counts):
         raise ValueError("Visitor counts must be positive and sum to a non-zero value.")
@@ -538,7 +621,10 @@ def calculate_frequentist_statistics(visitor_counts, conversion_counts, confiden
 
     # --- Core calculations ---
     conversion_rates = [c / v if v > 0 else 0 for c, v in zip(conversion_counts, visitor_counts)]
-    standard_errors = [np.sqrt(cr * (1 - cr) / v) if v > 0 else 0 for cr, v in zip(conversion_rates, visitor_counts)]
+    standard_errors = [
+        np.sqrt(cr * (1 - cr) * reduction_factor / v) if v > 0 else 0 
+        for cr, v in zip(conversion_rates, visitor_counts)
+    ]
 
     # Confidence interval calculation for conversion rates
     z_critical = norm.ppf(1 - (alpha / 2))
@@ -574,9 +660,16 @@ def calculate_frequentist_statistics(visitor_counts, conversion_counts, confiden
     
     # Z-statistics
     pooled_proportion = sum(conversion_counts) / sum(visitor_counts)
-    se_pooled_list = [np.sqrt(pooled_proportion * (1 - pooled_proportion) / v) if v > 0 else 0 for v in visitor_counts]
+    # se_pooled_list = [np.sqrt(pooled_proportion * (1 - pooled_proportion) / v) if v > 0 else 0 for v in visitor_counts]
+    #z_stats = [
+    #    (conversion_rates[i] - conversion_rates[0]) / np.sqrt(se_pooled_list[i]**2 + se_pooled_list[0]**2) if (se_pooled_list[i]**2 + se_pooled_list[0]**2) > 0 else 0
+    #    for i in range(1, num_variants)
+    #]
+
+    # Unpooled variance approach to maintain CUPED reduction integrity
     z_stats = [
-        (conversion_rates[i] - conversion_rates[0]) / np.sqrt(se_pooled_list[i]**2 + se_pooled_list[0]**2) if (se_pooled_list[i]**2 + se_pooled_list[0]**2) > 0 else 0
+        (conversion_rates[i] - conversion_rates[0]) / np.sqrt(standard_errors[i]**2 + standard_errors[0]**2)
+        if (standard_errors[i]**2 + standard_errors[0]**2) > 0 else 0
         for i in range(1, num_variants)
     ]
 
@@ -595,27 +688,35 @@ def calculate_frequentist_statistics(visitor_counts, conversion_counts, confiden
     observed_powers = []
     if all(v > 1000 for v in visitor_counts):
         power_method_used = "Analytical"
-        def analytical_power(cr_c, cr_v, n_c, n_v, corrected_alpha, t):
-            # Note: Using 'alpha' passed here (original overall alpha), not necessarily sidak_alpha
-            se_unpooled = np.sqrt((cr_c * (1 - cr_c) / n_c) + (cr_v * (1 - cr_v) / n_v))
-            if se_unpooled == 0:
-                return 1.0
-            z_delta = abs(cr_c - cr_v) / se_unpooled
-            power = None
+        # Iterate once through the challengers
+        for i in range(1, num_variants):
+            se_diff = np.sqrt(standard_errors[i]**2 + standard_errors[0]**2)
+            if se_diff == 0:
+                observed_powers.append(1.0)
+                continue
             
-            if t in ['Greater', 'Less']:
-                z_alpha = norm.ppf(1 - corrected_alpha)
+            # Calculated conversion rates and SEs include reduction_factor
+            z_delta = abs(conversion_rates[i] - conversion_rates[0]) / se_diff
+            
+            # Determine threshold based on tail and Sidak correction
+            if tail in ['Greater', 'Less']:
+                z_alpha = norm.ppf(1 - sidak_alpha)
                 power = norm.cdf(z_delta - z_alpha)
-            else:
-                z_alpha = norm.ppf(1 - corrected_alpha / 2)
+            else: # Two-sided
+                z_alpha = norm.ppf(1 - sidak_alpha / 2)
+                # Power for two-sided is the sum of both tails
                 power = norm.cdf(z_delta - z_alpha) + norm.cdf(-z_delta - z_alpha)
-                
-            return power
             
-        observed_powers = [analytical_power(conversion_rates[0], conversion_rates[i], visitor_counts[0], visitor_counts[i], sidak_alpha, tail) for i in range(1, num_variants)]
+            observed_powers.append(power)
     else:
-        power_method_used = "Bootstrap"
+        if reduction_factor < 1.0:
+            st.warning("CUPED variance reduction is enabled, but observed power calculation via bootstrap is not compatible with CUPED. Falling back to analytical method without CUPED adjustment for power estimation.")
+            power_method_used = "Analytical"
+        else:
+            power_method_used = "Bootstrap"
+            
         def bootstrap_sample(data_control, data_variant, alpha, tail):
+
             # Using 'alpha' passed here (original overall alpha), not necessarily sidak_alpha
             sample_control = np.random.choice(data_control, size=len(data_control), replace=True)
             sample_variant = np.random.choice(data_variant, size=len(data_variant), replace=True)
@@ -670,7 +771,8 @@ def calculate_frequentist_statistics(visitor_counts, conversion_counts, confiden
         "srm_p_value": srm_p_value,
         "sidak_alpha": sidak_alpha,
         "alpha": alpha,
-        "confidence_level": confidence_level
+        "confidence_level": confidence_level,
+        "reduction_factor": reduction_factor
     }
     
     return results
@@ -719,7 +821,6 @@ def plot_conversion_distributions(results):
         ax.plot(x_range * 100, pdf, label=variant_label, color=line_color, alpha=base_alpha, linewidth=1.5)
         ax.axvline(conversion_rates[i] * 100, color=line_color, linestyle='--', alpha=base_alpha*0.8)
         
-        # HERSTELD: Exacte kopie van de originele plt.text aanroep voor de gemiddelden
         text_left_margin = 0.005
         ax.text(conversion_rates[i] * 100 + text_left_margin, 
                 ax.get_ylim()[1] * 0.03,
@@ -807,7 +908,8 @@ def display_frequentist_summary(
     visitor_counts, 
     conversion_counts,
     non_inferiority_margin=0.01,
-    confidence_noninf=95
+    confidence_noninf=95,
+    reduction_factor=1.0
 ):
 
     if not results:
@@ -838,6 +940,8 @@ def display_frequentist_summary(
     
     st.write("## Results summary")
     st.write("---")
+    if reduction_factor < 1.0:
+        st.info(f"**CUPED Active**. Variance reduced by {reduction_factor:.4f} using pre-test data correlation.")
 
     for i in range(1, num_variants):
         challenger_index_in_lists = i - 1
@@ -869,6 +973,10 @@ def display_frequentist_summary(
                 value=f"{observed_diff*100:+.2f}%", # The '+' forces a +/- sign
                 help=f"The {results['confidence_level']}% confidence interval for the uplift is from {ci_difference[0]*100:+.2f}% to {ci_difference[1]*100:+.2f}%."
             )
+
+        st.write("#### Confidence Interval Comparison")
+        fig = display_ci_chart(results, i, alphabet)
+        st.altair_chart(fig, use_container_width=True)
         st.write("")
         
         # --- Superiority Test ---
@@ -879,6 +987,8 @@ def display_frequentist_summary(
             if conversion_rates[i] > conversion_rates[0]:
                 st.success(f"Variant **{alphabet[i]}** is a **winner**, congratulations!")
             else:
+                if reduction_factor < 1.0:
+                    st.info(f"CUPED Adjusted. Variance reduction factor applied: {reduction_factor:.4f}")
                 st.warning(f"**Loss averted** with variant **{alphabet[i]}**! Congratulations with this valuable insight.")
         
         # --- Non-inferiority Test ---
@@ -889,8 +999,8 @@ def display_frequentist_summary(
 
             if tail == 'Greater' or tail == 'Two-sided':
                 se_unpooled = np.sqrt(
-                    (conversion_rates[0] * (1 - conversion_rates[0]) / visitor_counts[0]) + 
-                    (conversion_rates[i] * (1 - conversion_rates[i]) / visitor_counts[i])
+                    (conversion_rates[0] * (1 - conversion_rates[0]) * reduction_factor / visitor_counts[0]) + 
+                    (conversion_rates[i] * (1 - conversion_rates[i]) * reduction_factor / visitor_counts[i])
                 )
                 
                 z_stat_noninf = (conversion_rates[i] - conversion_rates[0] + non_inferiority_margin) / se_unpooled
@@ -904,7 +1014,7 @@ def display_frequentist_summary(
                 else:
                     st.warning(f"The non-inferiority test does not provide sufficient evidence to conclude that {alphabet[i]} performs at least as well as {alphabet[0]}.")
             else: # Voor 'less' tail
-                 st.info(f"There is no strong evidence of a difference, and the effect size remains uncertain.")
+                st.info(f"There is no strong evidence of a difference, and the effect size remains uncertain.")
 
 # Main logic
 def run():
@@ -991,7 +1101,7 @@ def run():
     elif analysis_method == "Frequentist Analysis":
         st.header("Frequentist Analysis Inputs")
         
-        visitor_counts, conversion_counts, confidence_level = get_frequentist_inputs()
+        visitor_counts, conversion_counts, confidence_level, reduction_factor = get_frequentist_inputs()
         
         st.session_state.tail = st.radio(
             "Select the test hypothesis (tail):",
@@ -1023,6 +1133,7 @@ def run():
                         if test_results:
                             plot_conversion_distributions(test_results)
                             display_frequentist_summary(
+                                reduction_factor,
                                 test_results, 
                                 visitor_counts, 
                                 conversion_counts,
