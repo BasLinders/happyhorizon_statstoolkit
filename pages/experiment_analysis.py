@@ -2,10 +2,12 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import string
+import io
 import concurrent.futures
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import matplotlib.cm as cm
+import plotly.graph_objects as go
 from scipy.stats import beta, norm, chisquare
 import math
 import altair as alt
@@ -22,6 +24,7 @@ def initialize_session_state():
     st.session_state.setdefault("conversion_counts", [0] * num_variants)
     st.session_state.setdefault("aovs", [None] * num_variants)
     st.session_state.setdefault("confidence_level", 95)
+    st.session_state.setdefault("test_duration", 7)
     st.session_state.setdefault("tail", 'Greater')
     st.session_state.setdefault("probability_winner", 80.0)
     st.session_state.setdefault("runtime_days", 0)
@@ -179,43 +182,75 @@ def get_frequentist_inputs():
         value=st.session_state.get("confidence_level", 95),
         help="Set the confidence level for which you want to test (enter 90, 95, etc)."
     )
+    st.session_state.test_duration = st.number_input(
+        "How many days has this test been running?", 
+        min_value=1, 
+        value=st.session_state.get("test_duration", 7),
+        help="Enter the number of days the experiment has been running. This is used to estimate potential time savings from CUPED variance reduction."
+    )
 
     st.write("---")
     st.write("### CUPED Variance Reduction (Optional)")
     with st.expander("How CUPED works", expanded=False):
-        st.markdown("""
+        # Use LaTeX formatting for mathematical expressions
+        st.markdown(r"""
             ### CUPED (Controlled-experiment Using Pre-Experiment Data)
 
             CUPED is a variance reduction technique that uses historical data to account for pre-existing differences between users. 
             By identifying how much of a user's behavior is 'typical' for them (based on the correlation between the pre-test and test periods), we can strip away the 'noise.'
 
-            *The result*: Narrower confidence intervals and the ability to detect smaller effects with the same sample size.
+            The result: Narrower confidence intervals and the ability to detect smaller effects with the same sample size.
 
             **How it works**
-            *HEXKIT* applies a variance adjustment factor based on the square of the Pearson correlation coefficient ($\rho^2$) found in your uploaded sample. 
-            The Standard Error is adjusted using the formula: $$SE_{adjusted} = \sqrt{\frac{p(1-p)(1-\rho^2)}{n}}$$This effectively 'shrinks' the probability density curves, making it easier to distinguish a real signal from background noise.   
+            *HEXKIT* uses your uploaded historical data to calculate the Pearson correlation coefficient ($\rho^2$) between two time periods. This tells us how consistent your users are over time.
+            We then apply this correlation as a variance adjustment factor to your current experiment results. The Standard Error is adjusted using the formula $$ SE_{adjusted} = \sqrt{\frac{p(1-p)(1-\rho^2)}{n}} $$. This effectively 'shrinks' the probability density curves, removing the portion of variance that was already predictable from pre-experiment behavior.   
         """)
+    
+    # Template download
+    template_csv = get_cuped_template()
+    st.download_button(
+        label="Download CSV Template",
+        data=template_csv,
+        file_name="cuped_template.csv",
+        mime="text/csv",
+        help="Use this format: one row per user, with 1 (converted) or 0 (not converted) for two periods."
+    )
 
-        use_cuped = st.checkbox("Enhance precision with pre-test data CSV", help="Upload user-level data to reduce variance and reach significance faster.")
-    
-    reduction_factor = 1.0 # Default: no reduction
-    
+    use_cuped = st.checkbox("Apply Variance Reduction via Historical Benchmark")
+    reduction_factor = 1.0 
+        
     if use_cuped:
-        uploaded_file = st.file_uploader("Upload CSV (user_id, pre_result, post_result)", type="csv")
+        st.info("""
+            **How this works:** Upload a CSV containing two periods of historical data for the same users. 
+            We will calculate the typical correlation ($\rho$) to adjust your current experiment's variance.
+        """)
+        
+        uploaded_file = st.file_uploader("Upload Historical CSV (e.g., User ID, Pre-Period, Post-Period)", type="csv")
+        
         if uploaded_file:
-            df_cuped = pd.read_csv(uploaded_file)
-            col_pre = st.selectbox("Select column: Data before test", df_cuped.columns)
-            col_post = st.selectbox("Select column: Data during test", df_cuped.columns)
+            df_hist = pd.read_csv(uploaded_file)
+            cols = df_hist.columns.tolist()
             
-            reduction_factor, corr = calculate_cuped_reduction_factor(df_cuped, col_pre, col_post)
+            c1, c2 = st.columns(2)
+            with c1:
+                idx1 = cols.index("historical_period_1") if "historical_period_1" in cols else 0
+                col_pre = st.selectbox("Historical Baseline (e.g. Month 1)", cols, index=idx1)
+            with c2:
+                idx2 = cols.index("historical_period_2") if "historical_period_2" in cols else 0
+                col_post = st.selectbox("Historical Follow-up (e.g. Month 2)", cols, index=idx2)
             
-            st.success(f"Correlation found: {corr:.2f}. Variance is reduced by {((1-reduction_factor)*100):.1f}%.")
+            reduction_factor, corr = calculate_cuped_reduction_factor(df_hist, col_pre, col_post)
+            
+            st.info(f"**Correlation Found:** {corr:.2f}")
+            st.metric("New Variance Level", f"{(reduction_factor * 100):.1f}%", 
+                      delta=f"-{((1 - reduction_factor) * 100):.1f}% Noise", delta_color="normal")
     
     return (
         st.session_state.visitor_counts, 
         st.session_state.conversion_counts, 
         st.session_state.confidence_level, 
-        reduction_factor
+        reduction_factor,
+        st.session_state.test_duration
         )
 
 def validate_inputs(visitors, conversions, aovs=None):
@@ -561,20 +596,90 @@ def display_results_per_variant(
 
 
 # -- Frequentist helper functions --
-def calculate_cuped_reduction_factor(df, pre_col, post_col):
+def calculate_cuped_reduction_factor(df, period_1_col, period_2_col):
     """
-    Calculates the variance-reduction factor based on user-level data.
-    pre_col: data before the experiment
-    post_col: data from the experiment
+    Calculates the reduction factor based on historical user consistency.
+    period_1_col: e.g., 'purchases_jan'
+    period_2_col: e.g., 'purchases_feb'
     """
     try:
-        correlation = df[pre_col].corr(df[post_col])
-        # The variance-reduction factor of CUPED is (1 - rho^2)
-        reduction_factor = 1 - (correlation**2)
+        # Calculate Pearson correlation between two historical periods
+        correlation = df[period_1_col].corr(df[period_2_col])
+        
+        # CUPED variance reduction factor is (1 - rho^2)
+        reduction_factor = max(0.0, 1.0 - (correlation**2))
+        
         return reduction_factor, correlation
     except Exception as e:
-        st.error(f"Error when calculating correlation: {e}")
+        st.error(f"Error calculating historical correlation: {e}")
         return 1.0, 0.0
+
+# Simple visual representation of a cuped template
+def get_cuped_template():
+    # Create a simple dummy dataframe
+    template_df = pd.DataFrame({
+        "user_id": ["user_1", "user_2", "user_3", "user_4"],
+        "historical_period_1": [1, 0, 1, 0],
+        "historical_period_2": [1, 1, 0, 0]
+    })
+    
+    # Convert to CSV buffer
+    buffer = io.StringIO()
+    template_df.to_csv(buffer, index=False)
+    return buffer.getvalue()
+
+def calculate_time_savings(reduction_factor, days_running):
+    """
+    Estimates how much longer the test would have needed to run
+    to achieve the same precision without CUPED.
+    """
+    if reduction_factor >= 1.0 or days_running <= 0:
+        return 0
+    
+    # Without CUPED, required N is N_current / reduction_factor
+    # Therefore, time required is Days / reduction_factor
+    total_days_required_without_cuped = days_running / reduction_factor
+    days_saved = total_days_required_without_cuped - days_running
+    
+    return round(days_saved, 1)
+
+def plot_cuped_comparison(results, visitor_counts):
+    fig = go.Figure()
+    
+    # Generate a range of x-values (conversion rates) for the plot
+    x_min = max(0, results['lowest boundary'] - 0.05)
+    x_max = min(1, results['highest boundary'] + 0.05)
+    x = np.linspace(x_min, x_max, 500)
+
+    colors = ['#636EFA', '#EF553B', '#00CC96', '#AB63FA', '#FFA15A']
+    alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+    for i in range(results['num_variants']):
+        cr = results['conversion_rates'][i]
+        se = results['standard_errors'][i]
+        
+        # Calculate the Probability Density Function ("Bell Curve")
+        y = norm.pdf(x, cr, se)
+        
+        label = f"Variant {alphabet[i]} (Control)" if i == 0 else f"Variant {alphabet[i]}"
+        
+        fig.add_trace(go.Scatter(
+            x=x, y=y,
+            mode='lines',
+            name=label,
+            line=dict(color=colors[i % len(colors)], width=3),
+            fill='tozeroy' # Fills the Area Under the Curve
+        ))
+
+    fig.update_layout(
+        title=f"Probability Density (CUPED Reduction: {(1-results['reduction_factor'])*100:.1f}%)",
+        xaxis_title="Conversion Rate",
+        yaxis_title="Probability Density",
+        template="plotly_white",
+        hovermode="x unified"
+    )
+    
+    return fig
     
 def display_ci_chart(results, current_variant_idx, alphabet):
     # Prepare data for Control (0) and the current Variant (i)
@@ -1101,7 +1206,9 @@ def run():
     elif analysis_method == "Frequentist Analysis":
         st.header("Frequentist Analysis Inputs")
         
-        visitor_counts, conversion_counts, confidence_level, reduction_factor = get_frequentist_inputs()
+        visitor_counts, conversion_counts, confidence_level, reduction_factor, test_duration = get_frequentist_inputs()
+
+        st.write("---")
         
         st.session_state.tail = st.radio(
             "Select the test hypothesis (tail):",
@@ -1128,6 +1235,25 @@ def run():
                             confidence_level,
                             st.session_state.tail
                         )
+
+                        st.plotly_chart(plot_cuped_comparison(test_results, visitor_counts), use_container_width=True)
+
+                        if test_results['reduction_factor'] < 1.0:
+                            st.caption(f"The curves above are narrowed by {((1-test_results['reduction_factor'])*100):.1f}% "
+                                    "based on your historical benchmark data.")
+
+                            days_saved = calculate_time_savings(test_results['reduction_factor'], test_duration)
+    
+                            st.write("---")
+                            col1, col2 = st.columns(2)
+                            with col1:
+                                st.metric("CUPED Efficiency", f"{((1/test_results['reduction_factor'] - 1) * 100):.1f}%", 
+                                        help="This is the increase in effective sample size gained from variance reduction.")
+                            with col2:
+                                st.metric("Time Saved", f"{days_saved} Days", 
+                                        delta="Faster Significance", delta_color="normal")
+                                
+                            st.success(f"**CUPED Impact:** By reducing noise, you reached this level of precision **{days_saved} days sooner** than a standard A/B test would have.")
 
                         # --- Visualization and Results ---
                         if test_results:
