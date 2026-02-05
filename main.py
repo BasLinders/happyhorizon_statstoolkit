@@ -7,8 +7,8 @@ st.set_page_config(
 )
 
 # Main Page UI
-logo_url = "https://cdn.homerun.co/49305/hh-woordmerk-rgb-blue-met-discriptor1666785216logo.png"
-st.image(logo_url, width=200)
+#logo_url = "https://cdn.homerun.co/49305/hh-woordmerk-rgb-blue-met-discriptor1666785216logo.png"
+#st.image(logo_url, width=200)
 
 st.title("Happy Horizon Experimentation Toolkit")
 st.write("### <span style='color: orange;'>v0.7.1-beta</span>", unsafe_allow_html=True)
@@ -38,5 +38,5 @@ Happy Horizon is a creative digital agency of experts in strategic thinking, ana
 
 linkedin_url = "https://www.linkedin.com/in/blinders/"
 happyhorizon_url = "https://happyhorizon.com/"
-footnote_text = f"""Engineered and developed by <a href="{linkedin_url}" target="_blank">Bas Linders</a> @<a href="{happyhorizon_url}" target="_blank">Happy Horizon.</a>"""
+footnote_text = f"""Engineered and developed by <a href="{linkedin_url}" target="_blank">Bas Linders</a>"""
 st.markdown(footnote_text, unsafe_allow_html=True)
