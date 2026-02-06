@@ -205,6 +205,29 @@ def get_frequentist_inputs():
             *HEXKIT* uses your uploaded historical data to calculate the Pearson correlation coefficient ($\rho^2$) between two time periods. This tells us how consistent your users are over time.
             We then apply this correlation as a variance adjustment factor to your current experiment results. The Standard Error is adjusted using the formula $$ SE_{adjusted} = \sqrt{\frac{p(1-p)(1-\rho^2)}{n}} $$. This effectively 'shrinks' the probability density curves, removing the portion of variance that was already predictable from pre-experiment behavior.   
         """)
+
+    with st.expander("Data Quality & CUPED Reliability", expanded=False):
+        st.markdown(f"**Users found in both periods:** `{row_count:,}`")
+        
+        # Determine status based on row count
+        if row_count < 500:
+            status = "**High Risk**"
+            advice = "Sample size is too small. Correlation may be a 'fluke'. Stick to standard Frequentist results."
+        elif row_count < 2000:
+            status = "**Moderate**"
+            advice = "Reliable if correlation is > 0.3. Double-check if 'Days Saved' makes sense."
+        else:
+            status = "**Stable**"
+            advice = "Excellent sample size. CUPED results are statistically robust."
+
+        st.markdown(f"""
+        | Metric | Status / Recommendation |
+        | :--- | :--- |
+        | **Reliability** | {status} |
+        | **Advice** | {advice} |
+        """)
+
+        st.info("**Note:** CUPED effectiveness depends on 'Returning Users'. If your business has low repeat-visit rates, variance reduction will naturally be limited.")
     
     # Template download
     template_csv = get_cuped_template()
@@ -229,21 +252,32 @@ def get_frequentist_inputs():
         
         if uploaded_file:
             df_hist = pd.read_csv(uploaded_file)
-            cols = df_hist.columns.tolist()
-            
-            c1, c2 = st.columns(2)
-            with c1:
-                idx1 = cols.index("historical_period_1") if "historical_period_1" in cols else 0
-                col_pre = st.selectbox("Historical Baseline (e.g. Month 1)", cols, index=idx1)
-            with c2:
-                idx2 = cols.index("historical_period_2") if "historical_period_2" in cols else 0
-                col_post = st.selectbox("Historical Follow-up (e.g. Month 2)", cols, index=idx2)
-            
-            reduction_factor, corr = calculate_cuped_reduction_factor(df_hist, col_pre, col_post)
-            
-            st.info(f"**Correlation Found:** {corr:.2f}")
-            st.metric("New Variance Level", f"{(reduction_factor * 100):.1f}%", 
-                      delta=f"-{((1 - reduction_factor) * 100):.1f}% Noise", delta_color="normal")
+            row_count = len(df_hist)
+            is_valid, message = check_cuped_validity(df_hist, col_pre, col_post)
+    
+            if not is_valid:
+                st.warning(f"{message}")
+            else:
+                if row_count < 500:
+                    st.warning(f"Your historical dataset has only {row_count} rows. The correlation estimate might be noisy, and CUPED's effectiveness could be limited.")
+                else: 
+                    st.success(f"{message}")
+
+                cols = df_hist.columns.tolist()
+                
+                c1, c2 = st.columns(2)
+                with c1:
+                    idx1 = cols.index("historical_period_1") if "historical_period_1" in cols else 0
+                    col_pre = st.selectbox("Historical Baseline (e.g. Month 1)", cols, index=idx1)
+                with c2:
+                    idx2 = cols.index("historical_period_2") if "historical_period_2" in cols else 0
+                    col_post = st.selectbox("Historical Follow-up (e.g. Month 2)", cols, index=idx2)
+                
+                reduction_factor, corr = calculate_cuped_reduction_factor(df_hist, col_pre, col_post)
+                
+                st.info(f"**Correlation Found:** {corr:.2f}")
+                st.metric("New Variance Level", f"{(reduction_factor * 100):.1f}%", 
+                        delta=f"-{((1 - reduction_factor) * 100):.1f}% Noise", delta_color="normal")
     
     return (
         st.session_state.visitor_counts, 
@@ -680,6 +714,19 @@ def plot_cuped_comparison(results, visitor_counts):
     )
     
     return fig
+
+def check_cuped_validity(df, col1, col2):
+    total_users = len(df)
+    # Count users who converted in at least one period
+    active_converters = df[(df[col1] > 0) | (df[col2] > 0)]
+    
+    if total_users < 100:
+        return False, "Sample size too small (<100 users) for reliable correlation."
+    
+    if len(active_converters) / total_users < 0.01:
+        return False, "Very low conversion overlap. CUPED might provide noisy results."
+    
+    return True, "Data quality looks good."
     
 def display_ci_chart(results, current_variant_idx, alphabet):
     # Prepare data for Control (0) and the current Variant (i)
