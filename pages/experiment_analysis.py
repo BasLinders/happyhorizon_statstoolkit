@@ -205,29 +205,6 @@ def get_frequentist_inputs():
             *HEXKIT* uses your uploaded historical data to calculate the Pearson correlation coefficient ($\rho^2$) between two time periods. This tells us how consistent your users are over time.
             We then apply this correlation as a variance adjustment factor to your current experiment results. The Standard Error is adjusted using the formula $$ SE_{adjusted} = \sqrt{\frac{p(1-p)(1-\rho^2)}{n}} $$. This effectively 'shrinks' the probability density curves, removing the portion of variance that was already predictable from pre-experiment behavior.   
         """)
-
-    with st.expander("Data Quality & CUPED Reliability", expanded=False):
-        st.markdown(f"**Users found in both periods:** `{row_count:,}`")
-        
-        # Determine status based on row count
-        if row_count < 500:
-            status = "**High Risk**"
-            advice = "Sample size is too small. Correlation may be a 'fluke'. Stick to standard Frequentist results."
-        elif row_count < 2000:
-            status = "**Moderate**"
-            advice = "Reliable if correlation is > 0.3. Double-check if 'Days Saved' makes sense."
-        else:
-            status = "**Stable**"
-            advice = "Excellent sample size. CUPED results are statistically robust."
-
-        st.markdown(f"""
-        | Metric | Status / Recommendation |
-        | :--- | :--- |
-        | **Reliability** | {status} |
-        | **Advice** | {advice} |
-        """)
-
-        st.info("**Note:** CUPED effectiveness depends on 'Returning Users'. If your business has low repeat-visit rates, variance reduction will naturally be limited.")
     
     # Template download
     template_csv = get_cuped_template()
@@ -258,10 +235,30 @@ def get_frequentist_inputs():
             if not is_valid:
                 st.warning(f"{message}")
             else:
-                if row_count < 500:
-                    st.warning(f"Your historical dataset has only {row_count} rows. The correlation estimate might be noisy, and CUPED's effectiveness could be limited.")
-                else: 
-                    st.success(f"{message}")
+                st.success(f"{message}")
+
+                with st.expander("Data Quality & CUPED Reliability", expanded=False):
+                    st.markdown(f"**Users found in both periods:** `{row_count:,}`")
+                    
+                    # Determine status based on row count
+                    if row_count < 500:
+                        status = "**High Risk**"
+                        advice = "Sample size is too small. Correlation may be a 'fluke'. Stick to standard Frequentist results."
+                    elif row_count < 2000:
+                        status = "**Moderate**"
+                        advice = "Reliable if correlation is > 0.3. Double-check if 'Days Saved' makes sense."
+                    else:
+                        status = "**Stable**"
+                        advice = "Excellent sample size. CUPED results are statistically robust."
+
+                    st.markdown(f"""
+                    | Metric | Status / Recommendation |
+                    | :--- | :--- |
+                    | **Reliability** | {status} |
+                    | **Advice** | {advice} |
+                    """)
+
+                    st.info("**Note:** CUPED effectiveness depends on 'Returning Users'. If your business has low repeat-visit rates, variance reduction will naturally be limited.")
 
                 cols = df_hist.columns.tolist()
                 
